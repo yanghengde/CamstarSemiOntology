@@ -1,0 +1,957 @@
+{
+  "module": "Product Modeling",
+  "classes": [
+    {
+      "className": "Product",
+      "chineseName": "产品",
+      "description": "核心建模实体，定义制造、追踪或消耗的成品、半成品或组件，包含工作流、BOM及产能定义。",
+      "properties": [
+        {
+          "name": "productBase",
+          "type": "Navigation",
+          "description": "产品基线版本 → ProductBase"
+        },
+        {
+          "name": "limitsEmailGroup",
+          "type": "Navigation",
+          "description": "限制警报邮件组 → EmailGroup"
+        },
+        {
+          "name": "lifetimeLimit2",
+          "type": "Integer",
+          "description": "物理字段 LifetimeLimit2"
+        },
+        {
+          "name": "lifetimeLimit",
+          "type": "Integer",
+          "description": "物理字段 LifetimeLimit"
+        },
+        {
+          "name": "warningLifetimeLimit",
+          "type": "Integer",
+          "description": "物理字段 WarningLifetimeLimit"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "objectType",
+          "type": "String",
+          "description": "物理字段 ObjectType"
+        },
+        {
+          "name": "objectCategory",
+          "type": "String",
+          "description": "物理字段 ObjectCategory"
+        },
+        {
+          "name": "minQtyReorderEmailGroup",
+          "type": "Navigation",
+          "description": "最小再订货量邮件组 → EmailGroup"
+        },
+        {
+          "name": "usageLimit2",
+          "type": "Integer",
+          "description": "物理字段 UsageLimit2"
+        },
+        {
+          "name": "maxQty",
+          "type": "Integer",
+          "description": "物理字段 MaxQty"
+        },
+        {
+          "name": "minQty",
+          "type": "Integer",
+          "description": "物理字段 MinQty"
+        },
+        {
+          "name": "warningUsageLimit2",
+          "type": "Integer",
+          "description": "物理字段 WarningUsageLimit2"
+        },
+        {
+          "name": "warningUsageLimit",
+          "type": "Integer",
+          "description": "物理字段 WarningUsageLimit"
+        },
+        {
+          "name": "warningLifetimeLimit2",
+          "type": "Integer",
+          "description": "物理字段 WarningLifetimeLimit2"
+        },
+        {
+          "name": "warningExpiryDuration",
+          "type": "Float",
+          "description": "物理字段 WarningExpiryDuration"
+        },
+        {
+          "name": "usageLimit",
+          "type": "Integer",
+          "description": "物理字段 UsageLimit"
+        },
+        {
+          "name": "reconditionLimit",
+          "type": "Integer",
+          "description": "物理字段 ReconditionLimit"
+        },
+        {
+          "name": "partType",
+          "type": "Integer",
+          "description": "物理字段 PartType"
+        },
+        {
+          "name": "minQtyReorderLimit",
+          "type": "Integer",
+          "description": "物理字段 MinQtyReorderLimit"
+        },
+        {
+          "name": "tcReleaseStatus",
+          "type": "String",
+          "description": "物理字段 TCReleaseStatus"
+        },
+        {
+          "name": "uom2",
+          "type": "Navigation",
+          "description": "辅助计量单位 → UOM"
+        },
+        {
+          "name": "unitsPerStrip",
+          "type": "Float",
+          "description": "物理字段 UnitsPerStrip"
+        },
+        {
+          "name": "scsFieldMp",
+          "type": "Boolean",
+          "description": "物理字段 scsFieldMP"
+        },
+        {
+          "name": "thawingDuration",
+          "type": "Float",
+          "description": "物理字段 ThawingDuration"
+        },
+        {
+          "name": "waferSize",
+          "type": "Float",
+          "description": "物理字段 WaferSize"
+        },
+        {
+          "name": "scsFieldEnable",
+          "type": "Boolean",
+          "description": "物理字段 scsFieldEnable"
+        },
+        {
+          "name": "accumulateExposure",
+          "type": "Boolean",
+          "description": "物理字段 AccumulateExposure"
+        },
+        {
+          "name": "alternateName",
+          "type": "String",
+          "description": "物理字段 AlternateName"
+        },
+        {
+          "name": "assemblyVersion",
+          "type": "String",
+          "description": "物理字段 AssemblyVersion"
+        },
+        {
+          "name": "binList",
+          "type": "Integer",
+          "description": "物理字段 BinListId"
+        },
+        {
+          "name": "defaultStartLocation",
+          "type": "Navigation",
+          "description": "物理字段 DefaultStartLocationId → A_LocationMap"
+        },
+        {
+          "name": "defaultStartOwner",
+          "type": "Navigation",
+          "description": "物理字段 DefaultStartOwnerId → Owner"
+        },
+        {
+          "name": "deviceVersion",
+          "type": "String",
+          "description": "物理字段 DeviceVersion"
+        },
+        {
+          "name": "splitNumberingRule",
+          "type": "Navigation",
+          "description": "物理字段 SplitNumberingRuleId → NumberingRule"
+        },
+        {
+          "name": "defaultStartReason",
+          "type": "Navigation",
+          "description": "物理字段 DefaultStartReasonId → StartReason"
+        },
+        {
+          "name": "productLine",
+          "type": "Navigation",
+          "description": "物理字段 ProductLineId → A_ProductLine"
+        },
+        {
+          "name": "productSubProductList",
+          "type": "Integer",
+          "description": "物理字段 ProductSubProductListId"
+        },
+        {
+          "name": "qtyPerBox",
+          "type": "Float",
+          "description": "物理字段 QtyPerBox"
+        },
+        {
+          "name": "roHsCompliance",
+          "type": "String",
+          "description": "物理字段 RoHSCompliance"
+        },
+        {
+          "name": "roHsComplianceDate",
+          "type": "DateTime",
+          "description": "物理字段 RoHSComplianceDate"
+        },
+        {
+          "name": "roHsRequired",
+          "type": "Boolean",
+          "description": "物理字段 RoHSRequired"
+        },
+        {
+          "name": "opnRevision",
+          "type": "String",
+          "description": "物理字段 OPNRevision"
+        },
+        {
+          "name": "serialId",
+          "type": "String",
+          "description": "物理字段 SerialId"
+        },
+        {
+          "name": "opn",
+          "type": "String",
+          "description": "物理字段 OPN"
+        },
+        {
+          "name": "ssContainerDimension",
+          "type": "Navigation",
+          "description": "物理字段 ss_ContainerDimensionId → ss_ContainerDimension"
+        },
+        {
+          "name": "ssDummyProductLifeSpan",
+          "type": "Integer",
+          "description": "物理字段 ss_DummyProductLifeSpan"
+        },
+        {
+          "name": "ssDummyProductMaxProcessTime",
+          "type": "Float",
+          "description": "物理字段 ss_DummyProductMaxProcessTime"
+        },
+        {
+          "name": "ssIsDummyProduct",
+          "type": "Boolean",
+          "description": "物理字段 ss_IsDummyProduct"
+        },
+        {
+          "name": "subLotMinQty",
+          "type": "Float",
+          "description": "物理字段 SubLotMinQty"
+        },
+        {
+          "name": "subLotQty",
+          "type": "Float",
+          "description": "物理字段 SubLotQty"
+        },
+        {
+          "name": "technology",
+          "type": "String",
+          "description": "物理字段 Technology"
+        },
+        {
+          "name": "scsAllowZeroQty",
+          "type": "Boolean",
+          "description": "物理字段 scsAllowZeroQty"
+        },
+        {
+          "name": "leads",
+          "type": "String",
+          "description": "物理字段 Leads"
+        },
+        {
+          "name": "exposureDuration",
+          "type": "Float",
+          "description": "物理字段 ExposureDuration"
+        },
+        {
+          "name": "externalDevice",
+          "type": "String",
+          "description": "物理字段 ExternalDevice"
+        },
+        {
+          "name": "fabPlantArea",
+          "type": "String",
+          "description": "物理字段 FabPlantArea"
+        },
+        {
+          "name": "formatCode",
+          "type": "String",
+          "description": "物理字段 FormatCode"
+        },
+        {
+          "name": "gdpw",
+          "type": "Float",
+          "description": "物理字段 GDPW"
+        },
+        {
+          "name": "isAvailable",
+          "type": "Boolean",
+          "description": "物理字段 IsAvailable"
+        },
+        {
+          "name": "packageType",
+          "type": "String",
+          "description": "物理字段 PackageType"
+        },
+        {
+          "name": "isMultiProducts",
+          "type": "Boolean",
+          "description": "物理字段 IsMultiProducts"
+        },
+        {
+          "name": "device",
+          "type": "String",
+          "description": "物理字段 Device"
+        },
+        {
+          "name": "lotSize",
+          "type": "Float",
+          "description": "物理字段 LotSize"
+        },
+        {
+          "name": "maskSet",
+          "type": "Navigation",
+          "description": "物理字段 MaskSetId → A_MaskSet"
+        },
+        {
+          "name": "materialCategory",
+          "type": "Navigation",
+          "description": "物理字段 MaterialCategoryId → A_MaterialCategory"
+        },
+        {
+          "name": "materialType",
+          "type": "Navigation",
+          "description": "物理字段 MaterialTypeId → A_MaterialType"
+        },
+        {
+          "name": "maxReturns",
+          "type": "Integer",
+          "description": "物理字段 MaxReturns"
+        },
+        {
+          "name": "numberOfCols",
+          "type": "Integer",
+          "description": "物理字段 NumberOfCols"
+        },
+        {
+          "name": "numberOfRows",
+          "type": "Integer",
+          "description": "物理字段 NumberOfRows"
+        },
+        {
+          "name": "isConsignment",
+          "type": "Boolean",
+          "description": "物理字段 IsConsignment"
+        },
+        {
+          "name": "fefoEnforce",
+          "type": "Integer",
+          "description": "物理字段 FEFOEnforce"
+        },
+        {
+          "name": "fefoOverrideESigRequirement",
+          "type": "Navigation",
+          "description": "FEFO重写电子签名要求 → ESigRequirement"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+        },
+        {
+          "name": "isPhantom",
+          "type": "Boolean",
+          "description": "是否为虚拟件"
+        },
+        {
+          "name": "documentSet",
+          "type": "Navigation",
+          "description": "关联的文档集 → DocumentSet"
+        },
+        {
+          "name": "productFamily",
+          "type": "Navigation",
+          "description": "所属产品家族 → ProductFamily"
+        },
+        {
+          "name": "productType",
+          "type": "Navigation",
+          "description": "产品类型 → ProductType"
+        },
+        {
+          "name": "stdCost",
+          "type": "Float",
+          "description": "标准成本"
+        },
+        {
+          "name": "stdStartQty",
+          "type": "Float",
+          "description": "标准起产数量"
+        },
+        {
+          "name": "stdStartQty2",
+          "type": "Float",
+          "description": "物理字段 StdStartQty2"
+        },
+        {
+          "name": "stdStartUom",
+          "type": "Navigation",
+          "description": "物理字段 StdStartUOMId → UOM"
+        },
+        {
+          "name": "stdStartUom2",
+          "type": "Navigation",
+          "description": "物理字段 StdStartUOM2Id → UOM"
+        },
+        {
+          "name": "customerProductNumber",
+          "type": "String",
+          "description": "客户产品料号"
+        },
+        {
+          "name": "plannedCost",
+          "type": "Float",
+          "description": "计划成本"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP消息管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "状态：1=Active, 2=Inactive"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "修订版本"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述"
+        },
+        {
+          "name": "currentCost",
+          "type": "Float",
+          "description": "当前成本"
+        },
+        {
+          "name": "customer",
+          "type": "Navigation",
+          "description": "客户实体 → Customer"
+        },
+        {
+          "name": "brandName",
+          "type": "String",
+          "description": "品牌名称"
+        },
+        {
+          "name": "catalogNumber",
+          "type": "String",
+          "description": "目录编号"
+        },
+        {
+          "name": "concomitantProductNumber",
+          "type": "String",
+          "description": "物理字段 ConcomitantProductNumber"
+        },
+        {
+          "name": "deviceType",
+          "type": "String",
+          "description": "器件/设备类型"
+        },
+        {
+          "name": "modelNumber",
+          "type": "String",
+          "description": "型号"
+        },
+        {
+          "name": "trainingReqGroup",
+          "type": "Navigation",
+          "description": "培训要求组 → TrainingRequirementGroup"
+        },
+        {
+          "name": "stockPointControlled",
+          "type": "Boolean",
+          "description": "物理字段 StockPointControlled"
+        },
+        {
+          "name": "externallyControlled",
+          "type": "Boolean",
+          "description": "是否外部系统控制"
+        },
+        {
+          "name": "lotControlled",
+          "type": "Boolean",
+          "description": "是否批次控制"
+        },
+        {
+          "name": "productVariation",
+          "type": "String",
+          "description": "产品变体"
+        },
+        {
+          "name": "inventoryControlled",
+          "type": "Boolean",
+          "description": "是否库存控制"
+        },
+        {
+          "name": "subFactory",
+          "type": "String",
+          "description": "物理字段 SubFactory"
+        },
+        {
+          "name": "glEntity",
+          "type": "String",
+          "description": "物理字段 GLEntity"
+        },
+        {
+          "name": "serialControlled",
+          "type": "Boolean",
+          "description": "是否序列号控制"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "物理字段 Notes"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "工程变更单号"
+        },
+        {
+          "name": "inspectAll",
+          "type": "Boolean",
+          "description": "物理字段 InspectAll"
+        },
+        {
+          "name": "targetFinalYield",
+          "type": "Float",
+          "description": "目标终结良率"
+        },
+        {
+          "name": "targetRolledThroughputYield",
+          "type": "Float",
+          "description": "目标滚动通过良率"
+        },
+        {
+          "name": "targetDurationPerUnit",
+          "type": "Float",
+          "description": "物理字段 TargetDurationPerUnit"
+        },
+        {
+          "name": "targetCycleTime",
+          "type": "Float",
+          "description": "目标生产周期时长"
+        },
+        {
+          "name": "targetUnitsPerHour",
+          "type": "Float",
+          "description": "目标小时产出数量"
+        },
+        {
+          "name": "containerNumberingRule",
+          "type": "Navigation",
+          "description": "容器编号规则 → NumberingRule"
+        },
+        {
+          "name": "slitCount",
+          "type": "Integer",
+          "description": "物理字段 SlitCount"
+        },
+        {
+          "name": "slitProduct",
+          "type": "Navigation",
+          "description": "产品分切/衍生关联产品 → Product"
+        },
+        {
+          "name": "totalProcessTime",
+          "type": "Float",
+          "description": "总加工时长（按默认数量计）"
+        },
+        {
+          "name": "adjustmentType",
+          "type": "Integer",
+          "description": "物理字段 AdjustmentType"
+        },
+        {
+          "name": "adjustmentValue",
+          "type": "Float",
+          "description": "物理字段 AdjustmentValue"
+        },
+        {
+          "name": "totalProcessTimeBulk",
+          "type": "Float",
+          "description": "总加工时长（整批处理）"
+        },
+        {
+          "name": "totalProcessTimeUnit",
+          "type": "Float",
+          "description": "总加工时长（按单位独立计）"
+        },
+        {
+          "name": "rptMinimumValue",
+          "type": "Float",
+          "description": "物理字段 RPTMinimumValue"
+        },
+        {
+          "name": "holdStatus",
+          "type": "Navigation",
+          "description": "物理字段 HoldStatusId → HoldStatus"
+        },
+        {
+          "name": "allowAllRevisionsAsSubstitute",
+          "type": "Boolean",
+          "description": "物理字段 AllowAllRevisionsAsSubstitute"
+        },
+        {
+          "name": "isImage",
+          "type": "Navigation",
+          "description": "产品图像 → isImage"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "物理字段 FilterTags"
+        },
+        {
+          "name": "workflowBase",
+          "type": "Integer",
+          "description": "工作流基线版本"
+        },
+        {
+          "name": "workflow",
+          "type": "Navigation",
+          "description": "关联的工艺路线 → Workflow"
+        },
+        {
+          "name": "bomBase",
+          "type": "Integer",
+          "description": "BOM基线版本 → BOM"
+        },
+        {
+          "name": "bom",
+          "type": "Navigation",
+          "description": "关联的物料清单 → BOM"
+        },
+        {
+          "name": "erpbomBase",
+          "type": "Integer",
+          "description": "ERPBOM基线版本 → ERPBOM"
+        },
+        {
+          "name": "erpbom",
+          "type": "Navigation",
+          "description": "关联的 ERP BOM → ERPBOM"
+        },
+        {
+          "name": "erpRouteBase",
+          "type": "Integer",
+          "description": "ERP路线基线版本"
+        },
+        {
+          "name": "erpRoute",
+          "type": "Navigation",
+          "description": "关联的 ERP 工艺路线 → ERPRoute"
+        },
+        {
+          "name": "billOfProcessBase",
+          "type": "Integer",
+          "description": "BOP基线版本"
+        },
+        {
+          "name": "billOfProcess",
+          "type": "Navigation",
+          "description": "工艺过程 → BillOfProcess"
+        },
+        {
+          "name": "samplingPlanBase",
+          "type": "Integer",
+          "description": "抽样计划基线版本"
+        },
+        {
+          "name": "samplingPlan",
+          "type": "Navigation",
+          "description": "质量抽样计划 → SamplingPlan"
+        }
+      ]
+    },
+    {
+      "className": "VendorItem",
+      "chineseName": "供应商物料",
+      "description": "供应商销售的产品定义，用于外购件关联 and 发料追溯。物理上对应 VendorItem (CdoId: 686)。",
+      "properties": [
+        {
+          "name": "vendor",
+          "type": "Navigation",
+          "description": "所属供应商 → Vendor"
+        },
+        {
+          "name": "leadTime",
+          "type": "Float",
+          "description": "物理字段 LeadTime"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "物理字段 Description"
+        },
+        {
+          "name": "cost",
+          "type": "Float",
+          "description": "物理字段 Cost"
+        },
+        {
+          "name": "minOrderQty",
+          "type": "Float",
+          "description": "物理字段 MinOrderQty"
+        },
+        {
+          "name": "itemName",
+          "type": "String",
+          "description": "物理字段 ItemName"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "minOrderQty2",
+          "type": "Float",
+          "description": "物理字段 MinOrderQty2"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Product",
+      "toClass": "ProductBase",
+      "relationName": "HAS_PRODUCT_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ProductBaseId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.UOM2Id"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "A_LocationMap",
+      "relationName": "HAS_DEFAULT_START_LOCATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.DefaultStartLocationId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "Owner",
+      "relationName": "HAS_DEFAULT_START_OWNER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.DefaultStartOwnerId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "NumberingRule",
+      "relationName": "HAS_SPLIT_NUMBERING_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.SplitNumberingRuleId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "StartReason",
+      "relationName": "HAS_DEFAULT_START_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.DefaultStartReasonId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "A_ProductLine",
+      "relationName": "HAS_PRODUCT_LINE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ProductLineId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "ss_ContainerDimension",
+      "relationName": "HAS_SS_CONTAINER_DIMENSION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ss_ContainerDimensionId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "A_MaskSet",
+      "relationName": "HAS_MASK_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.MaskSetId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "A_MaterialCategory",
+      "relationName": "HAS_MATERIAL_CATEGORY",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.MaterialCategoryId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "A_MaterialType",
+      "relationName": "HAS_MATERIAL_TYPE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.MaterialTypeId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "DocumentSet",
+      "relationName": "HAS_DOCUMENT_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.DocumentSetId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "ProductFamily",
+      "relationName": "HAS_PRODUCT_FAMILY",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ProductFamilyId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "ProductType",
+      "relationName": "HAS_PRODUCT_TYPE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ProductTypeId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "UOM",
+      "relationName": "HAS_STD_START_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.StdStartUOMId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "UOM",
+      "relationName": "HAS_STD_START_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.StdStartUOM2Id"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "Customer",
+      "relationName": "HAS_CUSTOMER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.CustomerId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "TrainingRequirementGroup",
+      "relationName": "HAS_TRAINING_REQ_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.TrainingReqGroupId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "NumberingRule",
+      "relationName": "HAS_CONTAINER_NUMBERING_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ContainerNumberingRuleId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "Product",
+      "relationName": "HAS_SLIT_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.SlitProductId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "HoldStatus",
+      "relationName": "HAS_HOLD_STATUS",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.HoldStatusId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "Workflow",
+      "relationName": "HAS_WORKFLOW",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.WorkflowId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "BOM",
+      "relationName": "HAS_BOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.BOMId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "ERPBOM",
+      "relationName": "HAS_ERPBOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ERPBOMId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "ERPRoute",
+      "relationName": "HAS_ERP_ROUTE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.ERPRouteId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "BillOfProcess",
+      "relationName": "HAS_BILL_OF_PROCESS",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.BillOfProcessId"
+    },
+    {
+      "fromClass": "Product",
+      "toClass": "SamplingPlan",
+      "relationName": "HAS_SAMPLING_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Product.SamplingPlanId"
+    },
+    {
+      "fromClass": "VendorItem",
+      "toClass": "Vendor",
+      "relationName": "HAS_VENDOR",
+      "cardinality": "MANY_TO_ONE",
+      "description": "VendorItem.VendorId"
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "module": "erp_route",
+  "classes": [
+    {
+      "className": "ERPRoute",
+      "chineseName": "ERP工艺路线",
+      "description": "ERPRoute — ERP工艺路线（版本化实体）。从ERP系统下载的制造工艺路线定义，是ERP中最接近Camstar工作流(Workflow)的概念。包含多个工艺步骤(RouteStep)，每个步骤比工作流工步更粗粒度（通常在步骤级汇总）。可选择关联特定的产品(Product)。被 Workflow、MfgOrder、ERPBOM 引用，将ERP的工艺路线与Camstar'的工单和工作流桥接。",
+      "properties": [
+        {
+          "name": "erpRouteBase",
+          "type": "Navigation",
+          "description": "ERP工艺路线基线引用"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "换线设置权限 → SetupAccess"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "修订版本号"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "erpItem",
+          "type": "String",
+          "description": "ERP系统对应的物料/项目编码"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "状态：1=Active, 2=Inactive"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "关联的WIP消息定义管理器"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "工程变更单号(ECO)"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "productBase",
+          "type": "Integer",
+          "description": "产品基线引用"
+        },
+        {
+          "name": "product",
+          "type": "Navigation",
+          "description": "关联的产品(Product)，可选"
+        }
+      ]
+    },
+    {
+      "className": "RouteStep",
+      "chineseName": "ERP工艺步骤",
+      "description": "RouteStep — ERP工艺步骤（ERPRoute 的子实体）。ERP工艺路线中的单个步骤，包含ERP工序代码(ERPOperation)、执行顺序(Sequence)、名称(Name)，以及SMT贴片相关参数（isSMTSide、isSMTDate、isTransferType 等）和产能计算参数（isSetupTime、isDurationPerUnit、isUnitsPerHour 等）。被 WorkflowStep 和物料清单行引用，用于将ERP步骤映射到具体工步和物料消耗位置。",
+      "properties": [
+        {
+          "name": "name",
+          "type": "String",
+          "description": "步骤名称",
+          "required": true
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "erpRouteId",
+          "type": "Navigation",
+          "description": "物理字段 ERPRouteID → ERPRoute"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "erpOperation",
+          "type": "String",
+          "description": "ERP工序操作代码"
+        },
+        {
+          "name": "sequence",
+          "type": "String",
+          "description": "执行顺序号"
+        },
+        {
+          "name": "schedulingOperation",
+          "type": "String",
+          "description": "排程操作代码(SchedulingOperation)"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ERPRoute",
+      "toClass": "ERPRouteBase",
+      "relationName": "HAS_ERP_ROUTE_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ERPRoute.ERPRouteBaseId"
+    },
+    {
+      "fromClass": "ERPRoute",
+      "toClass": "Product",
+      "relationName": "HAS_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ERPRoute.ProductId"
+    },
+    {
+      "fromClass": "RouteStep",
+      "toClass": "ERPRoute",
+      "relationName": "HAS_ERP_ROUTE_ID",
+      "cardinality": "MANY_TO_ONE",
+      "description": "RouteStep.ERPRouteID"
+    }
+  ]
+}

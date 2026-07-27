@@ -1,0 +1,1666 @@
+{
+  "module": "container",
+  "classes": [
+    {
+      "className": "Container",
+      "chineseName": "容器",
+      "description": "车间追踪WIP的基本单位，代表正在生产的实体或逻辑物料批次。",
+      "properties": [
+        {
+          "name": "samplingLot",
+          "type": "Navigation",
+          "description": "抽样批次 → MfgLot"
+        },
+        {
+          "name": "salesOrder",
+          "type": "Navigation",
+          "description": "销售订单 → SalesOrder"
+        },
+        {
+          "name": "lastLotSortIqc",
+          "type": "Navigation",
+          "description": "物理字段 LastLotSortIQCId → A_LotSortIQC"
+        },
+        {
+          "name": "futureCombineParentLot",
+          "type": "Navigation",
+          "description": "物理字段 FutureCombineParentLotId → Container"
+        },
+        {
+          "name": "futureCombineSpec",
+          "type": "Navigation",
+          "description": "物理字段 FutureCombineSpecId → Spec"
+        },
+        {
+          "name": "lastIntegrationTxn",
+          "type": "Integer",
+          "description": "最后集成交易"
+        },
+        {
+          "name": "lastLotSortSqa",
+          "type": "Navigation",
+          "description": "物理字段 LastLotSortSQAId → A_LotSortSQA"
+        },
+        {
+          "name": "lotDisposition",
+          "type": "Navigation",
+          "description": "物理字段 LotDispositionId → A_LotDisposition"
+        },
+        {
+          "name": "stepLogicCriteria",
+          "type": "Integer",
+          "description": "物理字段 StepLogicCriteriaId"
+        },
+        {
+          "name": "maxTimeWindowCount",
+          "type": "Integer",
+          "description": "物理字段 MaxTimeWindowCount"
+        },
+        {
+          "name": "testIqcCount",
+          "type": "Integer",
+          "description": "物理字段 TestIQCCount"
+        },
+        {
+          "name": "lastLotSorting",
+          "type": "Navigation",
+          "description": "物理字段 LastLotSortingId → A_LotSorting"
+        },
+        {
+          "name": "varianceComments",
+          "type": "String",
+          "description": "物理字段 VarianceComments"
+        },
+        {
+          "name": "loanCount",
+          "type": "Integer",
+          "description": "物理字段 LoanCount"
+        },
+        {
+          "name": "loanSequence",
+          "type": "Integer",
+          "description": "物理字段 LoanSequence"
+        },
+        {
+          "name": "objectType",
+          "type": "String",
+          "description": "物理字段 ObjectType"
+        },
+        {
+          "name": "qtyScheduled",
+          "type": "Float",
+          "description": "物理字段 QtyScheduled"
+        },
+        {
+          "name": "lastInventoryStep",
+          "type": "Navigation",
+          "description": "物理字段 LastInventoryStepId → WorkflowStep"
+        },
+        {
+          "name": "scheduleData",
+          "type": "Navigation",
+          "description": "物理字段 ScheduleDataId → A_ScheduleData"
+        },
+        {
+          "name": "txnTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 TxnTimestamp"
+        },
+        {
+          "name": "equipmentLoadingCount",
+          "type": "Integer",
+          "description": "物理字段 EquipmentLoadingCount"
+        },
+        {
+          "name": "maxTimeWindowStopped",
+          "type": "Boolean",
+          "description": "物理字段 MaxTimeWindowStopped"
+        },
+        {
+          "name": "processSpec",
+          "type": "Navigation",
+          "description": "物理字段 ProcessSpecId → A_ProcessSpec"
+        },
+        {
+          "name": "alternateName1",
+          "type": "String",
+          "description": "物理字段 AlternateName1"
+        },
+        {
+          "name": "batchNo",
+          "type": "String",
+          "description": "物理字段 BatchNo"
+        },
+        {
+          "name": "splitCount",
+          "type": "Integer",
+          "description": "物理字段 SplitCount"
+        },
+        {
+          "name": "receivingTimeStamp",
+          "type": "DateTime",
+          "description": "物理字段 ReceivingTimeStamp"
+        },
+        {
+          "name": "insertionNumber",
+          "type": "Integer",
+          "description": "物理字段 InsertionNumber"
+        },
+        {
+          "name": "equipmentCount",
+          "type": "Integer",
+          "description": "物理字段 EquipmentCount"
+        },
+        {
+          "name": "moveInTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 MoveInTimestamp"
+        },
+        {
+          "name": "moveInQty",
+          "type": "Float",
+          "description": "物理字段 MoveInQty"
+        },
+        {
+          "name": "futureCombineCount",
+          "type": "Integer",
+          "description": "物理字段 FutureCombineCount"
+        },
+        {
+          "name": "lotAttributes",
+          "type": "Navigation",
+          "description": "物理字段 LotAttributesId → A_LotAttributes"
+        },
+        {
+          "name": "scheduleCount",
+          "type": "Integer",
+          "description": "物理字段 ScheduleCount"
+        },
+        {
+          "name": "currentWipLot",
+          "type": "Navigation",
+          "description": "物理字段 CurrentWIPLotId → A_WIPLot"
+        },
+        {
+          "name": "holdLocation",
+          "type": "Navigation",
+          "description": "物理字段 HoldLocationId → A_HoldLocation"
+        },
+        {
+          "name": "holdLocationStartTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 HoldLocationStartTimestamp"
+        },
+        {
+          "name": "lastLotCarriersSetupHistory",
+          "type": "Integer",
+          "description": "物理字段 LastLotCarriersSetupHistoryId"
+        },
+        {
+          "name": "varianceQty",
+          "type": "Float",
+          "description": "物理字段 VarianceQty"
+        },
+        {
+          "name": "varianceReason",
+          "type": "Navigation",
+          "description": "物理字段 VarianceReasonId → A_VarianceReason"
+        },
+        {
+          "name": "varianceApprovedBy",
+          "type": "String",
+          "description": "物理字段 VarianceApprovedBy"
+        },
+        {
+          "name": "holdLocationTotalDuration",
+          "type": "Float",
+          "description": "物理字段 HoldLocationTotalDuration"
+        },
+        {
+          "name": "moveInQty2",
+          "type": "Float",
+          "description": "物理字段 MoveInQty2"
+        },
+        {
+          "name": "scheduleResidueQty",
+          "type": "Float",
+          "description": "物理字段 ScheduleResidueQty"
+        },
+        {
+          "name": "moveInUsername",
+          "type": "String",
+          "description": "物理字段 MoveInUsername"
+        },
+        {
+          "name": "ss",
+          "type": "Navigation",
+          "description": "物理字段 SSId → A_ProcessSpec"
+        },
+        {
+          "name": "ssExists",
+          "type": "Boolean",
+          "description": "物理字段 SSExists"
+        },
+        {
+          "name": "lastStep",
+          "type": "Navigation",
+          "description": "物理字段 LastStepId → WorkflowStep"
+        },
+        {
+          "name": "futureHoldCount",
+          "type": "Integer",
+          "description": "物理字段 FutureHoldCount"
+        },
+        {
+          "name": "alternateName2",
+          "type": "String",
+          "description": "物理字段 AlternateName2"
+        },
+        {
+          "name": "lastLotTestedTestParamsBin",
+          "type": "Integer",
+          "description": "物理字段 LastLotTestedTestParamsBinId"
+        },
+        {
+          "name": "itemsCount",
+          "type": "Integer",
+          "description": "物理字段 ItemsCount"
+        },
+        {
+          "name": "skipDispatchPlan",
+          "type": "Boolean",
+          "description": "物理字段 SkipDispatchPlan"
+        },
+        {
+          "name": "documentSet",
+          "type": "Navigation",
+          "description": "物理字段 DocumentSetId → DocumentSet"
+        },
+        {
+          "name": "ssMoveBackToSpec",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveBackToSpecId → Spec"
+        },
+        {
+          "name": "ssMoveBackFromSpec",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveBackFromSpecId → Spec"
+        },
+        {
+          "name": "ssMoveOutFromSpec",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveOutFromSpecId → Spec"
+        },
+        {
+          "name": "firstName",
+          "type": "String",
+          "description": "物理字段 FirstName"
+        },
+        {
+          "name": "lastLotTestedTestParams",
+          "type": "Integer",
+          "description": "物理字段 LastLotTestedTestParamsId"
+        },
+        {
+          "name": "lastScheduleDataId",
+          "type": "String",
+          "description": "物理字段 LastScheduleDataId"
+        },
+        {
+          "name": "containerTxnSequence",
+          "type": "Integer",
+          "description": "物理字段 ContainerTxnSequence"
+        },
+        {
+          "name": "holdLocationDuration",
+          "type": "Float",
+          "description": "物理字段 HoldLocationDuration"
+        },
+        {
+          "name": "batchIdSequence",
+          "type": "Integer",
+          "description": "物理字段 BatchIdSequence"
+        },
+        {
+          "name": "lastMoveOutUsername",
+          "type": "String",
+          "description": "物理字段 LastMoveOutUsername"
+        },
+        {
+          "name": "lastMoveOutTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 LastMoveOutTimestamp"
+        },
+        {
+          "name": "ssMoveOutToSpec",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveOutToSpecId → Spec"
+        },
+        {
+          "name": "isEShip",
+          "type": "Boolean",
+          "description": "物理字段 IsEShip"
+        },
+        {
+          "name": "scsCurrentContainerStepSequenc",
+          "type": "Integer",
+          "description": "物理字段 scsCurrentContainerStepSequenc"
+        },
+        {
+          "name": "scsPreactorLastSequence",
+          "type": "Integer",
+          "description": "物理字段 scsPreactorLastSequence"
+        },
+        {
+          "name": "scsPrevContainerStepSequence",
+          "type": "Integer",
+          "description": "物理字段 scsPrevContainerStepSequence"
+        },
+        {
+          "name": "scsLotCarrierPosition",
+          "type": "Navigation",
+          "description": "物理字段 scsLotCarrierPositionId → scsLotCarrierPosition"
+        },
+        {
+          "name": "scsIsMultiLevelStart",
+          "type": "Boolean",
+          "description": "物理字段 scsIsMultiLevelStart"
+        },
+        {
+          "name": "qualityStatusReason",
+          "type": "Navigation",
+          "description": "物理字段 QualityStatusReasonId → ContainerDefectReason"
+        },
+        {
+          "name": "scsIsCarrierContainer",
+          "type": "Boolean",
+          "description": "物理字段 scsIsCarrierContainer"
+        },
+        {
+          "name": "scsCarrierContainerId",
+          "type": "String",
+          "description": "物理字段 scsCarrierContainerId"
+        },
+        {
+          "name": "ssrptUnitDelta",
+          "type": "Integer",
+          "description": "物理字段 SSRPTUnitDelta"
+        },
+        {
+          "name": "ssrptBulkDelta",
+          "type": "Integer",
+          "description": "物理字段 SSRPTBulkDelta"
+        },
+        {
+          "name": "scsLastMoveOutTimestampGmt",
+          "type": "DateTime",
+          "description": "物理字段 scsLastMoveOutTimestampGMT"
+        },
+        {
+          "name": "scsOnHoldDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 scsOnHoldDateGMT"
+        },
+        {
+          "name": "scsMoveInTimestampGmt",
+          "type": "DateTime",
+          "description": "物理字段 scsMoveInTimestampGMT"
+        },
+        {
+          "name": "ssMoveBackToStep",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveBackToStepId → WorkflowStep"
+        },
+        {
+          "name": "ssMoveOutToStep",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveOutToStepId → WorkflowStep"
+        },
+        {
+          "name": "ssMoveOutFromStep",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveOutFromStepId → WorkflowStep"
+        },
+        {
+          "name": "isSsUseStep",
+          "type": "Boolean",
+          "description": "物理字段 IsSSUseStep"
+        },
+        {
+          "name": "ssMoveBackFromStep",
+          "type": "Navigation",
+          "description": "物理字段 SSMoveBackFromStepId → WorkflowStep"
+        },
+        {
+          "name": "reworkHoldTriggered",
+          "type": "Boolean",
+          "description": "物理字段 ReworkHoldTriggered"
+        },
+        {
+          "name": "currentReworkCount",
+          "type": "Integer",
+          "description": "物理字段 CurrentReworkCount"
+        },
+        {
+          "name": "ssFeeder",
+          "type": "Navigation",
+          "description": "物理字段 ss_FeederId → ResourceDef"
+        },
+        {
+          "name": "ssMfgLine",
+          "type": "Navigation",
+          "description": "物理字段 ss_MfgLineId → ss_MfgLine"
+        },
+        {
+          "name": "ssToBeHeldAtMoveOut",
+          "type": "Boolean",
+          "description": "物理字段 ss_ToBeHeldAtMoveOut"
+        },
+        {
+          "name": "currentThruputQty",
+          "type": "Float",
+          "description": "物理字段 CurrentThruputQty"
+        },
+        {
+          "name": "currentThruputQty2",
+          "type": "Float",
+          "description": "物理字段 CurrentThruputQty2"
+        },
+        {
+          "name": "currentThruputChildCount",
+          "type": "Integer",
+          "description": "物理字段 CurrentThruputChildCount"
+        },
+        {
+          "name": "currentThruputUnitCount",
+          "type": "Integer",
+          "description": "物理字段 CurrentThruputUnitCount"
+        },
+        {
+          "name": "bom",
+          "type": "Integer",
+          "description": "关联的BOM → BOM"
+        },
+        {
+          "name": "issuedToContainer",
+          "type": "Navigation",
+          "description": "发料至目标容器 → Container"
+        },
+        {
+          "name": "batchComments",
+          "type": "String",
+          "description": "物理字段 BatchComments"
+        },
+        {
+          "name": "batchStatus",
+          "type": "Integer",
+          "description": "物理字段 BatchStatus"
+        },
+        {
+          "name": "batch",
+          "type": "Navigation",
+          "description": "所属批次容器 → Container"
+        },
+        {
+          "name": "masterRecipe",
+          "type": "Navigation",
+          "description": "主配方 → MasterRecipe"
+        },
+        {
+          "name": "thruputAdjustmentChildCount",
+          "type": "Integer",
+          "description": "物理字段 ThruputAdjustmentChildCount"
+        },
+        {
+          "name": "thruputAdjustmentUnitCount",
+          "type": "Integer",
+          "description": "物理字段 ThruputAdjustmentUnitCount"
+        },
+        {
+          "name": "detail",
+          "type": "Navigation",
+          "description": "容器明细数据 → ContainerDetail"
+        },
+        {
+          "name": "onHoldDate",
+          "type": "DateTime",
+          "description": "物理字段 OnHoldDate"
+        },
+        {
+          "name": "currentHoldCount",
+          "type": "Integer",
+          "description": "物理字段 CurrentHoldCount"
+        },
+        {
+          "name": "qty2",
+          "type": "Float",
+          "description": "物理字段 Qty2"
+        },
+        {
+          "name": "uom2",
+          "type": "Navigation",
+          "description": "副计量单位 → UOM"
+        },
+        {
+          "name": "requestDate",
+          "type": "DateTime",
+          "description": "物理字段 RequestDate"
+        },
+        {
+          "name": "requestDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 RequestDateGMT"
+        },
+        {
+          "name": "specStatus",
+          "type": "Navigation",
+          "description": "工序规格状态"
+        },
+        {
+          "name": "splitFrom",
+          "type": "Navigation",
+          "description": "拆分自源容器 → Container"
+        },
+        {
+          "name": "startReason",
+          "type": "Navigation",
+          "description": "开工原因 → StartReason"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "状态（如Hold, Active）"
+        },
+        {
+          "name": "uom",
+          "type": "Navigation",
+          "description": "主计量单位 → UOM"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP消息定义管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "unitCount",
+          "type": "Integer",
+          "description": "物理字段 UnitCount"
+        },
+        {
+          "name": "qty",
+          "type": "Float",
+          "description": "当前数量"
+        },
+        {
+          "name": "relativePriority",
+          "type": "Integer",
+          "description": "物理字段 RelativePriority"
+        },
+        {
+          "name": "originalUom",
+          "type": "Navigation",
+          "description": "物理字段 OriginalUOMId → UOM"
+        },
+        {
+          "name": "level",
+          "type": "Navigation",
+          "description": "容器级别 → ContainerLevel"
+        },
+        {
+          "name": "mfgOrder",
+          "type": "Navigation",
+          "description": "所属制造工单 → MfgOrder"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "容器编号（ContainerName）",
+          "required": true
+        },
+        {
+          "name": "originalContainer",
+          "type": "Navigation",
+          "description": "初始容器 → Container"
+        },
+        {
+          "name": "originalStartDate",
+          "type": "DateTime",
+          "description": "物理字段 OriginalStartDate"
+        },
+        {
+          "name": "originalStartDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 OriginalStartDateGMT"
+        },
+        {
+          "name": "originalFactory",
+          "type": "Navigation",
+          "description": "原始工厂 → Factory"
+        },
+        {
+          "name": "originalQty2",
+          "type": "Float",
+          "description": "物理字段 OriginalQty2"
+        },
+        {
+          "name": "lastActivityDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 LastActivityDateGMT"
+        },
+        {
+          "name": "originalUom2",
+          "type": "Navigation",
+          "description": "物理字段 OriginalUOM2Id → UOM"
+        },
+        {
+          "name": "owner",
+          "type": "Navigation",
+          "description": "所有者/责任人 → Owner"
+        },
+        {
+          "name": "parentContainer",
+          "type": "Navigation",
+          "description": "父级容器 → Container"
+        },
+        {
+          "name": "plannedProduct",
+          "type": "Navigation",
+          "description": "计划生产产品 → Product"
+        },
+        {
+          "name": "plannedQty",
+          "type": "Float",
+          "description": "物理字段 PlannedQty"
+        },
+        {
+          "name": "plannedQty2",
+          "type": "Float",
+          "description": "物理字段 PlannedQty2"
+        },
+        {
+          "name": "priorityCode",
+          "type": "Navigation",
+          "description": "优先级代码 → PriorityCode"
+        },
+        {
+          "name": "product",
+          "type": "Navigation",
+          "description": "当前产品 → Product"
+        },
+        {
+          "name": "originalQty",
+          "type": "Float",
+          "description": "物理字段 OriginalQty"
+        },
+        {
+          "name": "dueDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 DueDateGMT"
+        },
+        {
+          "name": "containerComments",
+          "type": "String",
+          "description": "物理字段 ContainerComments"
+        },
+        {
+          "name": "currentStatus",
+          "type": "Navigation",
+          "description": "当前状态信息 → CurrentStatus"
+        },
+        {
+          "name": "lastCompletionDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 LastCompletionDateGMT"
+        },
+        {
+          "name": "dueDate",
+          "type": "DateTime",
+          "description": "物理字段 DueDate"
+        },
+        {
+          "name": "lastCompletionDate",
+          "type": "DateTime",
+          "description": "物理字段 LastCompletionDate"
+        },
+        {
+          "name": "factoryStartDate",
+          "type": "DateTime",
+          "description": "物理字段 FactoryStartDate"
+        },
+        {
+          "name": "factoryStartDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 FactoryStartDateGMT"
+        },
+        {
+          "name": "factoryStartQty",
+          "type": "Float",
+          "description": "物理字段 FactoryStartQty"
+        },
+        {
+          "name": "factoryStartQty2",
+          "type": "Float",
+          "description": "物理字段 FactoryStartQty2"
+        },
+        {
+          "name": "factoryStartUom",
+          "type": "Navigation",
+          "description": "物理字段 FactoryStartUOMId → UOM"
+        },
+        {
+          "name": "factoryStartUom2",
+          "type": "Navigation",
+          "description": "物理字段 FactoryStartUOM2Id → UOM"
+        },
+        {
+          "name": "holdReason",
+          "type": "Navigation",
+          "description": "冻结原因 → HoldReason"
+        },
+        {
+          "name": "lastActivityDate",
+          "type": "DateTime",
+          "description": "物理字段 LastActivityDate"
+        },
+        {
+          "name": "customer",
+          "type": "Navigation",
+          "description": "关联客户 → Customer"
+        },
+        {
+          "name": "lastRevTxn",
+          "type": "Integer",
+          "description": "最后修订交易"
+        },
+        {
+          "name": "plannedQtyUom",
+          "type": "Navigation",
+          "description": "物理字段 PlannedQtyUOMId → UOM"
+        },
+        {
+          "name": "plannedQtyUom2",
+          "type": "Navigation",
+          "description": "物理字段 PlannedQtyUOM2Id → UOM"
+        },
+        {
+          "name": "childCount",
+          "type": "Integer",
+          "description": "物理字段 ChildCount"
+        },
+        {
+          "name": "thruputAdjustmentQty",
+          "type": "Float",
+          "description": "物理字段 ThruputAdjustmentQty"
+        },
+        {
+          "name": "thisContainerLost",
+          "type": "Boolean",
+          "description": "物理字段 ThisContainerLost"
+        },
+        {
+          "name": "thruputAdjustmentQty2",
+          "type": "Float",
+          "description": "物理字段 ThruputAdjustmentQty2"
+        },
+        {
+          "name": "billOfProcess",
+          "type": "Navigation",
+          "description": "工艺过程定义 → BillOfProcess"
+        },
+        {
+          "name": "expirationDate",
+          "type": "DateTime",
+          "description": "物理字段 ExpirationDate"
+        },
+        {
+          "name": "samplingRequired",
+          "type": "Boolean",
+          "description": "物理字段 SamplingRequired"
+        },
+        {
+          "name": "vendorItem",
+          "type": "Navigation",
+          "description": "供应商物料项 → VendorItem"
+        },
+        {
+          "name": "samplingPassed",
+          "type": "Boolean",
+          "description": "物理字段 SamplingPassed"
+        },
+        {
+          "name": "containerStartGuid",
+          "type": "String",
+          "description": "物理字段 ContainerStartGUID"
+        },
+        {
+          "name": "ssSendAheadDetails",
+          "type": "Navigation",
+          "description": "物理字段 ss_SendAheadDetailsId → ss_SendAheadDetails"
+        },
+        {
+          "name": "expirationDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 ExpirationDateGMT"
+        },
+        {
+          "name": "plannedStartDate",
+          "type": "DateTime",
+          "description": "物理字段 PlannedStartDate"
+        },
+        {
+          "name": "plannedStartDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 PlannedStartDateGMT"
+        },
+        {
+          "name": "remainingProcessTime",
+          "type": "Float",
+          "description": "物理字段 RemainingProcessTime"
+        },
+        {
+          "name": "holdMessage",
+          "type": "String",
+          "description": "物理字段 HoldMessage"
+        },
+        {
+          "name": "spcChartSaveOptionsEnum",
+          "type": "Integer",
+          "description": "SPC图表保存选项"
+        },
+        {
+          "name": "supplyFromName",
+          "type": "String",
+          "description": "物理字段 SupplyFromName"
+        },
+        {
+          "name": "supplyFromType",
+          "type": "String",
+          "description": "物理字段 SupplyFromType"
+        },
+        {
+          "name": "dateCode",
+          "type": "String",
+          "description": "物理字段 DateCode"
+        },
+        {
+          "name": "nickName",
+          "type": "String",
+          "description": "物理字段 NickName"
+        },
+        {
+          "name": "mfgPartNumber",
+          "type": "String",
+          "description": "物理字段 MfgPartNumber"
+        },
+        {
+          "name": "shapeName",
+          "type": "String",
+          "description": "物理字段 ShapeName"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "物理字段 Description"
+        },
+        {
+          "name": "direction",
+          "type": "Integer",
+          "description": "物理字段 Direction"
+        },
+        {
+          "name": "binSize",
+          "type": "String",
+          "description": "物理字段 BinSize"
+        },
+        {
+          "name": "leadFree",
+          "type": "Integer",
+          "description": "物理字段 LeadFree"
+        },
+        {
+          "name": "supplier",
+          "type": "String",
+          "description": "物理字段 Supplier"
+        },
+        {
+          "name": "productionComplete",
+          "type": "Boolean",
+          "description": "物理字段 ProductionComplete"
+        },
+        {
+          "name": "inQualityControl",
+          "type": "Integer",
+          "description": "物理字段 InQualityControl"
+        },
+        {
+          "name": "consumingOrder",
+          "type": "String",
+          "description": "物理字段 ConsumingOrder"
+        },
+        {
+          "name": "startParentContainer",
+          "type": "Navigation",
+          "description": "开工父容器 → Container"
+        },
+        {
+          "name": "lastCarrier",
+          "type": "Navigation",
+          "description": "最后使用载具 → Resource"
+        }
+      ]
+    },
+    {
+      "className": "MfgLot",
+      "chineseName": "物料批次",
+      "description": "供应商发来的原材料批次，或生产中形成的质量抽检及过程追踪批次(MfgLot)。",
+      "properties": [
+        {
+          "name": "qty",
+          "type": "Float",
+          "description": "当前数量"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "批号（MfgLotName）",
+          "required": true
+        },
+        {
+          "name": "creationDate",
+          "type": "DateTime",
+          "description": "批次创建日期"
+        },
+        {
+          "name": "samplingPassed",
+          "type": "Boolean",
+          "description": "抽样是否合格"
+        },
+        {
+          "name": "uom",
+          "type": "Navigation",
+          "description": "计量单位 → UOM"
+        },
+        {
+          "name": "allowAdjustToLotSize",
+          "type": "Boolean",
+          "description": "是否允许调整批次大小"
+        },
+        {
+          "name": "product",
+          "type": "Navigation",
+          "description": "关联的产品 → Product"
+        },
+        {
+          "name": "samplingCompleted",
+          "type": "Boolean",
+          "description": "抽样是否已完成"
+        },
+        {
+          "name": "lotStatus",
+          "type": "Integer",
+          "description": "批次状态编码"
+        },
+        {
+          "name": "samplingPlan",
+          "type": "Navigation",
+          "description": "关联的抽样计划 → SamplingPlan"
+        },
+        {
+          "name": "sampleRate",
+          "type": "Integer",
+          "description": "抽样率"
+        }
+      ]
+    },
+    {
+      "className": "ChangeStatusReason",
+      "chineseName": "状态变更原因",
+      "description": "ChangeStatusReason — 状态变更原因。用于记录和解释容器进行状态变更事务（如启用、冻结、释放、分流等）时的具体原因。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结启用（只读）"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "图标标识"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "状态变更原因的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "详细备注信息"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "过滤器标签"
+        }
+      ]
+    },
+    {
+      "className": "ContainerDefectReason",
+      "chineseName": "容器缺陷原因",
+      "description": "ContainerDefectReason — 容器缺陷原因代码。用于指定在制品容器(Container)在执行缺陷相关交易（如报废、不合格处置等）时的具体业务原因。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "defectReasonName",
+          "type": "String",
+          "description": "物理字段 DefectReasonName"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "ContDefectReasonGroup",
+      "chineseName": "容器缺陷原因组",
+      "description": "ContDefectReasonGroup — 容器缺陷原因组。对具体的容器缺陷原因代码(ContainerDefectReason)进行分组管理的命名对象，用以在特定操作工位/工序(Operation)限制可选的容器缺陷原因代码列表。支持嵌套子组。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "defectReasonGroupName",
+          "type": "String",
+          "description": "物理字段 DefectReasonGroupName"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目类型名称，固定为 ContainerDefectReason"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "ContainerGroup",
+      "chineseName": "容器组",
+      "description": "ContainerGroup — 容器分组。对在制品容器(Container)进行分组管理的命名对象，支持将特定容器归入同一组以便统一管理和筛选。支持嵌套子组。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "容器组名称（必填）",
+          "required": true
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目类型名称，固定为 Container"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "ContainerAutoHoldReq",
+      "chineseName": "容器自动冻结规则",
+      "description": "ContainerAutoHoldReq — 容器自动冻结需求规则。定义根据容器标识范围、批号列表或自定义表达式自动将符合条件的在制品容器(Container)自动冻结(Hold)的业务规则。可关联特定制造工单(MfgOrder)以限定适用范围。",
+      "properties": [
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "自动冻结规则唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "containerIdentifierRangeEnd",
+          "type": "String",
+          "description": "容器标识匹配范围的结束值"
+        },
+        {
+          "name": "containerIdentifierRangeStart",
+          "type": "String",
+          "description": "容器标识匹配范围的起始值"
+        },
+        {
+          "name": "expression",
+          "type": "String",
+          "description": "自定义条件表达式，用于定义额外的匹配逻辑"
+        },
+        {
+          "name": "mfgOrder",
+          "type": "Navigation",
+          "description": "关联的制造工单(MfgOrder)，限定规则的适用范围"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Container",
+      "toClass": "MfgLot",
+      "relationName": "HAS_SAMPLING_LOT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SamplingLotId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "SalesOrder",
+      "relationName": "HAS_SALES_ORDER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SalesOrderId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_FUTURE_COMBINE_PARENT_LOT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.FutureCombineParentLotId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Spec",
+      "relationName": "HAS_FUTURE_COMBINE_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.FutureCombineSpecId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_LAST_INVENTORY_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.LastInventoryStepId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "A_ProcessSpec",
+      "relationName": "HAS_PROCESS_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.ProcessSpecId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "A_HoldLocation",
+      "relationName": "HAS_HOLD_LOCATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.HoldLocationId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "A_VarianceReason",
+      "relationName": "HAS_VARIANCE_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.VarianceReasonId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "A_ProcessSpec",
+      "relationName": "HAS_SS",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_LAST_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.LastStepId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "DocumentSet",
+      "relationName": "HAS_DOCUMENT_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.DocumentSetId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Spec",
+      "relationName": "HAS_SS_MOVE_BACK_TO_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveBackToSpecId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Spec",
+      "relationName": "HAS_SS_MOVE_BACK_FROM_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveBackFromSpecId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Spec",
+      "relationName": "HAS_SS_MOVE_OUT_FROM_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveOutFromSpecId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Spec",
+      "relationName": "HAS_SS_MOVE_OUT_TO_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveOutToSpecId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "ContainerDefectReason",
+      "relationName": "HAS_QUALITY_STATUS_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.QualityStatusReasonId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_SS_MOVE_BACK_TO_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveBackToStepId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_SS_MOVE_OUT_TO_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveOutToStepId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_SS_MOVE_OUT_FROM_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveOutFromStepId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_SS_MOVE_BACK_FROM_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SSMoveBackFromStepId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "ResourceDef",
+      "relationName": "HAS_SS_FEEDER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.ss_FeederId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "ss_MfgLine",
+      "relationName": "HAS_SS_MFG_LINE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.ss_MfgLineId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_ISSUED_TO_CONTAINER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.IssuedToContainerId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_BATCH",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.BatchId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "MasterRecipe",
+      "relationName": "HAS_MASTER_RECIPE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.MasterRecipeId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.UOM2Id"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_SPLIT_FROM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.SplitFromId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "StartReason",
+      "relationName": "HAS_START_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.StartReasonId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.UOMId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_ORIGINAL_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.OriginalUOMId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "ContainerLevel",
+      "relationName": "HAS_LEVEL",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.LevelId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "MfgOrder",
+      "relationName": "HAS_MFG_ORDER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.MfgOrderId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_ORIGINAL_CONTAINER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.OriginalContainerId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Factory",
+      "relationName": "HAS_ORIGINAL_FACTORY",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.OriginalFactoryId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_ORIGINAL_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.OriginalUOM2Id"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Owner",
+      "relationName": "HAS_OWNER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.OwnerId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_PARENT_CONTAINER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.ParentContainerId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Product",
+      "relationName": "HAS_PLANNED_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.PlannedProductId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "PriorityCode",
+      "relationName": "HAS_PRIORITY_CODE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.PriorityCodeId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Product",
+      "relationName": "HAS_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.ProductId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "CurrentStatus",
+      "relationName": "HAS_CURRENT_STATUS",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.CurrentStatusId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_FACTORY_START_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.FactoryStartUOMId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_FACTORY_START_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.FactoryStartUOM2Id"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "HoldReason",
+      "relationName": "HAS_HOLD_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.HoldReasonId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Customer",
+      "relationName": "HAS_CUSTOMER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.CustomerId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_PLANNED_QTY_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.PlannedQtyUOMId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "UOM",
+      "relationName": "HAS_PLANNED_QTY_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.PlannedQtyUOM2Id"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "BillOfProcess",
+      "relationName": "HAS_BILL_OF_PROCESS",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.BillOfProcessId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "VendorItem",
+      "relationName": "HAS_VENDOR_ITEM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.VendorItemId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "Container",
+      "relationName": "HAS_START_PARENT_CONTAINER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.StartParentContainerId"
+    },
+    {
+      "fromClass": "Container",
+      "toClass": "ResourceDef",
+      "relationName": "HAS_LAST_CARRIER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Container.LastCarrierId"
+    },
+    {
+      "fromClass": "MfgLot",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgLot.UOMId"
+    },
+    {
+      "fromClass": "MfgLot",
+      "toClass": "Product",
+      "relationName": "HAS_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgLot.ProductId"
+    },
+    {
+      "fromClass": "MfgLot",
+      "toClass": "SamplingPlan",
+      "relationName": "HAS_SAMPLING_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgLot.SamplingPlanId"
+    },
+    {
+      "fromClass": "ContainerAutoHoldReq",
+      "toClass": "MfgOrder",
+      "relationName": "HAS_MFG_ORDER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ContainerAutoHoldReq.MfgOrderId"
+    }
+  ]
+}

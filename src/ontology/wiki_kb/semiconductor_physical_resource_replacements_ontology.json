@@ -1,0 +1,212 @@
+{
+  "module": "semiconductor_physical_resource_replacements",
+  "classes": [
+    {
+      "className": "A_PhysicalLocationPosition",
+      "chineseName": "物理位置关联",
+      "description": "物理位置与位置定义之间的顺序关联明细。 物理对应 A_PhysicalLocationPosition (CdoId: 679477479, Workspace: csi)。",
+      "properties": [
+        {
+          "name": "physicalLocation",
+          "type": "Navigation",
+          "description": "物理字段 PhysicalLocationId → A_PhysicalLocation"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "position",
+          "type": "Navigation",
+          "description": "物理字段 PositionId → A_PhysicalPosition"
+        },
+        {
+          "name": "positionSequence",
+          "type": "Integer",
+          "description": "物理字段 PositionSequence"
+        }
+      ]
+    },
+    {
+      "className": "A_PhysicalPosition",
+      "chineseName": "物理位置定义",
+      "description": "定义可用于厂内物理位置配置的位置主数据。 物理对应 A_PhysicalPosition (CdoId: 679477478, Workspace: csi)。",
+      "properties": [
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "物理字段 Notes"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "物理字段 PhysicalPositionName",
+          "required": true
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "物理字段 Description"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "物理字段 FilterTags"
+        }
+      ]
+    },
+    {
+      "className": "A_ResourceBOM",
+      "chineseName": "资源BOM",
+      "description": "资源所需物料清单的版本化定义。 物理对应 A_ResourceBOM (CdoId: 679477481, Workspace: csi)。",
+      "properties": [
+        {
+          "name": "resourceBomBase",
+          "type": "Navigation",
+          "description": "物理字段 ResourceBOMBaseId → A_ResourceBOMBase"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "物理字段 Status"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "物理字段 Revision"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "billType",
+          "type": "Navigation",
+          "description": "物理字段 BillTypeId → BillType"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "物理字段 Notes"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "物理字段 ECO"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "物理字段 Description"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "物理字段 FilterTags"
+        }
+      ]
+    },
+    {
+      "className": "A_ResourceBOMBase",
+      "chineseName": "资源BOM基础",
+      "description": "资源BOM各修订版本的基础记录。 物理对应 A_ResourceBOMBase (CdoId: 679477480, Workspace: csi)。",
+      "properties": [
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "revOfRcd",
+          "type": "Navigation",
+          "description": "物理字段 RevOfRcdId → A_ResourceBOM"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "物理字段 ResourceBOMName",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "A_PhysicalLocationPosition",
+      "toClass": "A_PhysicalLocation",
+      "relationName": "HAS_PHYSICAL_LOCATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_PhysicalLocationPosition.PhysicalLocationId"
+    },
+    {
+      "fromClass": "A_PhysicalLocationPosition",
+      "toClass": "A_PhysicalPosition",
+      "relationName": "HAS_POSITION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_PhysicalLocationPosition.PositionId"
+    },
+    {
+      "fromClass": "A_ResourceBOM",
+      "toClass": "A_ResourceBOMBase",
+      "relationName": "HAS_RESOURCE_BOM_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_ResourceBOM.ResourceBOMBaseId"
+    },
+    {
+      "fromClass": "A_ResourceBOM",
+      "toClass": "BillType",
+      "relationName": "HAS_BILL_TYPE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_ResourceBOM.BillTypeId"
+    },
+    {
+      "fromClass": "A_ResourceBOMBase",
+      "toClass": "A_ResourceBOM",
+      "relationName": "HAS_REV_OF_RCD",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_ResourceBOMBase.RevOfRcdId"
+    }
+  ]
+}

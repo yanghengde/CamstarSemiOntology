@@ -1,0 +1,54 @@
+{
+  "module": "supplier",
+  "classes": [
+    {
+      "className": "Vendor",
+      "chineseName": "供应商",
+      "description": "提供原材料或组件的第三方外部公司。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "物理字段 Description"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "物理字段 VendorName",
+          "required": true
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "物理字段 Notes"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "物理字段 FilterTags"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

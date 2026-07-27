@@ -1,0 +1,318 @@
+{
+  "module": "document",
+  "classes": [
+    {
+      "className": "Document",
+      "chineseName": "文档",
+      "description": "Document — 文档（版本化实体）。管理 SOP、图纸、安全手册等文件的元数据和版本控制。通过 identifier 指定外部文件路径/URL，fileLocation/fileName 定位文件，viewer 指定查看器，支持 XShare 协作系统集成。被 DocumentSet 引用组成文档集。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "限制的设置权限限制 → SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "修订版本号（必填）"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "documentBase",
+          "type": "Navigation",
+          "description": "关联的文档基类 → DocumentBase"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "关联的WIP消息定义管理器"
+        },
+        {
+          "name": "viewer",
+          "type": "Navigation",
+          "description": "关联的文档查看器(DocumentViewer)"
+        },
+        {
+          "name": "identifier",
+          "type": "String",
+          "description": "外部标识符——文件路径 and 文件名、URL等"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "状态：1=Active, 2=Inactive"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "工程变更单号(ECO)"
+        },
+        {
+          "name": "isAttachment",
+          "type": "Boolean",
+          "description": "是否为附件模式（不重用文档）"
+        },
+        {
+          "name": "fileVersion",
+          "type": "String",
+          "description": "文件版本"
+        },
+        {
+          "name": "attachmentHolder",
+          "type": "Navigation",
+          "description": "关联的质量对象文档附件 → DocAttachments"
+        },
+        {
+          "name": "xShareCollabspaceId",
+          "type": "String",
+          "description": "XShare 协作空间 GUID"
+        },
+        {
+          "name": "xShareContainerId",
+          "type": "String",
+          "description": "XShare 容器 GUID"
+        },
+        {
+          "name": "xShareUrn",
+          "type": "String",
+          "description": "物理字段 XShareURN"
+        },
+        {
+          "name": "xShareContainerName",
+          "type": "String",
+          "description": "物理字段 XShareContainerName"
+        },
+        {
+          "name": "xShareParentFolder",
+          "type": "String",
+          "description": "物理字段 XShareParentFolder"
+        },
+        {
+          "name": "xShareContainerType",
+          "type": "String",
+          "description": "物理字段 XShareContainerType"
+        },
+        {
+          "name": "browseMode",
+          "type": "Integer",
+          "description": "浏览模式编码"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "authenticationType",
+          "type": "Integer",
+          "description": "认证类型：10=Basic, 20=None"
+        }
+      ]
+    },
+    {
+      "className": "DocumentViewer",
+      "chineseName": "文档查看器",
+      "description": "DocumentViewer — 文档查看器。定义打开特定类型文档所使用的外部应用程序及命令行参数。commandLine 中 %1 令牌在运行时被替换为文档的 identifier/路径。例如：\"Acrobat.exe %1\" 用 PDF 阅读器打开文档。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "限制的设置权限限制 → SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "查看器唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "变更历史记录 → ChangeStatus"
+        },
+        {
+          "name": "currentDirectory",
+          "type": "String",
+          "description": "应用程序启动时的当前工作目录"
+        },
+        {
+          "name": "commandLine",
+          "type": "String",
+          "description": "启动应用程序的命令行，%1 令牌代表文档路径（最长2000字符）"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "DocumentSet",
+      "chineseName": "文档集",
+      "description": "DocumentSet — 文档集。将多个文档(Document)归组为一个逻辑集合，通过 DocumentEntry 子实体列表定义每个文档的引用和使用说明。可挂载到多种模型对象类型（如 Product、Spec、MfgOrder、Activity 等），由 docSetModelObjectTypeName 指定目标对象类型。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "限制的设置权限限制 → SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "文档集唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "变更历史记录 → ChangeStatus"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "DocumentEntry",
+      "chineseName": "文档条目",
+      "description": "DocumentEntry — 文档条目（DocumentSet 的子实体）。在文档集中引用一个具体的 Document，并提供在此集合中的用途说明(description)，以及一个名称(name)用于在关联步骤中请求特定文档。",
+      "properties": [
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "documentSet",
+          "type": "Navigation",
+          "description": "归属的文档集 → DocumentSet"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "条目名称，用于在关联步骤中标识和请求特定文档",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "条目的用途说明，用于构建选择列表"
+        },
+        {
+          "name": "documentBase",
+          "type": "Integer",
+          "description": "引用的文档基类 → DocumentBase"
+        },
+        {
+          "name": "document",
+          "type": "Navigation",
+          "description": "引用的文档(Document)"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Document",
+      "toClass": "DocumentBase",
+      "relationName": "HAS_DOCUMENT_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Document.DocumentBaseId"
+    },
+    {
+      "fromClass": "Document",
+      "toClass": "DocumentViewer",
+      "relationName": "HAS_VIEWER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Document.ViewerId"
+    },
+    {
+      "fromClass": "Document",
+      "toClass": "DocAttachments",
+      "relationName": "HAS_ATTACHMENT_HOLDER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Document.AttachmentHolderId"
+    },
+    {
+      "fromClass": "DocumentEntry",
+      "toClass": "DocumentSet",
+      "relationName": "HAS_DOCUMENT_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "DocumentEntry.DocumentSetId"
+    },
+    {
+      "fromClass": "DocumentEntry",
+      "toClass": "Document",
+      "relationName": "HAS_DOCUMENT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "DocumentEntry.DocumentId"
+    }
+  ]
+}

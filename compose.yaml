@@ -26,7 +26,6 @@ services:
     restart: unless-stopped
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?请先在 .env 中设置 NEO4J_PASSWORD}
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       NEO4J_server_memory_heap_initial__size: ${NEO4J_HEAP_INITIAL:-512m}
       NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX:-2g}
       NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE:-1g}
@@ -42,7 +41,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "cypher-shell -a bolt://localhost:7687 -u neo4j -p \"$$NEO4J_PASSWORD\" 'RETURN 1' >/dev/null 2>&1",
+          "cypher-shell -a bolt://localhost:7687 -u neo4j -p \"$${NEO4J_AUTH#*/}\" 'RETURN 1' >/dev/null 2>&1",
         ]
       interval: 10s
       timeout: 10s

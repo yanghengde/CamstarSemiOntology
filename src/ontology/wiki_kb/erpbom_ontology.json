@@ -1,0 +1,409 @@
+{
+  "module": "erpbom",
+  "classes": [
+    {
+      "className": "ERPBOM",
+      "chineseName": "ERP物料清单",
+      "description": "ERP Bill of Materials — 从 ERP 系统下载到 InSite 的 BOM，由外部系统（如 SAP）控制和管理。与原生 BOM 不同，ERPBOM 包含 ERP 路由步骤引用，其物料行使用独立的 BOMMaterialListItem 类型存储在专用表中。标记为 externallyControlled，编辑和更新受限制。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "换线设置权限 → SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+        },
+        {
+          "name": "erpbomBase",
+          "type": "Navigation",
+          "description": "ERPBOM 基线引用 → ERPBOM"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "ERP BOM 的描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "ERP BOM 版本号（必填）"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP消息定义管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "billType",
+          "type": "Navigation",
+          "description": "BOM 类型（如 Manufacturing, Engineering）"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "物理字段 Status"
+        },
+        {
+          "name": "externallyControlled",
+          "type": "Boolean",
+          "description": "是否由外部系统（ERP）控制，ERPBOM 始终为 true"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "内部备注"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "工程变更单号"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "erpRouteBase",
+          "type": "Integer",
+          "description": "ERP工艺路线基线引用"
+        },
+        {
+          "name": "erpRoute",
+          "type": "Navigation",
+          "description": "关联的 ERP 工艺路线（ERP Route/Step），定义物料在哪个工序消耗"
+        }
+      ]
+    },
+    {
+      "className": "BOMMaterialListItem",
+      "chineseName": "ERP BOM物料行",
+      "description": "BOMMaterialListItem — ERP BOM 中的物料行，与原生 ProductMaterialListItem 类似但存储在独立的表中。由 ERP 系统创建并下载到 InSite，包含 ERP 路由步骤信息。每个物料行指定一种物料、需求数量和发行控制策略。",
+      "properties": [
+        {
+          "name": "isSourceProduct",
+          "type": "Boolean",
+          "description": "物理字段 IsSourceProduct"
+        },
+        {
+          "name": "ssWorkflow",
+          "type": "Navigation",
+          "description": "物理字段 ss_WorkflowId → Workflow"
+        },
+        {
+          "name": "scsIsComponentIssue",
+          "type": "Boolean",
+          "description": "物理字段 scsIsComponentIssue"
+        },
+        {
+          "name": "ssStep",
+          "type": "Navigation",
+          "description": "物理字段 ss_StepId → WorkflowStep"
+        },
+        {
+          "name": "ssWfStackKey",
+          "type": "String",
+          "description": "物理字段 ss_WfStackKey"
+        },
+        {
+          "name": "isImage",
+          "type": "Navigation",
+          "description": "图像引用"
+        },
+        {
+          "name": "uom2",
+          "type": "Navigation",
+          "description": "辅助计量单位 → UOM"
+        },
+        {
+          "name": "issueControl",
+          "type": "Integer",
+          "description": "发行控制：1=Serial, 2=Bulk, 3=Quantity&Lot, 4=FloorStock, 5=Quantity, 6=DisplayOnly"
+        },
+        {
+          "name": "phantomBill",
+          "type": "Navigation",
+          "description": "虚拟件引用的下层 ERP BOM → ERPBOM"
+        },
+        {
+          "name": "qtyRequired",
+          "type": "Float",
+          "description": "需求数量（必填）"
+        },
+        {
+          "name": "qty2Required",
+          "type": "Float",
+          "description": "辅助数量"
+        },
+        {
+          "name": "referenceDesignator",
+          "type": "String",
+          "description": "装配位号"
+        },
+        {
+          "name": "routeStep",
+          "type": "Navigation",
+          "description": "指派的 ERP 工步/RouteStep"
+        },
+        {
+          "name": "scrapPercent",
+          "type": "Float",
+          "description": "预期报废百分比"
+        },
+        {
+          "name": "setupQty",
+          "type": "Float",
+          "description": "物理字段 SetupQty"
+        },
+        {
+          "name": "uom",
+          "type": "Navigation",
+          "description": "主计量单位 → UOM"
+        },
+        {
+          "name": "effectiveThruDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 EffectiveThruDateGMT"
+        },
+        {
+          "name": "vendorControl",
+          "type": "Boolean",
+          "description": "物理字段 VendorControl"
+        },
+        {
+          "name": "setupQty2",
+          "type": "Float",
+          "description": "物理字段 SetupQty2"
+        },
+        {
+          "name": "isPhantom",
+          "type": "Boolean",
+          "description": "是否为虚拟件"
+        },
+        {
+          "name": "isEnabled",
+          "type": "Boolean",
+          "description": "物理字段 IsEnabled"
+        },
+        {
+          "name": "allowSubstitution",
+          "type": "Boolean",
+          "description": "是否允许使用替代料"
+        },
+        {
+          "name": "effectiveFromDate",
+          "type": "DateTime",
+          "description": "生效开始日期"
+        },
+        {
+          "name": "effectiveFromDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 EffectiveFromDateGMT"
+        },
+        {
+          "name": "effectiveThruDate",
+          "type": "DateTime",
+          "description": "生效截止日期"
+        },
+        {
+          "name": "erpReportingFlag",
+          "type": "Boolean",
+          "description": "物理字段 ERPReportingFlag"
+        },
+        {
+          "name": "defaultStockPoint",
+          "type": "String",
+          "description": "物理字段 DefaultStockPoint"
+        },
+        {
+          "name": "defaultLot",
+          "type": "String",
+          "description": "物理字段 DefaultLot"
+        },
+        {
+          "name": "erpLineItem",
+          "type": "String",
+          "description": "物理字段 ERPLineItem"
+        },
+        {
+          "name": "subFactory",
+          "type": "String",
+          "description": "物理字段 SubFactory"
+        },
+        {
+          "name": "allowUnderConsumption",
+          "type": "Boolean",
+          "description": "物理字段 AllowUnderConsumption"
+        },
+        {
+          "name": "allowOverConsumption",
+          "type": "Boolean",
+          "description": "是否允许超发料"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "erpbom",
+          "type": "Navigation",
+          "description": "物理字段 ERPBOMId → ERPBOM"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "物料行名称",
+          "required": true
+        },
+        {
+          "name": "adjustmentValue",
+          "type": "Float",
+          "description": "自动调整数值"
+        },
+        {
+          "name": "adjustmentType",
+          "type": "Integer",
+          "description": "调整类型"
+        },
+        {
+          "name": "qtyIssued",
+          "type": "Float",
+          "description": "物理字段 QtyIssued"
+        },
+        {
+          "name": "allowAllRevisionsAsSubstitute",
+          "type": "Boolean",
+          "description": "物理字段 AllowAllRevisionsAsSubstitute"
+        },
+        {
+          "name": "assemblySequence",
+          "type": "Integer",
+          "description": "装配顺序"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "物理字段 Description"
+        },
+        {
+          "name": "objectTypeName",
+          "type": "String",
+          "description": "物理字段 ObjectTypeName"
+        },
+        {
+          "name": "parentRevision",
+          "type": "String",
+          "description": "物理字段 ParentRevision"
+        },
+        {
+          "name": "producingOrder",
+          "type": "String",
+          "description": "物理字段 ProducingOrder"
+        },
+        {
+          "name": "productBase",
+          "type": "Integer",
+          "description": "产品基线引用"
+        },
+        {
+          "name": "product",
+          "type": "Navigation",
+          "description": "关联的产品/物料 → Product"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ERPBOM",
+      "toClass": "ERPBOMBase",
+      "relationName": "HAS_ERPBOM_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ERPBOM.ERPBOMBaseId"
+    },
+    {
+      "fromClass": "ERPBOM",
+      "toClass": "BillType",
+      "relationName": "HAS_BILL_TYPE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ERPBOM.BillTypeId"
+    },
+    {
+      "fromClass": "ERPBOM",
+      "toClass": "ERPRoute",
+      "relationName": "HAS_ERP_ROUTE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ERPBOM.ERPRouteId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "Workflow",
+      "relationName": "HAS_SS_WORKFLOW",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.ss_WorkflowId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "WorkflowStep",
+      "relationName": "HAS_SS_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.ss_StepId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.UOM2Id"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "ERPBOM",
+      "relationName": "HAS_PHANTOM_BILL",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.PhantomBillId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "RouteStep",
+      "relationName": "HAS_ROUTE_STEP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.RouteStepId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.UOMId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "ERPBOM",
+      "relationName": "HAS_ERPBOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.ERPBOMId"
+    },
+    {
+      "fromClass": "BOMMaterialListItem",
+      "toClass": "Product",
+      "relationName": "HAS_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BOMMaterialListItem.ProductId"
+    }
+  ]
+}

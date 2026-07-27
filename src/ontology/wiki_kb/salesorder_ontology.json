@@ -1,0 +1,111 @@
+{
+  "module": "salesorder",
+  "classes": [
+    {
+      "className": "SalesOrder",
+      "chineseName": "销售订单",
+      "description": "Sales Order — 客户驱动的生产订单，定义要生产的产品、数量和计量单位。SalesOrder 追踪关联的生产容器(containers)，连接客户需求与 MES 制造执行。与 MfgOrder 不同，SalesOrder 更关注客户交付视角而非工单执行细节。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "关联的 WIP 消息定义管理器"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "销售订单的描述说明"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "销售订单的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "物理字段 ChangeStatusId → ChangeStatus"
+        },
+        {
+          "name": "qty",
+          "type": "Float",
+          "description": "订单计划生产数量"
+        },
+        {
+          "name": "qty2",
+          "type": "Float",
+          "description": "辅助数量（如重量或替代单位）"
+        },
+        {
+          "name": "uom",
+          "type": "Navigation",
+          "description": "主计量单位"
+        },
+        {
+          "name": "uom2",
+          "type": "Navigation",
+          "description": "物理字段 UOM2Id → UOM"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "productBase",
+          "type": "Integer",
+          "description": "物理字段 ProductBaseId"
+        },
+        {
+          "name": "product",
+          "type": "Navigation",
+          "description": "订单要求生产的产品"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "SalesOrder",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "SalesOrder.UOMId"
+    },
+    {
+      "fromClass": "SalesOrder",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "SalesOrder.UOM2Id"
+    },
+    {
+      "fromClass": "SalesOrder",
+      "toClass": "Product",
+      "relationName": "HAS_PRODUCT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "SalesOrder.ProductId"
+    }
+  ]
+}

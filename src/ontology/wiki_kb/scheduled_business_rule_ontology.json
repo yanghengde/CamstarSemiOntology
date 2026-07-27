@@ -1,0 +1,187 @@
+{
+  "module": "scheduled_business_rule",
+  "classes": [
+    {
+      "className": "ScheduledBusinessRule",
+      "chineseName": "定时业务规则",
+      "description": "Scheduled Business Rule — 定时/计划业务规则定义实体。定义按计划时间表自动执行的业务规则，支持周期性触发、条件判断和自动化处理逻辑，用于定期数据校验、自动通知、批处理等场景。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "定时业务规则的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "isLastDayOfMonth",
+          "type": "Boolean",
+          "description": "物理字段 IsLastDayOfMonth"
+        },
+        {
+          "name": "executionContext",
+          "type": "Integer",
+          "description": "物理字段 ExecutionContext"
+        },
+        {
+          "name": "dueTime",
+          "type": "DateTime",
+          "description": "物理字段 DueTime"
+        },
+        {
+          "name": "dueTimeGmt",
+          "type": "DateTime",
+          "description": "物理字段 DueTimeGMT"
+        },
+        {
+          "name": "recurrencePattern",
+          "type": "Integer",
+          "description": "物理字段 RecurrencePattern"
+        },
+        {
+          "name": "recurrenceFrequency",
+          "type": "Integer",
+          "description": "物理字段 RecurrenceFrequency"
+        },
+        {
+          "name": "recurrenceCount",
+          "type": "Integer",
+          "description": "物理字段 RecurrenceCount"
+        },
+        {
+          "name": "dayOfWeek",
+          "type": "Integer",
+          "description": "物理字段 DayOfWeek"
+        },
+        {
+          "name": "monthOfYear",
+          "type": "Integer",
+          "description": "物理字段 MonthOfYear"
+        },
+        {
+          "name": "startDate",
+          "type": "DateTime",
+          "description": "物理字段 StartDate"
+        },
+        {
+          "name": "startDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 StartDateGMT"
+        },
+        {
+          "name": "endDate",
+          "type": "DateTime",
+          "description": "物理字段 EndDate"
+        },
+        {
+          "name": "endDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 EndDateGMT"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "物理字段 Status"
+        },
+        {
+          "name": "isSystemDefined",
+          "type": "Boolean",
+          "description": "物理字段 IsSystemDefined"
+        },
+        {
+          "name": "lockGuid",
+          "type": "String",
+          "description": "物理字段 LockGUID"
+        },
+        {
+          "name": "dayOfMonth",
+          "type": "Integer",
+          "description": "物理字段 DayOfMonth"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "onExecute",
+          "type": "Navigation",
+          "description": "物理字段 OnExecute → BusinessRule"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "executionContextType",
+          "type": "Integer",
+          "description": "物理字段 ExecutionContextType"
+        },
+        {
+          "name": "timeZone",
+          "type": "String",
+          "description": "物理字段 TimeZone"
+        },
+        {
+          "name": "isAdvancedMode",
+          "type": "Boolean",
+          "description": "物理字段 IsAdvancedMode"
+        },
+        {
+          "name": "scheduleDaysOfMonth",
+          "type": "String",
+          "description": "物理字段 ScheduleDaysOfMonth"
+        },
+        {
+          "name": "scheduleDaysOfWeek",
+          "type": "String",
+          "description": "物理字段 ScheduleDaysOfWeek"
+        },
+        {
+          "name": "scheduleMonths",
+          "type": "String",
+          "description": "物理字段 ScheduleMonths"
+        },
+        {
+          "name": "scheduleHours",
+          "type": "String",
+          "description": "物理字段 ScheduleHours"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ScheduledBusinessRule",
+      "toClass": "BusinessRule",
+      "relationName": "HAS_ON_EXECUTE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ScheduledBusinessRule.OnExecute"
+    }
+  ]
+}

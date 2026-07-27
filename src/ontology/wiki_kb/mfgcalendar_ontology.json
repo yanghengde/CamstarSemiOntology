@@ -1,0 +1,136 @@
+{
+  "module": "mfgcalendar",
+  "classes": [
+    {
+      "className": "MfgCalendar",
+      "chineseName": "制造日历",
+      "description": "MfgCalendar — 制造日历。定义工厂的班次排程、制造日期和财会期间。包含多个 CalendarShift 条目，每条记录班次起止时间(ShiftStart/ShiftEnd)、制造日期、财会周期(年/季/月/周)和排程信息。Factory 和 WorkCenter 通过 USES_MFG_CALENDAR 引用。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "安全配置访问控制"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "制造日历唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "maxShiftDuration",
+          "type": "Float",
+          "description": "日历中班次的最大时长（只读）"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "CalendarShift",
+      "chineseName": "日历班次条目",
+      "description": "CalendarShift — 日历班次条目（MfgCalendar 的子实体）。记录制造日历中每个班次的起止时间(ShiftStart/ShiftEnd)、制造日期(CalendarDate)、财会期间（年/季/月/周）、非排程时间(isNonScheduledTime)，以及关联的班次类型(Shift)和班组(Team)。",
+      "properties": [
+        {
+          "name": "mfgCalendar",
+          "type": "Integer",
+          "description": "物理字段 MfgCalendarId"
+        },
+        {
+          "name": "shiftStart",
+          "type": "DateTime",
+          "description": "班次开始时间"
+        },
+        {
+          "name": "shiftEnd",
+          "type": "DateTime",
+          "description": "班次结束时间"
+        },
+        {
+          "name": "team",
+          "type": "Navigation",
+          "description": "班组 → Team"
+        },
+        {
+          "name": "calendarDate",
+          "type": "DateTime",
+          "description": "制造日期"
+        },
+        {
+          "name": "fiscalYear",
+          "type": "Integer",
+          "description": "财年"
+        },
+        {
+          "name": "fiscalQuarter",
+          "type": "Integer",
+          "description": "财季"
+        },
+        {
+          "name": "fiscalMonth",
+          "type": "Integer",
+          "description": "财月"
+        },
+        {
+          "name": "fiscalWeek",
+          "type": "Integer",
+          "description": "财周"
+        },
+        {
+          "name": "shift",
+          "type": "Navigation",
+          "description": "班次类型 → Shift"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "CalendarShift",
+      "toClass": "Team",
+      "relationName": "HAS_TEAM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "CalendarShift.TeamId"
+    },
+    {
+      "fromClass": "CalendarShift",
+      "toClass": "Shift",
+      "relationName": "HAS_SHIFT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "CalendarShift.ShiftId"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "module": "release_reason",
+  "classes": [
+    {
+      "className": "ReleaseReason",
+      "chineseName": "放行原因",
+      "description": "Release Reason — 放行/释放原因代码定义实体。定义制造过程中对容器、批次或物料进行放行/释放操作的原因分类。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "放行原因的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

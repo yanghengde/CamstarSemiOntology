@@ -1,0 +1,198 @@
+{
+  "module": "product_family",
+  "classes": [
+    {
+      "className": "ProductFamily",
+      "chineseName": "产品族",
+      "description": "Product Family — 产品族/产品系列定义实体（CdoId: 4760，版本控制对象）。将相似产品按族分组进行统一配置管理，包括编号规则、设置权限、序列号和在制品消息控制。",
+      "properties": [
+        {
+          "name": "splitNumberingRule",
+          "type": "Navigation",
+          "description": "物理字段 SplitNumberingRuleId → NumberingRule"
+        },
+        {
+          "name": "ssContainerNumberingRule",
+          "type": "Navigation",
+          "description": "物理字段 ss_ContainerNumberingRuleId → NumberingRule"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP消息管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "stdStartQty",
+          "type": "Float",
+          "description": "标准起产数量"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "产品族唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "状态变更记录 → ChangeStatus"
+        },
+        {
+          "name": "currentCost",
+          "type": "Float",
+          "description": "族内产品的当前单位成本"
+        },
+        {
+          "name": "documentSet",
+          "type": "Navigation",
+          "description": "关联的文档集 → DocumentSet"
+        },
+        {
+          "name": "stdCost",
+          "type": "Float",
+          "description": "族内产品的标准单位成本"
+        },
+        {
+          "name": "stdStartQty2",
+          "type": "Float",
+          "description": "标准起产数量（辅助单位）"
+        },
+        {
+          "name": "stdStartUom",
+          "type": "Navigation",
+          "description": "物理字段 StdStartUOMId → UOM"
+        },
+        {
+          "name": "stdStartUom2",
+          "type": "Navigation",
+          "description": "物理字段 StdStartUOM2Id → UOM"
+        },
+        {
+          "name": "plannedCost",
+          "type": "Float",
+          "description": "族内产品的计划单位成本"
+        },
+        {
+          "name": "trainingReqGroup",
+          "type": "Navigation",
+          "description": "培训要求组 → TrainingRequirementGroup"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "samplingPlan",
+          "type": "Navigation",
+          "description": "质量抽样计划 → SamplingPlan"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "containerNumberingRule",
+          "type": "Navigation",
+          "description": "产品容器编号规则 → NumberingRule"
+        },
+        {
+          "name": "workflowBase",
+          "type": "Integer",
+          "description": "工作流基线版本"
+        },
+        {
+          "name": "workflow",
+          "type": "Navigation",
+          "description": "关联的工艺路线 → Workflow"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "NumberingRule",
+      "relationName": "HAS_SPLIT_NUMBERING_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.SplitNumberingRuleId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "NumberingRule",
+      "relationName": "HAS_SS_CONTAINER_NUMBERING_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.ss_ContainerNumberingRuleId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "DocumentSet",
+      "relationName": "HAS_DOCUMENT_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.DocumentSetId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "UOM",
+      "relationName": "HAS_STD_START_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.StdStartUOMId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "UOM",
+      "relationName": "HAS_STD_START_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.StdStartUOM2Id"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "TrainingRequirementGroup",
+      "relationName": "HAS_TRAINING_REQ_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.TrainingReqGroupId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "SamplingPlan",
+      "relationName": "HAS_SAMPLING_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.SamplingPlanId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "NumberingRule",
+      "relationName": "HAS_CONTAINER_NUMBERING_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.ContainerNumberingRuleId"
+    },
+    {
+      "fromClass": "ProductFamily",
+      "toClass": "Workflow",
+      "relationName": "HAS_WORKFLOW",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ProductFamily.WorkflowId"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "module": "data_transport",
+  "classes": [
+    {
+      "className": "DataTransport",
+      "chineseName": "数据传输通道",
+      "description": "DataTransport — 数据传输通道配置。定义 Camstar 与外部系统通信的传输通道配置，支持多种传输类型的连接参数（SMTP邮件、FTP文件传输、WebService调用等），包含URL、认证凭据、超时设置、同步/异步模式等完整配置。被 Site、Factory、Organization、ResourceDef 等实体引用，用于各自的对外通信场景。",
+      "properties": [
+        {
+          "name": "smtpDomain",
+          "type": "String",
+          "description": "物理字段 SMTPDomain"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "byteOrderMark",
+          "type": "Boolean",
+          "description": "是否在文件编码中添加 BOM 标记"
+        },
+        {
+          "name": "priority",
+          "type": "String",
+          "description": "优先级"
+        },
+        {
+          "name": "labelFormat",
+          "type": "String",
+          "description": "标签格式"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "remoteFileName",
+          "type": "String",
+          "description": "远程目标文件名"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "传输通道唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "transportType",
+          "type": "String",
+          "description": "传输类型（如 SMTP、FTP、WebService、File 等）"
+        },
+        {
+          "name": "url",
+          "type": "String",
+          "description": "目标服务端点 URL（最长512字符）"
+        },
+        {
+          "name": "userName",
+          "type": "String",
+          "description": "认证用户名"
+        },
+        {
+          "name": "password",
+          "type": "String",
+          "description": "认证密码（加密存储）"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "transferType",
+          "type": "String",
+          "description": "传输方式类型"
+        },
+        {
+          "name": "isSynchronous",
+          "type": "Boolean",
+          "description": "是否为同步传输模式"
+        },
+        {
+          "name": "transportAssembly",
+          "type": "String",
+          "description": "传输实现组件/程序集名称"
+        },
+        {
+          "name": "connectionDocInit",
+          "type": "String",
+          "description": "连接初始化配置文档内容（最长4000字符）"
+        },
+        {
+          "name": "deliveryTimeout",
+          "type": "Integer",
+          "description": "投递超时时间（秒）"
+        },
+        {
+          "name": "connectionTimeout",
+          "type": "Integer",
+          "description": "连接超时时间（秒）"
+        },
+        {
+          "name": "remotePath",
+          "type": "String",
+          "description": "远程目标文件路径"
+        },
+        {
+          "name": "okToTerminateIfFails",
+          "type": "Boolean",
+          "description": "失败时是否允许终止事务"
+        },
+        {
+          "name": "useSsl",
+          "type": "Boolean",
+          "description": "物理字段 UseSSL"
+        },
+        {
+          "name": "port",
+          "type": "Integer",
+          "description": "连接端口号"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

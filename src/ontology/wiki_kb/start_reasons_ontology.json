@@ -1,0 +1,59 @@
+{
+  "module": "start_reasons",
+  "classes": [
+    {
+      "className": "StartReason",
+      "chineseName": "启动原因",
+      "description": "Start Reason — 定义在制品容器或制造工单启动/创建时的原因代码（例如新产品导入、正常量产启动、返工等原因）。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "物理字段 ChangeStatusId → ChangeStatus"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "启动原因名称（必填）",
+          "required": true
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

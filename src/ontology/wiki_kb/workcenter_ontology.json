@@ -1,0 +1,133 @@
+{
+  "module": "workcenter",
+  "classes": [
+    {
+      "className": "WorkCenter",
+      "chineseName": "工作中心",
+      "description": "WorkCenter — 工作中心。车间中执行制造操作的物理或逻辑区域，是组织生产活动和追踪在制品(WIP)的基本单位。配置派工方法(dispatchMethod)、队列时间(fastQueueTime/normalQueueTime)、派工规则(DispatchRule)、制造日历(MfgCalendar)、资源组(ResourceGroup)、培训要求组(TrainingRequirementGroup)、WIP消息管理器(WIPMsgDefMgr)和工作时间表(WorkSchedule)。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "mfgCalendar",
+          "type": "Navigation",
+          "description": "制造日历 → MfgCalendar"
+        },
+        {
+          "name": "resourceGroup",
+          "type": "Navigation",
+          "description": "默认资源组 → ResourceGroup"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP消息定义管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "dispatchMethod",
+          "type": "Integer",
+          "description": "派工方法：1=Dispatch Queue Only(仅队列), 2=Dynamic Only(仅动态), 3=Both(队列+动态)"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "工作中心名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "物理字段 ChangeStatusId → ChangeStatus"
+        },
+        {
+          "name": "normalQueueTime",
+          "type": "Float",
+          "description": "正常队列时间（小时），处理前在此工作中心等待的典型时间"
+        },
+        {
+          "name": "workSchedule",
+          "type": "Integer",
+          "description": "工作时间表/排班 → WorkSchedule"
+        },
+        {
+          "name": "fastQueueTime",
+          "type": "Float",
+          "description": "快速队列时间（小时），处理前在此工作中心等待的最短时间"
+        },
+        {
+          "name": "trainingReqGroup",
+          "type": "Navigation",
+          "description": "培训要求组 → TrainingRequirementGroup"
+        },
+        {
+          "name": "image",
+          "type": "String",
+          "description": "关联的图片标识"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "dispatchRule",
+          "type": "Navigation",
+          "description": "派工规则 → DispatchRule"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "WorkCenter",
+      "toClass": "MfgCalendar",
+      "relationName": "HAS_MFG_CALENDAR",
+      "cardinality": "MANY_TO_ONE",
+      "description": "WorkCenter.MfgCalendarId"
+    },
+    {
+      "fromClass": "WorkCenter",
+      "toClass": "ResourceGroup",
+      "relationName": "HAS_RESOURCE_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "WorkCenter.ResourceGroupId"
+    },
+    {
+      "fromClass": "WorkCenter",
+      "toClass": "TrainingRequirementGroup",
+      "relationName": "HAS_TRAINING_REQ_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "WorkCenter.TrainingReqGroupId"
+    },
+    {
+      "fromClass": "WorkCenter",
+      "toClass": "DispatchRule",
+      "relationName": "HAS_DISPATCH_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "WorkCenter.DispatchRuleId"
+    }
+  ]
+}

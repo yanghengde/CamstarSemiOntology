@@ -1,0 +1,134 @@
+{
+  "module": "mfg_order_task_list",
+  "classes": [
+    {
+      "className": "MfgOrderTaskList",
+      "chineseName": "制造工单任务清单",
+      "description": "MfgOrder Task List — 制造工单任务清单定义实体（CdoId: 8911，版本控制对象）。定义制造工单(MfgOrder)执行过程中需要完成的任务列表(tasks)，支持顺序(Sequential)或非顺序(Non-Sequential)执行模式(executionMode)，可指定工作站(workstation/stationGroup)。与 ProcessList 类似但专用于工单执行上下文。",
+      "properties": [
+        {
+          "name": "mfgOrderTaskListBase",
+          "type": "Navigation",
+          "description": "物理字段 MfgOrderTaskListBaseId → MfgOrderTaskListBase"
+        },
+        {
+          "name": "isImage",
+          "type": "Navigation",
+          "description": "物理字段 isImageId → isImage"
+        },
+        {
+          "name": "executionMode",
+          "type": "Integer",
+          "description": "任务执行模式（必填）：1=Sequential, 2=Non-Sequential",
+          "required": true
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "物理字段 FilterTags"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "版本号（必填）",
+          "required": true
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+        },
+        {
+          "name": "instruction",
+          "type": "String",
+          "description": "物理字段 Instruction"
+        },
+        {
+          "name": "prerequisiteTaskList",
+          "type": "Navigation",
+          "description": "物理字段 PrerequisiteTaskListId → MfgOrderTaskList"
+        },
+        {
+          "name": "reportInstruction",
+          "type": "String",
+          "description": "物理字段 ReportInstruction"
+        },
+        {
+          "name": "workstation",
+          "type": "Navigation",
+          "description": "指定执行任务的工作站"
+        },
+        {
+          "name": "workstationGroup",
+          "type": "Navigation",
+          "description": "指定执行任务的工作站组"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "状态：1=Active, 2=Inactive"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "工程变更单号"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "MfgOrderTaskList",
+      "toClass": "MfgOrderTaskListBase",
+      "relationName": "HAS_MFG_ORDER_TASK_LIST_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgOrderTaskList.MfgOrderTaskListBaseId"
+    },
+    {
+      "fromClass": "MfgOrderTaskList",
+      "toClass": "MfgOrderTaskList",
+      "relationName": "HAS_PREREQUISITE_TASK_LIST",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgOrderTaskList.PrerequisiteTaskListId"
+    },
+    {
+      "fromClass": "MfgOrderTaskList",
+      "toClass": "ResourceDef",
+      "relationName": "HAS_WORKSTATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgOrderTaskList.WorkstationId"
+    },
+    {
+      "fromClass": "MfgOrderTaskList",
+      "toClass": "ResourceGroup",
+      "relationName": "HAS_WORKSTATION_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "MfgOrderTaskList.WorkstationGroupId"
+    }
+  ]
+}

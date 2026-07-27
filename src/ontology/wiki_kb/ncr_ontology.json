@@ -1,0 +1,322 @@
+{
+  "module": "ncr",
+  "classes": [
+    {
+      "className": "NCRCauseCode",
+      "chineseName": "NCR根本原因代码",
+      "description": "NCRCauseCode — 不合格报告根本原因代码（命名对象）。定义导致缺陷/不合格的根本原因分类，如操作失误(Operator Error)、设备故障(Machine Malfunction)、来料问题(Incoming Material)、工艺参数偏差(Process Deviation)等。可关联默认的解决方案代码组(ncrResolutionCodeGroup)。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "根本原因代码唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "ncrResolutionCodeGroup",
+          "type": "Navigation",
+          "description": "关联的默认解决方案代码组 → NCRResolutionCodeGroup"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "NCRCauseCodeGroup",
+      "chineseName": "NCR根本原因代码组",
+      "description": "NCRCauseCodeGroup — 不合格报告根本原因代码分组（命名对象）。对根本原因代码(NCRCauseCode)进行分组管理，支持嵌套子组和扁平化解析条目。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "根本原因代码组唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目类型名称（NCRCauseCode）"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "NCRFailureCode",
+      "chineseName": "NCR缺陷/失效代码",
+      "description": "NCRFailureCode — 不合格报告缺陷/失效代码（命名对象）。定义不合格报告中具体缺陷的编码分类，如外观划痕(Scratch)、尺寸超差(Dimension Out of Tolerance)、焊点不良(Poor Solder Joint)、脏污(Contamination)等。注意与 NCRFailureType（缺陷大类型）和 FailureMode（FMEA失效模式）区分。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "缺陷代码唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "NCRFailureCodeGroup",
+      "chineseName": "NCR缺陷代码组",
+      "description": "NCRFailureCodeGroup — 不合格报告缺陷代码分组（命名对象）。对缺陷代码(NCRFailureCode)进行分组管理，支持嵌套子组。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "缺陷代码组唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目类型名称（NCRFailureCode）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "NCRResolutionCode",
+      "chineseName": "NCR解决方案代码",
+      "description": "NCRResolutionCode — 不合格报告解决方案代码（命名对象）。定义不合格处置的解决方案分类，如返工(Rework)、维修(Repair)、报废(Scrap)、让步接收(Use As Is)、退回供应商(Return to Vendor)、降级使用(Downgrade)等。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "解决方案代码唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "NCRResolutionCodeGroup",
+      "chineseName": "NCR解决方案代码组",
+      "description": "NCRResolutionCodeGroup — 不合格报告解决方案代码分组（命名对象）。对解决方案代码(NCRResolutionCode)进行分组管理，支持嵌套子组。被 NCRCauseCode 的 ncrResolutionCodeGroup 引用。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目类型名称（NCRResolutionCode）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "解决方案代码组唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "NCRCauseCode",
+      "toClass": "NCRResolutionCodeGroup",
+      "relationName": "HAS_NCR_RESOLUTION_CODE_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "NCRCauseCode.NCRResolutionCodeGroupId"
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "module": "setup",
+  "classes": [
+    {
+      "className": "Setup",
+      "chineseName": "换线定义",
+      "description": "Setup — 换线/设置定义实体。定义生产设备从一种产品/工艺切换到另一种时所需的物理配置变更规则，包括模具要求、轨道宽度、工装夹具等配置项。Part 通过 currentSetup 字段引用当前 Setup 状态。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "documentSet",
+          "type": "Navigation",
+          "description": "关联的换线指导文档集 → DocumentSet"
+        },
+        {
+          "name": "stdSetupLaborTime",
+          "type": "Float",
+          "description": "物理字段 StdSetupLaborTime"
+        },
+        {
+          "name": "resourceGroup",
+          "type": "Navigation",
+          "description": "换线适用的设备组 → ResourceGroup"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "物理字段 Status"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "物理字段 SetupRevision"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "setupBase",
+          "type": "Navigation",
+          "description": "物理字段 SetupBaseId → SetupBase"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+        },
+        {
+          "name": "stdSetupTime",
+          "type": "Float",
+          "description": "物理字段 StdSetupTime"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "物理字段 ECO"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Setup",
+      "toClass": "DocumentSet",
+      "relationName": "HAS_DOCUMENT_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Setup.DocumentSetId"
+    },
+    {
+      "fromClass": "Setup",
+      "toClass": "ResourceGroup",
+      "relationName": "HAS_RESOURCE_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Setup.ResourceGroupId"
+    },
+    {
+      "fromClass": "Setup",
+      "toClass": "SetupBase",
+      "relationName": "HAS_SETUP_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Setup.SetupBaseId"
+    }
+  ]
+}

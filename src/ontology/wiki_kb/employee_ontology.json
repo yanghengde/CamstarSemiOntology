@@ -1,0 +1,346 @@
+{
+  "module": "employee",
+  "classes": [
+    {
+      "className": "Employee",
+      "chineseName": "员工",
+      "description": "Employee — 可登录 InSite、执行事务或被记入工时的工厂人员。物理上对应 Employee (CdoId: 277)。",
+      "properties": [
+        {
+          "name": "verifySessionValues",
+          "type": "Boolean",
+          "description": "物理字段 VerifySessionValues"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置（物理：SetupAccessId）"
+        },
+        {
+          "name": "accessLevel",
+          "type": "Integer",
+          "description": "物理字段 AccessLevel"
+        },
+        {
+          "name": "isSuperUser",
+          "type": "Boolean",
+          "description": "物理字段 IsSuperUser"
+        },
+        {
+          "name": "lastWebLoginTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 LastWebLoginTimestamp"
+        },
+        {
+          "name": "loginEmployeeGroup",
+          "type": "Navigation",
+          "description": "物理字段 LoginEmployeeGroupId → A_EmployeeGroup"
+        },
+        {
+          "name": "historyView",
+          "type": "Navigation",
+          "description": "历史记录视图规则（物理：HistoryViewId）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "languageDictionary",
+          "type": "Navigation",
+          "description": "界面语言词典"
+        },
+        {
+          "name": "terminologyDictionary",
+          "type": "Navigation",
+          "description": "术语字典归属（物理：TerminologyDictionaryId）"
+        },
+        {
+          "name": "webMenuDefinition",
+          "type": "Navigation",
+          "description": "Web常规菜单定义（物理：WebMenuDefinitionId）"
+        },
+        {
+          "name": "allowOverrideOfSessionValues",
+          "type": "Boolean",
+          "description": "是否允许覆写默认 Session 值"
+        },
+        {
+          "name": "webDrillDownMenuDefinition",
+          "type": "Navigation",
+          "description": "Web下钻菜单定义（物理：WebDrillDownMenuDefinitionId）"
+        },
+        {
+          "name": "modelerAccess",
+          "type": "Boolean",
+          "description": "是否允许打开 Modeler 建模器"
+        },
+        {
+          "name": "menuDefinition",
+          "type": "Navigation",
+          "description": "菜单定义"
+        },
+        {
+          "name": "domainName",
+          "type": "String",
+          "description": "Windows 域认证（可选）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "员工唯一登录名（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "变更历史状态（物理：ChangeStatusId）"
+        },
+        {
+          "name": "sessionValues",
+          "type": "Navigation",
+          "description": "会话属性预设值（物理：SessionValuesId）"
+        },
+        {
+          "name": "fullName",
+          "type": "String",
+          "description": "员工全名"
+        },
+        {
+          "name": "userComment",
+          "type": "String",
+          "description": "物理字段 UserComment"
+        },
+        {
+          "name": "canLogin",
+          "type": "Boolean",
+          "description": "是否允许登录 InSite"
+        },
+        {
+          "name": "emailAddress",
+          "type": "String",
+          "description": "电子邮件地址"
+        },
+        {
+          "name": "primaryOrganization",
+          "type": "Navigation",
+          "description": "主组织归属"
+        },
+        {
+          "name": "uiPortalProfile",
+          "type": "Navigation",
+          "description": "UI Portal配置文件（物理：UIPortalProfileId）"
+        },
+        {
+          "name": "portalMenuDefinition",
+          "type": "Navigation",
+          "description": "Portal 菜单定义"
+        },
+        {
+          "name": "eSigRoleGroup",
+          "type": "Navigation",
+          "description": "电子签名角色组"
+        },
+        {
+          "name": "trainingPlan",
+          "type": "Navigation",
+          "description": "关联的系统培训计划（物理：TrainingPlanId）"
+        },
+        {
+          "name": "userProfile",
+          "type": "Navigation",
+          "description": "用户配置偏好（物理：UserProfileId）"
+        },
+        {
+          "name": "skipTrainingReqValidation",
+          "type": "Boolean",
+          "description": "物理字段 SkipTrainingReqValidation"
+        },
+        {
+          "name": "portalV8MenuDefinition",
+          "type": "Navigation",
+          "description": "Portal V8菜单定义（物理：PortalV8MenuDefinitionId）"
+        },
+        {
+          "name": "employeeLoginInfo",
+          "type": "Navigation",
+          "description": "登录会话记录（物理：EmployeeLoginInfoId）"
+        },
+        {
+          "name": "filterTagAccess",
+          "type": "Integer",
+          "description": "筛选标签访问控制"
+        },
+        {
+          "name": "filterTagsSession",
+          "type": "String",
+          "description": "物理字段 FilterTagsSession"
+        },
+        {
+          "name": "portalMobileMenuDefinition",
+          "type": "Navigation",
+          "description": "Portal Mobile 菜单定义"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "docManagerUser",
+          "type": "String",
+          "description": "外部文档库（如 TeamCenter）用户名"
+        },
+        {
+          "name": "docManagerPassword",
+          "type": "String",
+          "description": "外部文档库密码（加密字段）"
+        }
+      ]
+    },
+    {
+      "className": "EmployeeLoginInfo",
+      "chineseName": "登录信息",
+      "description": "Employee Login Info — 员工的登录会话信息。物理上对应 EmployeeLoginInfo (CdoId: 1734)。",
+      "properties": [
+        {
+          "name": "timeZone",
+          "type": "String",
+          "description": "时区设置"
+        },
+        {
+          "name": "employee",
+          "type": "Navigation",
+          "description": "关联的员工"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "lastLoginDateGmt",
+          "type": "DateTime",
+          "description": "物理字段 LastLoginDateGMT"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "登录信息名称",
+          "required": true
+        }
+      ]
+    },
+    {
+      "className": "EmployeeRole",
+      "chineseName": "员工角色分配",
+      "description": "Employee Role — 员工在特定组织上下文中的角色成员关系。物理上对应 EmployeeRole (CdoId: 1217)。",
+      "properties": [
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "role",
+          "type": "Navigation",
+          "description": "分配的角色（RoleDef 引用）"
+        },
+        {
+          "name": "organization",
+          "type": "Navigation",
+          "description": "组织上下文（Department/Factory）"
+        },
+        {
+          "name": "propagateToChildOrgs",
+          "type": "Boolean",
+          "description": "是否传播到下级组织"
+        },
+        {
+          "name": "employee",
+          "type": "Navigation",
+          "description": "关联的员工"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Employee",
+      "toClass": "A_EmployeeGroup",
+      "relationName": "HAS_LOGIN_EMPLOYEE_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Employee.LoginEmployeeGroupId"
+    },
+    {
+      "fromClass": "Employee",
+      "toClass": "Organization",
+      "relationName": "HAS_PRIMARY_ORGANIZATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Employee.PrimaryOrganizationId"
+    },
+    {
+      "fromClass": "Employee",
+      "toClass": "TrainingPlan",
+      "relationName": "HAS_TRAINING_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Employee.TrainingPlanId"
+    },
+    {
+      "fromClass": "Employee",
+      "toClass": "EmployeeLoginInfo",
+      "relationName": "HAS_EMPLOYEE_LOGIN_INFO",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Employee.EmployeeLoginInfoId"
+    },
+    {
+      "fromClass": "EmployeeLoginInfo",
+      "toClass": "Employee",
+      "relationName": "HAS_EMPLOYEE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "EmployeeLoginInfo.EmployeeId"
+    },
+    {
+      "fromClass": "EmployeeRole",
+      "toClass": "RoleDef",
+      "relationName": "HAS_ROLE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "EmployeeRole.RoleId"
+    },
+    {
+      "fromClass": "EmployeeRole",
+      "toClass": "Organization",
+      "relationName": "HAS_ORGANIZATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "EmployeeRole.OrganizationId"
+    },
+    {
+      "fromClass": "EmployeeRole",
+      "toClass": "Employee",
+      "relationName": "HAS_EMPLOYEE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "EmployeeRole.EmployeeId"
+    }
+  ]
+}

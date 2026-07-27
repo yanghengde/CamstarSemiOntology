@@ -1,0 +1,84 @@
+{
+  "module": "enterprise",
+  "classes": [
+    {
+      "className": "Enterprise",
+      "chineseName": "企业/集团",
+      "description": "Enterprise — 企业/集团。Camstar 系统中最顶层的组织层级单元，包含多个工厂(Factory)。配置报表标题(ReportHeading)、LiveConnect 代理站点(LiveConnectProxySite)、企业级培训要求组(TrainingReqGroup)，是系统的根级建模对象。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "企业名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "物理字段 ChangeStatusId → ChangeStatus"
+        },
+        {
+          "name": "reportHeading",
+          "type": "String",
+          "description": "报表标题文本"
+        },
+        {
+          "name": "trainingReqGroup",
+          "type": "Navigation",
+          "description": "企业级培训要求组(TrainingRequirementGroup)"
+        },
+        {
+          "name": "liveConnectProxySite",
+          "type": "Navigation",
+          "description": "LiveConnect 代理站点(Site)"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Enterprise",
+      "toClass": "TrainingRequirementGroup",
+      "relationName": "HAS_TRAINING_REQ_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Enterprise.TrainingReqGroupId"
+    },
+    {
+      "fromClass": "Enterprise",
+      "toClass": "Site",
+      "relationName": "HAS_LIVE_CONNECT_PROXY_SITE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Enterprise.LiveConnectProxySiteId"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "module": "UOMs Modeling",
+  "classes": [
+    {
+      "className": "UOM",
+      "chineseName": "计量单位",
+      "description": "定义物料、产品、批次等的度量单位，支持整数控制和折算关系。物理上对应 UOM (CdoId: 349)。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置 → SetupAccess"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否冻结"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP消息管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "状态变更记录 → ChangeStatus"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "计量单位名称 (如 PCS, KG)",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "单位描述"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "物理字段 Notes"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "过滤标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

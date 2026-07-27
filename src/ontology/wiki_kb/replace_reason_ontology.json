@@ -1,0 +1,54 @@
+{
+  "module": "replace_reason",
+  "classes": [
+    {
+      "className": "ReplaceReason",
+      "chineseName": "替换原因",
+      "description": "Replace Reason — 替换原因代码定义实体。定义制造过程中物料/组件替换的原因分类（如来料不良、工艺变更、临时替代等）。",
+      "properties": [
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "替换原因的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "isScrapRemoved",
+          "type": "Boolean",
+          "description": "物理字段 IsScrapRemoved"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

@@ -1,0 +1,54 @@
+{
+  "module": "team",
+  "classes": [
+    {
+      "className": "Team",
+      "chineseName": "班组/团队",
+      "description": "Team — 班组或团队是人员的逻辑分组单位，用于将一组员工绑定为工作团队。Team 可关联到 WorkCenter（工作中心培训组）、Skill（技能培训组）和 Resource（资源分配），也可用于派工和排班管理。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "班组描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "班组/团队的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

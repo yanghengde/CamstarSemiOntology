@@ -1,0 +1,325 @@
+{
+  "module": "businessrule",
+  "classes": [
+    {
+      "className": "BusinessRule",
+      "chineseName": "业务规则",
+      "description": "Business Rule — 定义在 MES 事务执行过程中自动触发的业务逻辑。BusinessRule 通过 Spec 的 BizRuleTxnMap（业务规则事务映射）与特定事务事件绑定，当事务发生时自动校验或执行业务规则。规则可包含参数(BizRuleParameter)和数据处理逻辑(data)。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "安全配置访问控制 → SetupAccess"
+        },
+        {
+          "name": "businessRuleData",
+          "type": "Navigation",
+          "description": "业务规则的数据/逻辑定义 → BusinessRuleData"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "图标 ID"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "业务规则的描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "业务规则的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录 → ChangeStatus"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "BusinessRuleData",
+      "chineseName": "业务规则数据",
+      "description": "BusinessRuleData — 业务规则的数据/逻辑定义主体（CdoId: 1119）。定义业务规则运行的触发条件、执行条件表达式、执行范围以及关联的母业务规则定义。",
+      "properties": [
+        {
+          "name": "businessRuleCondition",
+          "type": "String",
+          "description": "规则执行条件表达式（最长4000字符）"
+        },
+        {
+          "name": "alwaysExecute",
+          "type": "Boolean",
+          "description": "是否总是执行（不判断条件）"
+        },
+        {
+          "name": "scope",
+          "type": "Integer",
+          "description": "规则执行范围编码"
+        },
+        {
+          "name": "contextType",
+          "type": "Integer",
+          "description": "规则执行上下文类型编码"
+        },
+        {
+          "name": "businessRule",
+          "type": "Navigation",
+          "description": "关联的业务规则定义 → BusinessRule"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "规则数据块唯一名称（必填，通常映射 BusinessRuleDataName）",
+          "required": true
+        }
+      ]
+    },
+    {
+      "className": "BizRuleParameter",
+      "chineseName": "业务规则参数",
+      "description": "Business Rule Parameter — 业务规则的输入参数，定义规则执行时需要的参数名称、类型和默认值。",
+      "properties": [
+        {
+          "name": "businessRuleData",
+          "type": "Navigation",
+          "description": "关联的规则数据实体 → BusinessRuleData"
+        },
+        {
+          "name": "valueExpression",
+          "type": "String",
+          "description": "物理字段 ValueExpression"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "paramSpec",
+          "type": "Navigation",
+          "description": "引用的处理器参数规格 → BizRuleHandlerParameter"
+        },
+        {
+          "name": "businessRuleHandler",
+          "type": "Navigation",
+          "description": "引用的规则处理器 → BusinessRuleHandler"
+        }
+      ]
+    },
+    {
+      "className": "BusinessRuleHandler",
+      "chineseName": "业务规则动作处理器",
+      "description": "BusinessRuleHandler — 规则动作处理器（CdoId: 1116）。定义业务规则被触发时执行的具体后端逻辑、服务方法、以及用于进行保存前校验的开关配置。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "安全访问设置控制 → SetupAccess"
+        },
+        {
+          "name": "businessRuleHandlerData",
+          "type": "Navigation",
+          "description": "处理器底层数据主体 → BusinessRuleHandlerData"
+        },
+        {
+          "name": "validateOnSave",
+          "type": "Boolean",
+          "description": "是否开启在保存时校验"
+        },
+        {
+          "name": "isValid",
+          "type": "Boolean",
+          "description": "动作处理器有效状态"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录 → ChangeStatus"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结启用（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "动作处理器名称（必填，通常映射 BusinessRuleHandlerName）",
+          "required": true
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类过滤器标签"
+        }
+      ]
+    },
+    {
+      "className": "BusinessRuleHandlerData",
+      "chineseName": "业务规则动作处理器数据",
+      "description": "BusinessRuleHandlerData — 规则动作处理器的配置数据实体（CdoId: 1117）。存储动作处理器的脚本内容、动作执行类型与关联服务类型定义。",
+      "properties": [
+        {
+          "name": "serviceType",
+          "type": "Integer",
+          "description": "调用服务类型编码"
+        },
+        {
+          "name": "bizRuleHandlerType",
+          "type": "Integer",
+          "description": "动作处理器类型编码"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "script",
+          "type": "String",
+          "description": "执行动作对应的脚本逻辑内容（最长4000字符）"
+        },
+        {
+          "name": "businessRuleHandler",
+          "type": "Navigation",
+          "description": "关联的动作处理器 → BusinessRuleHandler"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "数据块名称（必填，通常映射 BusinessRuleHandlerDataName）",
+          "required": true
+        }
+      ]
+    },
+    {
+      "className": "BizRuleHandlerParameter",
+      "chineseName": "规则处理器参数规格",
+      "description": "BizRuleHandlerParameter — 规则动作处理器的输入参数规格定义（CdoId: 1115）。用于定义特定动作处理器所需传入的底层参数规格及默认值。",
+      "properties": [
+        {
+          "name": "businessRuleHandlerData",
+          "type": "Navigation",
+          "description": "处理器底层数据主体 → BusinessRuleHandlerData"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "参数规格名称（必填，通常映射 BizRuleHandlerParameterName）",
+          "required": true
+        },
+        {
+          "name": "dataType",
+          "type": "Integer",
+          "description": "参数类型编码"
+        },
+        {
+          "name": "defaultValue",
+          "type": "String",
+          "description": "参数默认值表达式"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "BusinessRule",
+      "toClass": "BusinessRuleData",
+      "relationName": "HAS_BUSINESS_RULE_DATA",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BusinessRule.BusinessRuleDataId"
+    },
+    {
+      "fromClass": "BusinessRuleData",
+      "toClass": "BusinessRule",
+      "relationName": "HAS_BUSINESS_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BusinessRuleData.BusinessRuleId"
+    },
+    {
+      "fromClass": "BizRuleParameter",
+      "toClass": "BusinessRuleData",
+      "relationName": "HAS_BUSINESS_RULE_DATA",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BizRuleParameter.BusinessRuleDataId"
+    },
+    {
+      "fromClass": "BizRuleParameter",
+      "toClass": "BizRuleHandlerParameter",
+      "relationName": "HAS_PARAM_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BizRuleParameter.ParamSpecId"
+    },
+    {
+      "fromClass": "BizRuleParameter",
+      "toClass": "BusinessRuleHandler",
+      "relationName": "HAS_BUSINESS_RULE_HANDLER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BizRuleParameter.BusinessRuleHandlerId"
+    },
+    {
+      "fromClass": "BusinessRuleHandler",
+      "toClass": "BusinessRuleHandlerData",
+      "relationName": "HAS_BUSINESS_RULE_HANDLER_DATA",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BusinessRuleHandler.BusinessRuleHandlerDataId"
+    },
+    {
+      "fromClass": "BusinessRuleHandlerData",
+      "toClass": "BusinessRuleHandler",
+      "relationName": "HAS_BUSINESS_RULE_HANDLER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BusinessRuleHandlerData.BusinessRuleHandlerId"
+    },
+    {
+      "fromClass": "BizRuleHandlerParameter",
+      "toClass": "BusinessRuleHandlerData",
+      "relationName": "HAS_BUSINESS_RULE_HANDLER_DATA",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BizRuleHandlerParameter.BusinessRuleHandlerDataId"
+    }
+  ]
+}

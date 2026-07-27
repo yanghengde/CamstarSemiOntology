@@ -1,0 +1,940 @@
+{
+  "module": "spec",
+  "classes": [
+    {
+      "className": "Spec",
+      "chineseName": "规范/规格",
+      "description": "Spec — 定义生产步骤的执行细节，包括操作指令、工艺参数、调度计划、资源要求、电子程序及自动化规则。Spec 是 WorkflowStep 的核心执行载体，可绑定 Operation、ElectronicProcedure、Resource、SamplingPlan 等。物理上对应 Spec (CdoId: 361)。",
+      "properties": [
+        {
+          "name": "allowCountVariance",
+          "type": "Boolean",
+          "description": "物理字段 AllowCountVariance"
+        },
+        {
+          "name": "maxInsertion",
+          "type": "Integer",
+          "description": "物理字段 MaxInsertion"
+        },
+        {
+          "name": "requireTrackInQty",
+          "type": "Boolean",
+          "description": "物理字段 RequireTrackInQty"
+        },
+        {
+          "name": "autoMoveOut",
+          "type": "Boolean",
+          "description": "物理字段 AutoMoveOut"
+        },
+        {
+          "name": "setQtyFromWafers",
+          "type": "Boolean",
+          "description": "物理字段 SetQtyFromWafers"
+        },
+        {
+          "name": "yieldOffDefects",
+          "type": "Boolean",
+          "description": "物理字段 YieldOffDefects"
+        },
+        {
+          "name": "inputCarrierFamily",
+          "type": "Navigation",
+          "description": "物理字段 InputCarrierFamilyId → ResourceFamily"
+        },
+        {
+          "name": "checkScanning",
+          "type": "Boolean",
+          "description": "物理字段 CheckScanning"
+        },
+        {
+          "name": "autoSelectTrackOutLots",
+          "type": "Boolean",
+          "description": "物理字段 AutoSelectTrackOutLots"
+        },
+        {
+          "name": "verifyWafersGoodQty",
+          "type": "Boolean",
+          "description": "物理字段 VerifyWafersGoodQty"
+        },
+        {
+          "name": "allowDummyQty",
+          "type": "Boolean",
+          "description": "物理字段 AllowDummyQty"
+        },
+        {
+          "name": "testIqcRequired",
+          "type": "Boolean",
+          "description": "物理字段 TestIQCRequired"
+        },
+        {
+          "name": "allowDefectQty",
+          "type": "Boolean",
+          "description": "物理字段 AllowDefectQty"
+        },
+        {
+          "name": "autoCreateFirstInsertion",
+          "type": "Boolean",
+          "description": "物理字段 AutoCreateFirstInsertion"
+        },
+        {
+          "name": "processCode",
+          "type": "Navigation",
+          "description": "物理字段 ProcessCodeId → A_ProcessCode"
+        },
+        {
+          "name": "uom",
+          "type": "Navigation",
+          "description": "物理字段 UOMId → UOM"
+        },
+        {
+          "name": "requireMaxTimeWindow",
+          "type": "Boolean",
+          "description": "物理字段 RequireMaxTimeWindow"
+        },
+        {
+          "name": "allowMaterialLoading",
+          "type": "Boolean",
+          "description": "物理字段 AllowMaterialLoading"
+        },
+        {
+          "name": "utaPrefix",
+          "type": "String",
+          "description": "物理字段 UTAPrefix"
+        },
+        {
+          "name": "checkPrinting",
+          "type": "Boolean",
+          "description": "物理字段 CheckPrinting"
+        },
+        {
+          "name": "consolidatePreviousBins",
+          "type": "Boolean",
+          "description": "物理字段 ConsolidatePreviousBins"
+        },
+        {
+          "name": "autoRejectsRescreens",
+          "type": "Integer",
+          "description": "物理字段 AutoRejectsRescreens"
+        },
+        {
+          "name": "uom2",
+          "type": "Navigation",
+          "description": "物理字段 UOM2Id → UOM"
+        },
+        {
+          "name": "externalInterface",
+          "type": "Navigation",
+          "description": "物理字段 ExternalInterfaceId → A_ExternalInterface"
+        },
+        {
+          "name": "runNumberSetup",
+          "type": "Navigation",
+          "description": "物理字段 RunNumberSetupId → A_RunNumberSetup"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "要求的设置权限控制 → SetupAccess"
+        },
+        {
+          "name": "objectCategory",
+          "type": "String",
+          "description": "物理字段 ObjectCategory"
+        },
+        {
+          "name": "objectType",
+          "type": "String",
+          "description": "物理字段 ObjectType"
+        },
+        {
+          "name": "stepLogic",
+          "type": "Navigation",
+          "description": "物理字段 StepLogicId → A_StepLogic"
+        },
+        {
+          "name": "holdLotIfLimitsNotFound",
+          "type": "Boolean",
+          "description": "物理字段 HoldLotIfLimitsNotFound"
+        },
+        {
+          "name": "allowNumberOfStrips",
+          "type": "Boolean",
+          "description": "物理字段 AllowNumberOfStrips"
+        },
+        {
+          "name": "maxLotsPerUser",
+          "type": "Integer",
+          "description": "物理字段 MaxLotsPerUser"
+        },
+        {
+          "name": "maxEquipmentPerLot",
+          "type": "Integer",
+          "description": "物理字段 MaxEquipmentPerLot"
+        },
+        {
+          "name": "consolidatePreviousRejects",
+          "type": "Boolean",
+          "description": "物理字段 ConsolidatePreviousRejects"
+        },
+        {
+          "name": "binSplitRequired",
+          "type": "Boolean",
+          "description": "物理字段 BinSplitRequired"
+        },
+        {
+          "name": "binType",
+          "type": "Navigation",
+          "description": "物理字段 BinTypeId → A_BinType"
+        },
+        {
+          "name": "isTest",
+          "type": "Boolean",
+          "description": "物理字段 IsTest"
+        },
+        {
+          "name": "allowRejectsRecording",
+          "type": "Boolean",
+          "description": "物理字段 AllowRejectsRecording"
+        },
+        {
+          "name": "allowUnidentifiableRejectQty",
+          "type": "Boolean",
+          "description": "物理字段 AllowUnidentifiableRejectQty"
+        },
+        {
+          "name": "allowReworkableRejectQty",
+          "type": "Boolean",
+          "description": "物理字段 AllowReworkableRejectQty"
+        },
+        {
+          "name": "wipDataSetup",
+          "type": "Navigation",
+          "description": "物理字段 WIPDataSetupId → A_WIPDataSetup"
+        },
+        {
+          "name": "notRequiredBinsLocation",
+          "type": "Navigation",
+          "description": "物理字段 NotRequiredBinsLocationId → A_LocationMap"
+        },
+        {
+          "name": "isWaferProcessing",
+          "type": "Boolean",
+          "description": "物理字段 IsWaferProcessing"
+        },
+        {
+          "name": "outputCarrierFamily",
+          "type": "Navigation",
+          "description": "物理字段 OutputCarrierFamilyId → ResourceFamily"
+        },
+        {
+          "name": "autoSetTestProgram",
+          "type": "Boolean",
+          "description": "物理字段 AutoSetTestProgram"
+        },
+        {
+          "name": "setDateCode",
+          "type": "Boolean",
+          "description": "物理字段 SetDateCode"
+        },
+        {
+          "name": "removeDateCode",
+          "type": "Boolean",
+          "description": "物理字段 RemoveDateCode"
+        },
+        {
+          "name": "pdaLimitsRequired",
+          "type": "Boolean",
+          "description": "物理字段 PDALimitsRequired"
+        },
+        {
+          "name": "sameParentLot",
+          "type": "Boolean",
+          "description": "物理字段 SameParentLot"
+        },
+        {
+          "name": "autoSetTrackInQty",
+          "type": "Boolean",
+          "description": "物理字段 AutoSetTrackInQty"
+        },
+        {
+          "name": "dispatchPlan",
+          "type": "Navigation",
+          "description": "物理字段 DispatchPlanId → A_DispatchPlan"
+        },
+        {
+          "name": "verifyStepCycleTime",
+          "type": "Boolean",
+          "description": "物理字段 VerifyStepCycleTime"
+        },
+        {
+          "name": "useEquipmentMatrix",
+          "type": "Boolean",
+          "description": "物理字段 UseEquipmentMatrix"
+        },
+        {
+          "name": "autoRemoveMaterials",
+          "type": "Boolean",
+          "description": "物理字段 AutoRemoveMaterials"
+        },
+        {
+          "name": "allowSplitUnProcessed",
+          "type": "Boolean",
+          "description": "物理字段 AllowSplitUnProcessed"
+        },
+        {
+          "name": "isSubCon",
+          "type": "Boolean",
+          "description": "物理字段 IsSubCon"
+        },
+        {
+          "name": "defaultMaterialWipLocation",
+          "type": "Navigation",
+          "description": "物理字段 DefaultMaterialWIPLocationId → A_LocationMap"
+        },
+        {
+          "name": "autoSetTrackOutQty",
+          "type": "Boolean",
+          "description": "物理字段 AutoSetTrackOutQty"
+        },
+        {
+          "name": "autoSetMoveOutQty",
+          "type": "Boolean",
+          "description": "物理字段 AutoSetMoveOutQty"
+        },
+        {
+          "name": "ssOnlyCalculateYield",
+          "type": "Boolean",
+          "description": "物理字段 ss_OnlyCalculateYield"
+        },
+        {
+          "name": "ssBypassRecipeVerification",
+          "type": "Boolean",
+          "description": "物理字段 ss_BypassRecipeVerification"
+        },
+        {
+          "name": "ssBypassToolPlanVerification",
+          "type": "Boolean",
+          "description": "物理字段 ss_BypassToolPlanVerification"
+        },
+        {
+          "name": "ssLabelPlan",
+          "type": "Navigation",
+          "description": "物理字段 ss_LabelPlanId → ss_LabelPlan"
+        },
+        {
+          "name": "verifyToolPlan",
+          "type": "Boolean",
+          "description": "物理字段 ES_VerifyToolPlan"
+        },
+        {
+          "name": "scsFieldEnable",
+          "type": "Boolean",
+          "description": "物理字段 scsFieldEnable"
+        },
+        {
+          "name": "scsRecipeConfigRequired",
+          "type": "Boolean",
+          "description": "物理字段 scsRecipeConfigRequired"
+        },
+        {
+          "name": "scsSpecSlotMappingRequired",
+          "type": "Boolean",
+          "description": "物理字段 scsSpecSlotMappingRequired"
+        },
+        {
+          "name": "ssUseWipDataSetupMatrix",
+          "type": "Boolean",
+          "description": "物理字段 ss_UseWIPDataSetupMatrix"
+        },
+        {
+          "name": "ssAutoUnloadFeeders",
+          "type": "Boolean",
+          "description": "物理字段 ss_AutoUnloadFeeders"
+        },
+        {
+          "name": "ssMfgLine",
+          "type": "Navigation",
+          "description": "物理字段 ss_MfgLineId → ss_MfgLine"
+        },
+        {
+          "name": "ssVerifyMfgLine",
+          "type": "Boolean",
+          "description": "物理字段 ss_VerifyMfgLine"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录 → ChangeStatus"
+        },
+        {
+          "name": "schedulingDetail",
+          "type": "Navigation",
+          "description": "产能调度明细参数 → SpecSchedulingDetail"
+        },
+        {
+          "name": "status",
+          "type": "Integer",
+          "description": "状态：1=Active, 2=Inactive"
+        },
+        {
+          "name": "revision",
+          "type": "String",
+          "description": "修订版本"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "物理字段 IconId"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "specBase",
+          "type": "Navigation",
+          "description": "规格对应的基线版本 → SpecBase"
+        },
+        {
+          "name": "operation",
+          "type": "Navigation",
+          "description": "关联的工序操作定义 → Operation"
+        },
+        {
+          "name": "resourceGroup",
+          "type": "Navigation",
+          "description": "允许执行的设备资源组限制 → ResourceGroup"
+        },
+        {
+          "name": "maxQueueTime",
+          "type": "Float",
+          "description": "最大排队时间"
+        },
+        {
+          "name": "maxQueueTimeAction",
+          "type": "Integer",
+          "description": "超时动作：0=None, 1=Warn, 3=Hold, 4=Block"
+        },
+        {
+          "name": "warningQueueTime",
+          "type": "Float",
+          "description": "物理字段 WarningQueueTime"
+        },
+        {
+          "name": "documentSet",
+          "type": "Navigation",
+          "description": "绑定的作业指导文档集 → DocumentSet"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "关联的WIP消息定义管理器 → WIPMsgDefMgr"
+        },
+        {
+          "name": "allowReworkTo",
+          "type": "Boolean",
+          "description": "物理字段 AllowReworkTo"
+        },
+        {
+          "name": "trainingReqGroup",
+          "type": "Navigation",
+          "description": "要求的培训/上岗资格限制组 → TrainingRequirementGroup"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "allowOverrides",
+          "type": "Boolean",
+          "description": "物理字段 AllowOverrides"
+        },
+        {
+          "name": "eco",
+          "type": "String",
+          "description": "工程变更单号"
+        },
+        {
+          "name": "validateMaterialConsumption",
+          "type": "Boolean",
+          "description": "物理字段 ValidateMaterialConsumption"
+        },
+        {
+          "name": "allowReprocess",
+          "type": "Boolean",
+          "description": "物理字段 AllowReprocess"
+        },
+        {
+          "name": "ssIsSendAheadRequired",
+          "type": "Boolean",
+          "description": "物理字段 ss_IsSendAheadRequired"
+        },
+        {
+          "name": "autoFillDataPointHistoryValue",
+          "type": "Boolean",
+          "description": "物理字段 AutoFillDataPointHistoryValue"
+        },
+        {
+          "name": "validateActiveMfgOrder",
+          "type": "Boolean",
+          "description": "物理字段 ValidateActiveMfgOrder"
+        },
+        {
+          "name": "allowOtherResource",
+          "type": "Boolean",
+          "description": "物理字段 AllowOtherResource"
+        },
+        {
+          "name": "optional",
+          "type": "Integer",
+          "description": "物理字段 Optional"
+        },
+        {
+          "name": "postProductionAction",
+          "type": "Integer",
+          "description": "物理字段 PostProductionAction"
+        },
+        {
+          "name": "requirePreProductionProcedure",
+          "type": "Boolean",
+          "description": "物理字段 RequirePreProductionProcedure"
+        },
+        {
+          "name": "validateLotSamplingComplete",
+          "type": "Boolean",
+          "description": "物理字段 ValidateLotSamplingComplete"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "setupBase",
+          "type": "Integer",
+          "description": "多态换线基准 revision 字段 → SetupBase"
+        },
+        {
+          "name": "setup",
+          "type": "Navigation",
+          "description": "要求的设备换线配置 → Setup"
+        },
+        {
+          "name": "recipeFileBase",
+          "type": "Integer",
+          "description": "多态配方文档基准 revision 字段 → DocumentBase"
+        },
+        {
+          "name": "recipeFile",
+          "type": "Navigation",
+          "description": "工位关联的默认配方/指导文档 → Document"
+        },
+        {
+          "name": "electronicProcedureBase",
+          "type": "Integer",
+          "description": "多态电子程序基准 revision 字段 → ElectronicProcedureBase"
+        },
+        {
+          "name": "electronicProcedure",
+          "type": "Navigation",
+          "description": "绑定的电子操作规程流程 → ElectronicProcedure"
+        }
+      ]
+    },
+    {
+      "className": "SpecSchedulingDetail",
+      "chineseName": "规格调度详情",
+      "description": "Spec Scheduling Detail — 定义规格层面的产能和周期时间参数（节拍、准备时间、良率）。物理上对应 SpecSchedulingDetail (CdoId: 389)。",
+      "properties": [
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "durationPerUnit",
+          "type": "Float",
+          "description": "单单位加工时长"
+        },
+        {
+          "name": "yield",
+          "type": "Float",
+          "description": "预期良率 (%)"
+        },
+        {
+          "name": "spec",
+          "type": "Integer",
+          "description": "关联的母规格定义 → Spec"
+        },
+        {
+          "name": "fastCycleTime",
+          "type": "Float",
+          "description": "物理字段 FastCycleTime"
+        },
+        {
+          "name": "normalCycleTime",
+          "type": "Float",
+          "description": "物理字段 NormalCycleTime"
+        },
+        {
+          "name": "runRateOption",
+          "type": "Integer",
+          "description": "物理字段 RunRateOption"
+        },
+        {
+          "name": "unitsPerHour",
+          "type": "Float",
+          "description": "每小时产出单位数 (UPH)"
+        },
+        {
+          "name": "stdBatchSize",
+          "type": "Float",
+          "description": "标准批次大小"
+        },
+        {
+          "name": "setupTime",
+          "type": "Float",
+          "description": "设置/换线时长"
+        },
+        {
+          "name": "unscheduledTime",
+          "type": "Float",
+          "description": "物理字段 UnscheduledTime"
+        },
+        {
+          "name": "timePerBatch",
+          "type": "Float",
+          "description": "物理字段 TimePerBatch"
+        }
+      ]
+    },
+    {
+      "className": "TxnMap",
+      "chineseName": "事务映射",
+      "description": "Transaction Map — 将系统事务类型映射到特定的数据采集定义，限定各工序下可采集的参数。物理上对应 TxnMap (CdoId: 411)。",
+      "properties": [
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "sequence",
+          "type": "Integer",
+          "description": "执行顺序"
+        },
+        {
+          "name": "txnType",
+          "type": "Integer",
+          "description": "事务类型标识"
+        },
+        {
+          "name": "txnToUse",
+          "type": "Integer",
+          "description": "使用的底层交易ID"
+        },
+        {
+          "name": "required",
+          "type": "Boolean",
+          "description": "该数据采集是否为必填项"
+        },
+        {
+          "name": "spec",
+          "type": "Navigation",
+          "description": "归属的规格定义 → Spec"
+        },
+        {
+          "name": "dataCollectionDefinitionBase",
+          "type": "Integer",
+          "description": "数据采集定义基线 revision 字段"
+        },
+        {
+          "name": "dataCollectionDefinition",
+          "type": "Navigation",
+          "description": "绑定的数据采集定义 → DataCollectionDef"
+        }
+      ]
+    },
+    {
+      "className": "ESigReqTxnMap",
+      "chineseName": "电子签名事务映射",
+      "description": "E-Signature Requirement Transaction Map — 定义规格事务执行的电子签名限制要求。物理上对应 ESigReqTxnMap (CdoId: 964)。",
+      "properties": [
+        {
+          "name": "parent",
+          "type": "Navigation",
+          "description": "归属的规格定义 → Spec"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        },
+        {
+          "name": "allTxns",
+          "type": "Boolean",
+          "description": "是否应用于所有事务"
+        },
+        {
+          "name": "eSigRequirement",
+          "type": "Navigation",
+          "description": "物理字段 ESigRequirementId → ESigRequirement"
+        },
+        {
+          "name": "txnId",
+          "type": "Integer",
+          "description": "事务定义 ID"
+        },
+        {
+          "name": "txnToUse",
+          "type": "String",
+          "description": "适用的底层事务名"
+        }
+      ]
+    },
+    {
+      "className": "BPSpecBizRuleTxnMap",
+      "chineseName": "业务规则事务映射",
+      "description": "Business Process Spec BizRule Transaction Map — 定义在特定规格事务事件发生时触发的业务规则逻辑。物理上对应 BPSpecBizRuleTxnMap (CdoId: 1727)。",
+      "properties": [
+        {
+          "name": "businessProcessSpec",
+          "type": "Navigation",
+          "description": "归属的业务流程规格定义 → BusinessProcessSpec"
+        },
+        {
+          "name": "event",
+          "type": "Integer",
+          "description": "触发事件 ID"
+        },
+        {
+          "name": "businessRule",
+          "type": "Navigation",
+          "description": "触发执行的业务规则主数据 → BusinessRule"
+        },
+        {
+          "name": "txnToUse",
+          "type": "Integer",
+          "description": "适用的交易ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "物理字段 IsFrozen"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "Spec",
+      "toClass": "ResourceFamily",
+      "relationName": "HAS_INPUT_CARRIER_FAMILY",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.InputCarrierFamilyId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_ProcessCode",
+      "relationName": "HAS_PROCESS_CODE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.ProcessCodeId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.UOMId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "UOM",
+      "relationName": "HAS_UOM2",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.UOM2Id"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_ExternalInterface",
+      "relationName": "HAS_EXTERNAL_INTERFACE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.ExternalInterfaceId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_RunNumberSetup",
+      "relationName": "HAS_RUN_NUMBER_SETUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.RunNumberSetupId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_StepLogic",
+      "relationName": "HAS_STEP_LOGIC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.StepLogicId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_BinType",
+      "relationName": "HAS_BIN_TYPE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.BinTypeId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_WIPDataSetup",
+      "relationName": "HAS_WIP_DATA_SETUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.WIPDataSetupId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_LocationMap",
+      "relationName": "HAS_NOT_REQUIRED_BINS_LOCATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.NotRequiredBinsLocationId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "ResourceFamily",
+      "relationName": "HAS_OUTPUT_CARRIER_FAMILY",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.OutputCarrierFamilyId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_DispatchPlan",
+      "relationName": "HAS_DISPATCH_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.DispatchPlanId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "A_LocationMap",
+      "relationName": "HAS_DEFAULT_MATERIAL_WIP_LOCATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.DefaultMaterialWIPLocationId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "ss_LabelPlan",
+      "relationName": "HAS_SS_LABEL_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.ss_LabelPlanId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "ss_MfgLine",
+      "relationName": "HAS_SS_MFG_LINE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.ss_MfgLineId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "SpecSchedulingDetail",
+      "relationName": "HAS_SCHEDULING_DETAIL",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.SchedulingDetailId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "SpecBase",
+      "relationName": "HAS_SPEC_BASE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.SpecBaseId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "Operation",
+      "relationName": "HAS_OPERATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.OperationId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "ResourceGroup",
+      "relationName": "HAS_RESOURCE_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.ResourceGroupId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "DocumentSet",
+      "relationName": "HAS_DOCUMENT_SET",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.DocumentSetId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "TrainingRequirementGroup",
+      "relationName": "HAS_TRAINING_REQ_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.TrainingReqGroupId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "Setup",
+      "relationName": "HAS_SETUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.SetupId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "Document",
+      "relationName": "HAS_RECIPE_FILE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.RecipeFileId"
+    },
+    {
+      "fromClass": "Spec",
+      "toClass": "ElectronicProcedure",
+      "relationName": "HAS_ELECTRONIC_PROCEDURE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Spec.ElectronicProcedureId"
+    },
+    {
+      "fromClass": "TxnMap",
+      "toClass": "BillOfProcessOverride",
+      "relationName": "HAS_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "TxnMap.SpecId"
+    },
+    {
+      "fromClass": "TxnMap",
+      "toClass": "DataCollectionDef",
+      "relationName": "HAS_DATA_COLLECTION_DEFINITION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "TxnMap.DataCollectionDefinitionId"
+    },
+    {
+      "fromClass": "ESigReqTxnMap",
+      "toClass": "Factory",
+      "relationName": "HAS_PARENT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ESigReqTxnMap.ParentId"
+    },
+    {
+      "fromClass": "BPSpecBizRuleTxnMap",
+      "toClass": "BusinessProcessSpec",
+      "relationName": "HAS_BUSINESS_PROCESS_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BPSpecBizRuleTxnMap.BusinessProcessSpecId"
+    },
+    {
+      "fromClass": "BPSpecBizRuleTxnMap",
+      "toClass": "BusinessRule",
+      "relationName": "HAS_BUSINESS_RULE",
+      "cardinality": "MANY_TO_ONE",
+      "description": "BPSpecBizRuleTxnMap.BusinessRuleId"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "module": "pause_reason_group",
+  "classes": [
+    {
+      "className": "PauseReasonGroup",
+      "chineseName": "暂停原因分组",
+      "description": "Pause Reason Group — 暂停原因的分组容器实体（CdoId: 8988）。将多个 PauseReason 条目按业务逻辑分组，支持嵌套子分组（groups），形成层级的暂停原因分类树。可配置 defaultForObjectTypes 指定某些业务对象类型在创建时自动获得该分组的暂停原因列表。已解析条目（resolvedEntries）自动汇总本组及所有嵌套子组中的全部 PauseReason。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签，逗号分隔"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明，默认与名称相同"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "暂停原因分组的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目对象类型名称（CDO Definition Name），指定 entries 中包含的实体类型"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

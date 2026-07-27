@@ -1,0 +1,79 @@
+{
+  "module": "resource_group",
+  "classes": [
+    {
+      "className": "ResourceGroup",
+      "chineseName": "资源组",
+      "description": "Resource Group — 资源组/排程组定义实体。将多个 Resource 按排程或统计需求分组管理。支持嵌套子分组(groups)和包含条目(entries)，可配置 defaultForObjectTypes 自动指派。",
+      "properties": [
+        {
+          "name": "objectType",
+          "type": "String",
+          "description": "物理字段 ObjectType"
+        },
+        {
+          "name": "objectCategory",
+          "type": "String",
+          "description": "物理字段 ObjectCategory"
+        },
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置"
+        },
+        {
+          "name": "scsAllowMultiStepsTrackIn",
+          "type": "Boolean",
+          "description": "物理字段 scsAllowMultiStepsTrackIn"
+        },
+        {
+          "name": "ssAllowInProcessStatChange",
+          "type": "Boolean",
+          "description": "物理字段 ss_AllowInProcessStatChange"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "资源组的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "entryType",
+          "type": "String",
+          "description": "条目对象类型名称（CDO Definition Name）"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

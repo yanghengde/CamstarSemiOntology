@@ -1,0 +1,107 @@
+{
+  "module": "resource_status_code",
+  "classes": [
+    {
+      "className": "ResourceStatusCode",
+      "chineseName": "资源状态代码",
+      "description": "Resource Status Code — 资源状态代码定义实体。定义设备资源可处于的状态代码（如 Available可用、InUse使用中、Down停机、Maintenance维护中、Idle空闲等），配合 ResourceStatusModel 的状态流转模型使用。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "isAvailable",
+          "type": "Boolean",
+          "description": "物理字段 IsAvailable"
+        },
+        {
+          "name": "nextTxnType",
+          "type": "Integer",
+          "description": "物理字段 NextTxnType"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "资源状态代码的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "resourceState",
+          "type": "Integer",
+          "description": "物理字段 ResourceState"
+        },
+        {
+          "name": "resourceStatusReasons",
+          "type": "Navigation",
+          "description": "物理字段 ResourceStatusReasonsId → ResStatusReasonGroup"
+        },
+        {
+          "name": "availability",
+          "type": "Integer",
+          "description": "物理字段 Availability"
+        },
+        {
+          "name": "resourceCdoTypeName",
+          "type": "String",
+          "description": "物理字段 ResourceCDOTypeName"
+        },
+        {
+          "name": "statusCodeBehavior",
+          "type": "Integer",
+          "description": "物理字段 StatusCodeBehavior"
+        },
+        {
+          "name": "omlStatus",
+          "type": "String",
+          "description": "物理字段 OMLStatus"
+        },
+        {
+          "name": "statusId",
+          "type": "Integer",
+          "description": "物理字段 StatusId"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ResourceStatusCode",
+      "toClass": "ResStatusReasonGroup",
+      "relationName": "HAS_RESOURCE_STATUS_REASONS",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ResourceStatusCode.ResourceStatusReasonsId"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "module": "shift",
+  "classes": [
+    {
+      "className": "Shift",
+      "chineseName": "班次",
+      "description": "Shift — 班次/排班定义实体（CdoId: 7046）。定义制造工厂的班次排程（如白班、夜班、早班等），包括班次的开始/结束时间、班次持续时间等配置，用于工单排程、人员分配和 OEE 报表中的班次维度分析。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "班次的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

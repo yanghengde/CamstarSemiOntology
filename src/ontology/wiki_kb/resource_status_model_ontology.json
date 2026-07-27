@@ -1,0 +1,67 @@
+{
+  "module": "resource_status_model",
+  "classes": [
+    {
+      "className": "ResourceStatusModel",
+      "chineseName": "资源状态模型",
+      "description": "Resource Status Model — 资源状态模型定义实体（CdoId: 1384）。定义特定设备资源在生产生命周期中的所有合法状态转换关系和转换规则。约束资源如何从一个状态（如可用）流转到另一个状态（如停机或保养），通过关联多个 ResourceStatusCode 和转换规则构成完整的状态机。被 Resource、Part 和 PartFamily 引用。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置/换线权限配置"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "状态模型的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "initStatusCodes",
+          "type": "Navigation",
+          "description": "物理字段 InitStatusCodesId → ResourceStatusCodeGroup"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ResourceStatusModel",
+      "toClass": "ResourceStatusCodeGroup",
+      "relationName": "HAS_INIT_STATUS_CODES",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ResourceStatusModel.InitStatusCodesId"
+    }
+  ]
+}

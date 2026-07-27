@@ -1,0 +1,165 @@
+{
+  "module": "customer",
+  "classes": [
+    {
+      "className": "Customer",
+      "chineseName": "客户",
+      "description": "Customer — 客户。定义产品/容器的目标客户信息，包含公司名称、联系地址、电话/传真、网站等完整客户资料，以及关联的WIP消息定义管理器。用于在容器(Container)、产品(Product)、发货目的地(ShipmentDestination)等场景中标识和生产面向特定客户的产品。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "设置权限限制 → SetupAccess (SetupAccessId)"
+        },
+        {
+          "name": "faxNumber",
+          "type": "String",
+          "description": "传真"
+        },
+        {
+          "name": "phoneNumber",
+          "type": "String",
+          "description": "电话"
+        },
+        {
+          "name": "country",
+          "type": "String",
+          "description": "国家"
+        },
+        {
+          "name": "webSite",
+          "type": "String",
+          "description": "网站URL"
+        },
+        {
+          "name": "company",
+          "type": "String",
+          "description": "公司名称，用于标识客户的公司全称"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "关联的WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId)"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "客户唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId)"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标标识"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注说明"
+        },
+        {
+          "name": "addressLine1",
+          "type": "String",
+          "description": "地址行1"
+        },
+        {
+          "name": "addressLine2",
+          "type": "String",
+          "description": "地址行2"
+        },
+        {
+          "name": "city",
+          "type": "String",
+          "description": "城市"
+        },
+        {
+          "name": "state",
+          "type": "String",
+          "description": "州/省"
+        },
+        {
+          "name": "zipCode",
+          "type": "String",
+          "description": "邮政编码"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    },
+    {
+      "className": "CustomerContact",
+      "chineseName": "客户联系人",
+      "description": "CustomerContact — 客户联系人。客户的联系人信息，包含联系人姓名、电话、邮箱等联系方式。作为Customer的子实体。",
+      "properties": [
+        {
+          "name": "primaryContact",
+          "type": "Boolean",
+          "description": "是否为主要联系人"
+        },
+        {
+          "name": "customer",
+          "type": "Navigation",
+          "description": "关联的客户（必填） → Customer (CustomerId)"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "物理字段 CustomerContactName",
+          "required": true
+        },
+        {
+          "name": "phoneNumber",
+          "type": "String",
+          "description": "联系人电话"
+        },
+        {
+          "name": "cellPhoneNumber",
+          "type": "String",
+          "description": "手机号码 (CellPhoneNumber)"
+        },
+        {
+          "name": "faxNumber",
+          "type": "String",
+          "description": "联系人传真"
+        },
+        {
+          "name": "emailAddress",
+          "type": "String",
+          "description": "联系人邮箱 (EmailAddress)"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "CustomerContact",
+      "toClass": "Customer",
+      "relationName": "HAS_CUSTOMER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "CustomerContact.CustomerId"
+    }
+  ]
+}

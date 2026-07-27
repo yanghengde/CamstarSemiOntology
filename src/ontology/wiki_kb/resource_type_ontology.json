@@ -1,0 +1,72 @@
+{
+  "module": "resource_type",
+  "classes": [
+    {
+      "className": "ResourceType",
+      "chineseName": "资源类型",
+      "description": "Resource Type — 资源类型定义实体。定义设备资源的分类类型（如设备、工具、人员、夹具等）。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "resourceStatusModel",
+          "type": "Navigation",
+          "description": "物理字段 ResourceStatusModelId → ResourceStatusModel"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "资源类型的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "uiPreference",
+          "type": "Navigation",
+          "description": "物理字段 UIPreferenceId → UIPreference"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromClass": "ResourceType",
+      "toClass": "ResourceStatusModel",
+      "relationName": "HAS_RESOURCE_STATUS_MODEL",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ResourceType.ResourceStatusModelId"
+    }
+  ]
+}

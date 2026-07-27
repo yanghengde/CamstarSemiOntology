@@ -1,0 +1,59 @@
+{
+  "module": "product_type",
+  "classes": [
+    {
+      "className": "ProductType",
+      "chineseName": "产品类型",
+      "description": "Product Type — 产品类型定义实体（CdoId: 4290）。定义产品的主数据分类类型（如成品、半成品、原材料、包装材料等），用于在产品和物料管理中区分不同类别的制造对象。关联 WIP 消息定义管理器（wipMsgDefMgr）配置车间事务提示。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "产品类型的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "changeStatus",
+          "type": "Navigation",
+          "description": "物理字段 ChangeStatusId → ChangeStatus"
+        },
+        {
+          "name": "wipMsgDefMgr",
+          "type": "Navigation",
+          "description": "WIP 消息定义管理器 → WIPMsgEntity"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

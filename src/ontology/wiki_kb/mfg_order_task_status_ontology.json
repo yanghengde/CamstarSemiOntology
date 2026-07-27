@@ -1,0 +1,59 @@
+{
+  "module": "mfg_order_task_status",
+  "classes": [
+    {
+      "className": "MfgOrderTaskStatus",
+      "chineseName": "制造工单任务状态",
+      "description": "MfgOrder Task Status — 制造工单任务执行状态代码定义实体。定义工单任务在生命周期中的状态（如待执行、执行中、已完成、已跳过等），用于追踪和报告工单任务进度。",
+      "properties": [
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "任务状态的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "taskComplete",
+          "type": "Boolean",
+          "description": "物理字段 TaskComplete"
+        },
+        {
+          "name": "taskFailed",
+          "type": "Boolean",
+          "description": "物理字段 TaskFailed"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

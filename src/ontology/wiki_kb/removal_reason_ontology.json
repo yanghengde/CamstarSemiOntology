@@ -1,0 +1,59 @@
+{
+  "module": "removal_reason",
+  "classes": [
+    {
+      "className": "RemovalReason",
+      "chineseName": "移除原因",
+      "description": "Removal Reason — 移除原因代码定义实体。定义制造过程中从容器/工单中移除物料或组件的原因分类。",
+      "properties": [
+        {
+          "name": "setupAccess",
+          "type": "Navigation",
+          "description": "物理字段 SetupAccessId → A_SetupAccess"
+        },
+        {
+          "name": "changeHistory",
+          "type": "Navigation",
+          "description": "变更历史记录"
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "description": "描述说明"
+        },
+        {
+          "name": "iconId",
+          "type": "Integer",
+          "description": "关联的图标 ID"
+        },
+        {
+          "name": "isFrozen",
+          "type": "Boolean",
+          "description": "是否已冻结（只读）"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "description": "移除原因的唯一名称（必填）",
+          "required": true
+        },
+        {
+          "name": "removalType",
+          "type": "Integer",
+          "description": "物理字段 RemovalType"
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "description": "备注信息"
+        },
+        {
+          "name": "filterTags",
+          "type": "String",
+          "description": "分类筛选标签"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}
