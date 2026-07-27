@@ -23,6 +23,7 @@ class ChatRequest(BaseModel):
     history: list[dict] | None = None
     assistant_mode: str = "sql"
     selected_classes: list[str] | None = None
+    sql_dialect: str = "oracle"
 
 
 class ClearRequest(BaseModel):
@@ -165,6 +166,7 @@ async def chat(req: ChatRequest):
                 product_line=req.product_line,
                 assistant_mode=req.assistant_mode,
                 selected_classes=all_classes,
+                sql_dialect=req.sql_dialect,
             ):
                 if isinstance(chunk, dict) and chunk.get("type") == "status":
                     yield f"data: {json.dumps({'type': 'status', 'content': chunk['content']}, ensure_ascii=False)}\n\n"

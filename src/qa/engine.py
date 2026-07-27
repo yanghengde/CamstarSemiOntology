@@ -137,6 +137,7 @@ async def query(
     product_line: str = "general",
     assistant_mode: str = "sql",
     selected_classes: list[str] | None = None,
+    sql_dialect: str = "oracle",
 ) -> str:
     """
     Non-streaming query: returns complete answer string.
@@ -149,6 +150,7 @@ async def query(
         product_line=product_line,
         assistant_mode=assistant_mode,
         selected_classes=selected_classes,
+        sql_dialect=sql_dialect,
     ):
         if isinstance(chunk, str):
             chunks.append(chunk)
@@ -163,6 +165,7 @@ async def query_stream(
     product_line: str = "general",
     assistant_mode: str = "sql",
     selected_classes: list[str] | None = None,
+    sql_dialect: str = "oracle",
 ):
     """
     Streaming query: yields answer chunks as they arrive from DeepSeek.
@@ -229,9 +232,13 @@ async def query_stream(
     # 4. Build prompt
     step_prompt = trace.add_step("提示词构建") if trace else None
     sql_schema_context = ""
+    sql_domain_context = ""
     if assistant_mode == "sql":
         from src.qa.sql_schema_retriever import build_sql_schema_context
-        sql_schema_context = build_sql_schema_context(keywords)
+        from src.qa.sql_domain_context import build_sql_domain_context
+
+        sql_schema_context = build_sql_schema_context(keywords, question=question)
+        sql_domain_context = build_sql_domain_context(keywords, question=question)
     messages = build_prompt(
         question,
         graph_context,
@@ -240,6 +247,8 @@ async def query_stream(
         product_line=product_line,
         assistant_mode=assistant_mode,
         sql_schema_context=sql_schema_context,
+        sql_domain_context=sql_domain_context,
+        sql_dialect=sql_dialect,
     )
     if step_prompt:
         step_prompt.done(output={

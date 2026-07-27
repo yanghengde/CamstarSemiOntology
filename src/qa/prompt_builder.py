@@ -15,15 +15,20 @@ def build_prompt(
     product_line: str = "general",
     assistant_mode: str = "sql",
     sql_schema_context: str = "",
+    sql_domain_context: str = "",
+    sql_dialect: str = "oracle",
 ) -> list[dict]:
     """
     Build the complete message list for the LLM API call.
     Uses compact context to reduce token count and latency.
     """
     if assistant_mode == "sql":
+        dialect = (sql_dialect or "oracle").lower()
+        if dialect != "oracle":
+            dialect = "oracle"
         system_prompt = (
             "你是 Siemens Opcenter Execution（Camstar）只读 SQL 助手，服务对象是需要查询后台业务数据的 IT 人员。"
-            "默认数据库方言为 Microsoft SQL Server T-SQL。\n\n"
+            "当前数据库方言为 Oracle SQL。\n\n"
             "强制规则：\n"
             "1. 表名、字段名、主键和外键连接条件只能使用“物理数据库架构”中明确出现的内容；"
             "本体 camelCase 属性不能直接当作物理列名。不得猜测任何表或列。SQL、说明和注意事项中都不得"
@@ -32,14 +37,15 @@ def build_prompt(
             "不要用同名字段臆造连接。\n"
             "3. 只生成只读 SELECT 或以 SELECT 结束的 CTE。拒绝生成或改写 INSERT、UPDATE、DELETE、"
             "MERGE、TRUNCATE、DROP、ALTER、CREATE、EXEC 等会修改数据或结构的语句。\n"
-            "4. 明细查询默认使用 TOP (100)，除非用户明确指定数量；不要 SELECT *，只选择需要的列。\n"
-            "5. 使用方括号包围表名和字段名，使用清晰别名；所有筛选值必须使用 @参数，"
+            "4. 明细查询默认使用 `FETCH FIRST 100 ROWS ONLY`，除非用户明确指定数量；不要 SELECT *，只选择需要的列。"
+            "禁止使用 SQL Server 的 TOP、方括号标识符、GETDATE、ISNULL 等语法。\n"
+            "5. 表名和字段名按物理架构原样输出并使用清晰别名；所有筛选值必须使用 Oracle `:参数名`，"
             "即使用户给出了数字或文本值也不能直接写入 SQL 字面量。\n"
             "6. 若需求、时间范围、状态含义或目标表不明确，先给可确认的查询骨架，并明确标出待确认参数；"
             "不得把不确定业务含义说成事实。不得根据 DataTypeCode 猜测业务枚举值，也不得虚构状态值说明。\n"
             "7. 输出固定包含：`### SQL`（sql代码块）、`### 说明`、`### 使用的表与连接`、`### 注意事项`。"
             "提及图谱类名时使用 [[ClassName]]，便于界面定位。\n"
-            "8. SQL 仅供审核，不在系统中执行。"
+            "8. SQL 仅供生成、审核和复制；本系统不连接业务数据库，也不执行 SQL。"
             "9. 输出前逐一自检 SQL 和说明中的表名、字段名；删除所有物理上下文中不存在的对象。"
             "不要主动推荐其他表、事务接口或后续扩展查询。"
             "10. 当用户请求写操作时只简短拒绝，不自动改写成 SELECT，也不提供任何替代修改方案。"
@@ -96,6 +102,8 @@ def build_prompt(
     parts = []
     if assistant_mode == "sql" and sql_schema_context:
         parts.append(f"## 物理数据库架构（唯一SQL事实来源）\n{sql_schema_context}")
+    if assistant_mode == "sql" and sql_domain_context:
+        parts.append(f"## SQL领域口径（用于选表与防止误统计）\n{sql_domain_context}")
     if graph_context:
         parts.append(f"## 业务语义与关系图谱（辅助理解，不能替代物理字段）\n{graph_context}")
     if vector_context and vector_context != "未配置向量检索。":

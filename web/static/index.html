@@ -39,6 +39,10 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <input type="text" id="searchInput" placeholder="搜索类名、属性..." autocomplete="off" />
+                <button type="button" id="btnPrioritySearch" class="search-priority-btn" title="只搜索重点大节点">
+                    <span>★</span>
+                </button>
+                <div id="searchResults" class="search-results search-results-hidden"></div>
             </div>
         </div>
         <div class="topbar-right">
@@ -122,12 +126,32 @@
         <aside id="detailPanel" class="panel-hidden">
             <div class="panel-header">
                 <h2 id="panelTitle">节点详情</h2>
-                <button class="icon-btn panel-close" id="btnClosePanel">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
+                <div class="panel-header-actions">
+                    <button class="icon-btn node-size-trigger" id="btnNodeSize" title="设置节点大小">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="8" cy="12" r="3" /><circle cx="17" cy="12" r="5" />
+                        </svg>
+                    </button>
+                    <button class="icon-btn panel-close" id="btnClosePanel">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="nodeSizePopover" class="node-size-popover node-size-popover-hidden">
+                    <div class="node-size-popover-title">节点显示设置</div>
+                    <label class="node-priority-toggle">
+                        <input type="checkbox" id="nodePriorityToggle" />
+                        <span>设为重点节点</span>
+                    </label>
+                    <div class="node-size-slider-row">
+                        <span>大小</span>
+                        <input id="nodeSizeSlider" type="range" min="44" max="120" step="4" value="76" />
+                        <output id="nodeSizeValue">76</output>
+                    </div>
+                    <button type="button" id="nodeSizeReset" class="node-size-reset">恢复默认</button>
+                </div>
             </div>
             <div class="panel-body">
                 <div class="panel-section" id="sectionMeta"></div>
@@ -274,6 +298,12 @@
             <span class="chat-context-label">当前上下文</span>
             <span id="chatContextClasses" class="chat-context-classes">尚未引用表</span>
         </div>
+        <div class="chat-quick-actions" id="chatQuickActions">
+            <button type="button" data-prompt="fields">查看物理字段</button>
+            <button type="button" data-prompt="time">时间范围模板</button>
+            <button type="button" data-prompt="move">Container过站</button>
+            <button type="button" data-prompt="throughput">工序产出</button>
+        </div>
         <div id="chatSessionMenu" class="chat-session-menu chat-session-menu-hidden">
             <div class="chat-session-menu-header">
                 <span>历史会话</span>
@@ -286,7 +316,7 @@
                 <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon"
                     style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
                 <p>你好！我是 Camstar SQL 助手。</p>
-                <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 T-SQL</p>
+                <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 Oracle SQL</p>
             </div>
         </div>
         <div class="chat-input-area" style="position: relative;">

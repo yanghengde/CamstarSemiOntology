@@ -175,12 +175,45 @@
     let graphMutationBusy = false;
     let pendingHighlightClear = false;
     let detailRenderToken = 0;
+    const PRIORITY_NODE_STORAGE_KEY = "camstar_priority_node_sizes_v1";
+    const LARGE_MODULES = new Set(["workflow", "mfgorder", "material", "product"]);
+    let priorityNodeSizes = new Map();
+    try {
+        const savedSizes = JSON.parse(localStorage.getItem(PRIORITY_NODE_STORAGE_KEY) || "{}");
+        priorityNodeSizes = new Map(
+            Object.entries(savedSizes)
+                .filter(([, size]) => Number.isFinite(Number(size)))
+                .map(([id, size]) => [id, Math.max(44, Math.min(120, Number(size)))]),
+        );
+    } catch (_) {
+        priorityNodeSizes = new Map();
+    }
 
     // Keep high-degree nodes responsive. The detail panel still exposes the
     // complete schema and relationship list; the canvas only draws a useful
     // summary of the immediate neighborhood.
     const MAX_CANVAS_NEIGHBORS = 28;
     const INITIAL_PROPERTY_ROWS = 60;
+
+    function defaultNodeSize(nodeOrData) {
+        const module = nodeOrData?.data?.module || nodeOrData?.module;
+        return LARGE_MODULES.has(module) ? 76 : 52;
+    }
+
+    function getNodeSize(nodeId, nodeOrData) {
+        return priorityNodeSizes.get(nodeId) || defaultNodeSize(nodeOrData);
+    }
+
+    function persistPriorityNodeSizes() {
+        localStorage.setItem(
+            PRIORITY_NODE_STORAGE_KEY,
+            JSON.stringify(Object.fromEntries(priorityNodeSizes)),
+        );
+    }
+
+    function isLargeNode(node) {
+        return priorityNodeSizes.has(node.id) || defaultNodeSize(node) >= 76;
+    }
 
     // ── Layout presets ──
     const LAYOUTS = {
@@ -341,6 +374,7 @@
                 id: n.id,
                 combo: useCombo ? mod : undefined,
                 style: {
+                    size: getNodeSize(n.id, n),
                     fill: c.fill,
                     stroke: c.stroke,
                     shadowColor: c.fill,
@@ -445,7 +479,7 @@
                 type: "circle",
                 style: {
                     zIndex: 10,
-                    size: (d) => ["workflow", "mfgorder", "material", "product"].includes(d.data?.module) ? 76 : 52,
+                    size: (d) => getNodeSize(d.id, d),
                     fill: (d) => (COLORS[d.data?.module] || COLORS.other).fill,
                     stroke: (d) => (COLORS[d.data?.module] || COLORS.other).stroke,
                     lineWidth: 2,
@@ -457,7 +491,7 @@
                     labelPlacement: "bottom",
                     labelOffsetY: 8,
                     iconText: (d) => (d.data?.label || d.id).substring(0, 2),
-                    iconFontSize: (d) => ["workflow", "mfgorder", "material", "product"].includes(d.data?.module) ? 18 : 14,
+                    iconFontSize: (d) => getNodeSize(d.id, d) >= 76 ? 18 : 14,
                     iconFontWeight: 700,
                     iconFill: "#fff",
                     iconFontFamily: "Inter, sans-serif",
@@ -838,6 +872,34 @@
     window._selectNode = selectNode;
     window._getSelectedNodeId = () => selectedNodeId;
 
+    async function hideAllCanvasEdges() {
+        if (!graph) return;
+        edgeRenderToken++;
+        pendingEdgeNodeId = null;
+        if (edgeRenderWorker) {
+            try { await edgeRenderWorker; } catch (_) {}
+        }
+        const edgeIds = graph.getEdgeData().map((edge) => edge.id);
+        if (!edgeIds.length) return;
+        if (_prevStates) {
+            for (const edgeId of edgeIds) delete _prevStates[edgeId];
+        }
+        graph.removeEdgeData(edgeIds);
+        await graph.draw();
+    }
+
+    async function locateNodeWithoutEdges(nodeId, openDetail = true) {
+        if (!graph || !nodeInfoCache.has(nodeId)) return;
+        selectNode(nodeId);
+        await hideAllCanvasEdges();
+        clearHighlight();
+        _applyStates({ [nodeId]: ["selected"] });
+        await graph.focusElement(nodeId, true);
+        if (openDetail) await showClassDetail(nodeId);
+    }
+
+    window._locateNodeWithoutEdges = locateNodeWithoutEdges;
+
     function queueIncidentEdgeRender(nodeId) {
         pendingEdgeNodeId = nodeId;
         edgeRenderToken++;
@@ -1117,6 +1179,84 @@
         if (industryBtn) {
             industryBtn.href = `/static/industry.html?product_line=${currentProductLine}`;
         }
+    }
+
+    // ══════════════════════════════════════════════════════
+    //  Per-node size and priority controls
+    // ══════════════════════════════════════════════════════
+    function syncNodeSizeControls(nodeId) {
+        const toggle = document.getElementById("nodePriorityToggle");
+        const slider = document.getElementById("nodeSizeSlider");
+        const output = document.getElementById("nodeSizeValue");
+        const button = document.getElementById("btnNodeSize");
+        const node = nodeInfoCache.get(nodeId);
+        const size = getNodeSize(nodeId, node);
+        toggle.checked = priorityNodeSizes.has(nodeId);
+        slider.value = String(size);
+        output.textContent = String(size);
+        button.classList.toggle("active", priorityNodeSizes.has(nodeId));
+    }
+
+    async function applySelectedNodeSize(size, isPriority = true) {
+        if (!selectedNodeId || !graph) return;
+        const safeSize = Math.max(44, Math.min(120, Number(size) || 76));
+        if (isPriority) {
+            priorityNodeSizes.set(selectedNodeId, safeSize);
+        } else {
+            priorityNodeSizes.delete(selectedNodeId);
+        }
+        persistPriorityNodeSizes();
+        const node = graph.getNodeData(selectedNodeId);
+        if (node) {
+            graph.updateNodeData([{
+                id: selectedNodeId,
+                style: {
+                    ...(node.style || {}),
+                    size: getNodeSize(selectedNodeId, node),
+                },
+            }]);
+            await graph.draw();
+        }
+        syncNodeSizeControls(selectedNodeId);
+    }
+
+    function setupNodeSizeControls() {
+        const button = document.getElementById("btnNodeSize");
+        const popover = document.getElementById("nodeSizePopover");
+        const toggle = document.getElementById("nodePriorityToggle");
+        const slider = document.getElementById("nodeSizeSlider");
+        const output = document.getElementById("nodeSizeValue");
+        const reset = document.getElementById("nodeSizeReset");
+
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (!selectedNodeId) return;
+            syncNodeSizeControls(selectedNodeId);
+            popover.classList.toggle("node-size-popover-hidden");
+        });
+        popover.addEventListener("click", (event) => event.stopPropagation());
+        toggle.addEventListener("change", () => {
+            const desired = toggle.checked
+                ? Math.max(76, Number(slider.value) || 76)
+                : defaultNodeSize(nodeInfoCache.get(selectedNodeId));
+            applySelectedNodeSize(desired, toggle.checked);
+        });
+        slider.addEventListener("input", () => {
+            output.textContent = slider.value;
+        });
+        slider.addEventListener("change", () => {
+            toggle.checked = true;
+            applySelectedNodeSize(Number(slider.value), true);
+        });
+        reset.addEventListener("click", () => {
+            applySelectedNodeSize(
+                defaultNodeSize(nodeInfoCache.get(selectedNodeId)),
+                false,
+            );
+        });
+        document.addEventListener("click", () => {
+            popover.classList.add("node-size-popover-hidden");
+        });
     }
 
     async function loadProductLines() {
@@ -1521,6 +1661,9 @@
     // ══════════════════════════════════════════════════════
     async function showClassDetail(className) {
         const renderToken = ++detailRenderToken;
+        if (nodeInfoCache.has(className) && selectedNodeId !== className) {
+            selectNode(className);
+        }
         // Expose for chat.js
         window._showClassDetail = showClassDetail;
         const panel = document.getElementById("detailPanel");
@@ -1531,6 +1674,8 @@
         const sectionProperties = document.getElementById("sectionProperties");
 
         panelTitle.textContent = className;
+        syncNodeSizeControls(className);
+        document.getElementById("nodeSizePopover").classList.add("node-size-popover-hidden");
 
         let detail;
         if (classDetailCache.has(className)) {
@@ -1635,7 +1780,7 @@
             relList.querySelectorAll(".rel-item").forEach((el) => {
                 el.addEventListener("click", () => {
                     const target = el.dataset.target;
-                    if (target) showClassDetail(target);
+                    if (target) locateNodeWithoutEdges(target, true);
                 });
             });
         } catch (err) {
@@ -1646,6 +1791,7 @@
     function closePanel() {
         detailRenderToken++;
         document.getElementById("detailPanel").classList.add("panel-hidden");
+        document.getElementById("nodeSizePopover").classList.add("node-size-popover-hidden");
     }
 
     // ══════════════════════════════════════════════════════
@@ -1654,8 +1800,60 @@
     // ══════════════════════════════════════════════════════
     function setupSearch() {
         const input = document.getElementById("searchInput");
+        const priorityButton = document.getElementById("btnPrioritySearch");
+        const results = document.getElementById("searchResults");
         let debounceTimer;
         let isComposing = false;
+        let priorityOnly = false;
+        let currentMatches = [];
+
+        const escapeSearchText = (value) => String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+
+        function renderResults(matches) {
+            currentMatches = matches.slice(0, 30);
+            if (!currentMatches.length) {
+                results.innerHTML = `<div class="search-result-cn" style="padding:10px">未找到匹配节点</div>`;
+            } else {
+                results.innerHTML = currentMatches.map((node, index) => {
+                    const custom = priorityNodeSizes.has(node.id);
+                    const size = getNodeSize(node.id, node);
+                    return `<div class="search-result-item ${index === 0 ? "active" : ""}" data-node-id="${escapeSearchText(node.id)}">
+                        <div class="search-result-title">${escapeSearchText(node.id)}</div>
+                        <div class="search-result-cn">${escapeSearchText(node.data?.chineseName || node.data?.module || "")}</div>
+                        <div class="search-result-size">${custom ? "★ 重点" : "大节点"} · ${size}</div>
+                    </div>`;
+                }).join("");
+            }
+            results.classList.remove("search-results-hidden");
+        }
+
+        async function chooseResult(nodeId) {
+            input.value = nodeId;
+            results.classList.add("search-results-hidden");
+            await locateNodeWithoutEdges(nodeId, true);
+        }
+
+        results.addEventListener("mousedown", (event) => {
+            const item = event.target.closest(".search-result-item[data-node-id]");
+            if (!item) return;
+            event.preventDefault();
+            chooseResult(item.dataset.nodeId);
+        });
+
+        priorityButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            priorityOnly = !priorityOnly;
+            priorityButton.classList.toggle("active", priorityOnly);
+            priorityButton.title = priorityOnly ? "正在只搜索重点大节点" : "只搜索重点大节点";
+            input.placeholder = priorityOnly ? "快速定位重点大节点..." : "搜索类名、属性...";
+            triggerSearch(input.value.trim(), true);
+            input.focus();
+        });
 
         // 阻断拼音输入法输入期间的频繁检索重绘
         input.addEventListener("compositionstart", () => {
@@ -1677,30 +1875,54 @@
             }, 350); // 适度增加防抖时间至 350ms 减缓冲击
         });
 
-        function triggerSearch(text) {
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && currentMatches.length) {
+                event.preventDefault();
+                chooseResult(currentMatches[0].id);
+            } else if (event.key === "Escape") {
+                results.classList.add("search-results-hidden");
+            }
+        });
+        input.addEventListener("focus", () => {
+            if (input.value.trim() || priorityOnly) triggerSearch(input.value.trim(), true);
+        });
+        document.addEventListener("mousedown", (event) => {
+            if (!event.target.closest("#searchBox")) {
+                results.classList.add("search-results-hidden");
+            }
+        });
+
+        function triggerSearch(text, forceResults = false) {
             const query = text.toLowerCase();
             if (!graph || !rawData) return;
 
-            if (!query) {
+            if (!query && !priorityOnly) {
                 // 清空全部高亮状态
                 clearHighlight();
+                results.classList.add("search-results-hidden");
                 return;
             }
 
-            // 高性能 for 循环和 indexOf 匹配，避免频繁 callback 堆栈开销
-            const states = {};
             const nodes = rawData.nodes;
             const len = nodes.length;
+            const matches = [];
 
             for (let i = 0; i < len; i++) {
                 const n = nodes[i];
                 const label = (n.data?.label || n.id).toLowerCase();
                 const cn = (n.data?.chineseName || "").toLowerCase();
-                const match = label.indexOf(query) !== -1 || cn.indexOf(query) !== -1;
-                states[n.id] = match ? ["active"] : ["inactive"];
+                const textMatches = !query || label.indexOf(query) !== -1 || cn.indexOf(query) !== -1;
+                const match = textMatches && (!priorityOnly || isLargeNode(n));
+                if (match) matches.push(n);
             }
 
-            _applyStates(states);
+            matches.sort((a, b) => {
+                const priorityDifference =
+                    Number(priorityNodeSizes.has(b.id)) - Number(priorityNodeSizes.has(a.id));
+                return priorityDifference || a.id.localeCompare(b.id);
+            });
+            hideAllCanvasEdges().catch((error) => console.debug("Search edge cleanup skipped:", error));
+            if (query || priorityOnly || forceResults) renderResults(matches);
         }
     }
 
@@ -2607,6 +2829,7 @@
 
             // Setup UI
             setupSearch();
+            setupNodeSizeControls();
             setupToolbar();
             setupLegend();
             setupResize();

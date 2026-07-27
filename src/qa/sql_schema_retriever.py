@@ -39,13 +39,34 @@ def _schema():
 def build_sql_schema_context(
     class_names: list[str],
     *,
+    question: str = "",
     max_tables: int = 6,
     max_fields: int = 420,
 ) -> str:
     """Format exact physical tables, fields, PKs and FKs for an LLM prompt."""
     tables, fields_by_table = _schema()
+    requested = list(class_names)
+    from src.qa.sql_domain_context import (
+        HISTORY_MAINLINE_TABLES,
+        history_mainline_companion_tables,
+    )
+
+    history_domain_tables = {"HistoryMainline"}
+    for companion_group in HISTORY_MAINLINE_TABLES.values():
+        history_domain_tables.update(companion_group)
+    if history_domain_tables.intersection(requested):
+
+        # HistoryMainline may be appended after many persisted selections.
+        # Prioritize the active transaction domain so the six-table cap cannot
+        # discard the table the user is currently asking about.
+        requested = (
+            ["HistoryMainline"]
+            + history_mainline_companion_tables(question)
+            + [name for name in requested if name != "HistoryMainline"]
+        )
+
     selected = []
-    for name in class_names:
+    for name in requested:
         if name in tables and name not in selected:
             selected.append(name)
         if len(selected) >= max_tables:

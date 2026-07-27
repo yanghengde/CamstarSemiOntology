@@ -38,14 +38,9 @@ def _get_vector_collection():
                     print(f"[Chat] Vector store not available: {e}")
     return _vector_collection
 
-def _preload_vector_store_bg():
-    try:
-        _get_vector_collection()
-    except Exception as e:
-        print(f"[Server] Failed to preload vector store: {e}")
-
-# Start a background daemon thread to pre-load vector collection without blocking server startup
-threading.Thread(target=_preload_vector_store_bg, daemon=True).start()
+# SQL mode does not use ChromaDB. Keep the collection lazy so starting the
+# graph viewer neither writes to the tracked vector database nor consumes
+# memory before a non-SQL assistant explicitly requests vector retrieval.
 
 # ── Module combos classification ──
 MODULE_MAP = {}

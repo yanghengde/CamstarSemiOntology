@@ -52,5 +52,5 @@ if __name__ == "__main__":
         port=5050,
         reload=True,
         reload_dirs=[PROJECT_ROOT],
-        reload_excludes=["*.md", "*.json", "*.jsonl", "*.csv", "*.log", "*relationships*", "*wiki_kb*", "*logs*", "*scratch*"]
+        reload_excludes=["*.md", "*.json", "*.jsonl", "*.csv", "*.log", "*.sqlite3", "*relationships*", "*wiki_kb*", "*logs*", "*scratch*"]
     )

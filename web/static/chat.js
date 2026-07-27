@@ -29,12 +29,13 @@
     const chatSessionCount = document.getElementById("chatSessionCount");
     const chatContextTitle = document.getElementById("chatContextTitle");
     const chatContextClasses = document.getElementById("chatContextClasses");
+    const chatQuickActions = document.getElementById("chatQuickActions");
 
     // ── Welcome HTML template ──
     const WELCOME_HTML = `<div class="chat-welcome">
         <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
         <p>你好！我是 Camstar SQL 助手。</p>
-        <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 T-SQL</p>
+        <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 Oracle SQL</p>
     </div>`;
 
     function stopStreaming() {
@@ -332,6 +333,23 @@
         }
     });
 
+    chatQuickActions.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-prompt]");
+        if (!button || isStreaming) return;
+        const selected = (typeof window._getSelectedNodeId === "function")
+            ? window._getSelectedNodeId()
+            : null;
+        const subject = selected ? `[[${selected}]]` : "当前选中的表";
+        const prompts = {
+            fields: `请列出 ${subject} 最常用于写SQL的物理字段、主键和外键，并说明适合的查询场景。`,
+            time: `请基于 ${subject} 生成一个Oracle SQL时间范围查询模板，使用 :StartTime 和 :EndTime 参数。`,
+            move: "请生成按Container名称和时间范围查询完整过站Move轨迹的Oracle SQL。",
+            throughput: "请生成按工序和时间范围统计产出数量的Oracle SQL，并说明数量和去重口径。",
+        };
+        chatInput.value = prompts[button.dataset.prompt] || "";
+        chatInput.focus();
+    });
+
     chatHistory.addEventListener("click", async () => {
         const opening = chatSessionMenu.classList.contains("chat-session-menu-hidden");
         chatSessionMenu.classList.toggle("chat-session-menu-hidden");
@@ -449,6 +467,7 @@
                     session_id: sessionId,
                     product_line,
                     assistant_mode: "sql",
+                    sql_dialect: "oracle",
                     selected_classes: selectedNode ? [selectedNode] : []
                 }),
                 signal: abortController.signal
@@ -592,11 +611,8 @@
         if (e.target.classList.contains("chat-class-link")) {
             const className = e.target.dataset.class;
             if (!className) return;
-            if (typeof window._selectNode === "function") {
-                window._selectNode(className);
-            }
-            if (typeof window._showClassDetail === "function") {
-                window._showClassDetail(className);
+            if (typeof window._locateNodeWithoutEdges === "function") {
+                window._locateNodeWithoutEdges(className, true);
             }
         }
     });
