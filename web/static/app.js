@@ -177,7 +177,7 @@
     let pendingHighlightClear = false;
     let detailRenderToken = 0;
     const PRIORITY_NODE_STORAGE_KEY = "camstar_priority_nodes_v2";
-    const LARGE_MODULES = new Set(["workflow", "mfgorder", "material", "product"]);
+    const DEFAULT_CORE_NODE_IDS = new Set(["Workflow", "Product", "MfgOrder"]);
     let priorityNodes = new Set();
     let largeNodeFocusMode = false;
     try {
@@ -199,8 +199,7 @@
     const INITIAL_PROPERTY_ROWS = 60;
 
     function defaultNodeSize(nodeOrData) {
-        const module = nodeOrData?.data?.module || nodeOrData?.module;
-        return LARGE_MODULES.has(module) ? 76 : 52;
+        return DEFAULT_CORE_NODE_IDS.has(nodeOrData?.id) ? 76 : 52;
     }
 
     function getNodeSize(nodeId, nodeOrData) {
@@ -298,25 +297,56 @@
                 .localeCompare(b.data?.module || "other");
             return moduleOrder || a.id.localeCompare(b.id);
         });
+        const followedNodes = orderedNodes.filter((node) =>
+            priorityNodes.has(node.id),
+        );
         const coreNodes = orderedNodes.filter((node) =>
-            priorityNodes.has(node.id) || isLargeNode(node),
+            !priorityNodes.has(node.id) && isLargeNode(node),
         );
         const regularNodes = orderedNodes.filter((node) =>
             !priorityNodes.has(node.id) && !isLargeNode(node),
         );
-        const anchorIndex = coreNodes.findIndex((node) => node.id === "Workflow");
-        const anchorNode = anchorIndex >= 0 ? coreNodes.splice(anchorIndex, 1)[0] : null;
+        let anchorNode = null;
+        const followedAnchorIndex = followedNodes.findIndex((node) => node.id === "Workflow");
+        if (followedAnchorIndex >= 0) {
+            anchorNode = followedNodes.splice(followedAnchorIndex, 1)[0];
+        } else {
+            const coreAnchorIndex = coreNodes.findIndex((node) => node.id === "Workflow");
+            if (coreAnchorIndex >= 0) {
+                anchorNode = coreNodes.splice(coreAnchorIndex, 1)[0];
+            }
+        }
         if (anchorNode) presetPositions.set(anchorNode.id, { x: 0, y: 0 });
 
-        // Keep large/priority objects on a well-spaced inner ring. Previously
-        // Product and Workflow overlapped, hiding their short relationship line.
+        // Followed objects live in the central focus area, between Workflow
+        // and the permanent core objects. This makes the switch visibly
+        // meaningful without changing the user's current camera position.
+        const followedRadius = followedNodes.length
+            ? Math.max(145, followedNodes.length * 115 / (2 * Math.PI))
+            : 0;
+        followedNodes.forEach((node, index) => {
+            const angle = followedNodes.length === 1
+                ? -Math.PI / 2
+                : index / followedNodes.length * Math.PI * 2 - Math.PI / 2;
+            presetPositions.set(node.id, {
+                x: Math.cos(angle) * followedRadius * 1.12,
+                y: Math.sin(angle) * followedRadius,
+            });
+        });
+
+        // Keep the permanent large objects on a ring outside the followed
+        // area. Product and MfgOrder remain prominent while followed nodes
+        // get the clearest part of the graph.
         const coreRadius = Math.max(
-            180,
+            followedRadius + 165,
+            270,
             coreNodes.length * 130 / (2 * Math.PI),
         );
         coreNodes.forEach((node, index) => {
-            const angle = index / Math.max(1, coreNodes.length) * Math.PI * 2
-                - Math.PI / 2;
+            // Offset the permanent core ring from the followed ring so a
+            // newly followed node never sits directly on top of Product or
+            // MfgOrder and its relationship line remains visible.
+            const angle = index / Math.max(1, coreNodes.length) * Math.PI * 2;
             presetPositions.set(node.id, {
                 x: Math.cos(angle) * coreRadius * 1.2,
                 y: Math.sin(angle) * coreRadius * 0.78,
@@ -541,11 +571,12 @@
             height,
             autoFit: "view",
             padding: [60, 60, 60, 60],
-            // ── G6 v5 高密集节点渲染性能优化配置 ──
-            culling: {
-                enable: true,
-                cullingDebounce: 30,
-            },
+            // The graph only keeps a compact overview edge layer, or the
+            // currently selected node's direct-neighbor layer. G6 culling is
+            // therefore unnecessary here. More importantly, its cached
+            // bounds can drop newly-added long edges after a focus switch,
+            // leaving a highlighted neighbor with no visible connection.
+            culling: false,
 
             // ── Node defaults ──
             node: {
@@ -730,7 +761,11 @@
             },
 
             // ── Layout ──
-            layout: { ...LAYOUTS[layoutMode] },
+            // Initial coordinates are already written into every node. Do
+            // not ask G6 to resolve a non-existent "preset" layout plugin.
+            layout: layoutMode === "preset"
+                ? undefined
+                : { ...LAYOUTS[layoutMode] },
 
             // ── Behaviours ──
             behaviors: [
@@ -961,11 +996,9 @@
         if (edgeRenderWorker) {
             try { await edgeRenderWorker; } catch (_) {}
         }
+        await clearHighlight();
         const edgeIds = graph.getEdgeData().map((edge) => edge.id);
         if (!edgeIds.length) return;
-        if (_prevStates) {
-            for (const edgeId of edgeIds) delete _prevStates[edgeId];
-        }
         graph.removeEdgeData(edgeIds);
         await graph.draw();
     }
@@ -974,10 +1007,6 @@
         if (!graph || !rawData || largeNodeFocusMode) return;
         await hideAllCanvasEdges();
         setFocusBackdrop(null);
-        const resetStates = {};
-        for (const node of graph.getNodeData()) resetStates[node.id] = [];
-        await graph.setElementState(resetStates);
-        _prevStates = null;
         const overviewEdges = buildGraphData(
             { nodes: [], edges: overviewApiEdges },
             false,
@@ -990,13 +1019,12 @@
         if (!graph || !nodeInfoCache.has(nodeId)) return;
         selectNode(nodeId);
         await hideAllCanvasEdges();
-        clearHighlight();
         if (largeNodeFocusMode) {
-            applyLargeNodeFocusHighlight(
+            await applyLargeNodeFocusHighlight(
                 document.getElementById("searchInput")?.value || "",
             );
         } else {
-            _applyStates({ [nodeId]: ["selected"] });
+            await _applyStates({ [nodeId]: ["selected"] });
         }
         await graph.focusElement(nodeId, true);
         if (openDetail) await showClassDetail(nodeId);
@@ -1033,13 +1061,21 @@
         const token = edgeRenderToken;
         graphMutationBusy = true;
         try {
+            // Finish clearing the previous focus state before removing its
+            // edges. Otherwise an older async G6 state update can repaint
+            // stale neighbors after the new edge layer has been installed.
+            await clearHighlight();
+            if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
+
             const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
             if (currentEdgeIds.length) {
-                // Removed elements must not remain in the differential state cache.
-                if (_prevStates) {
-                    for (const edgeId of currentEdgeIds) delete _prevStates[edgeId];
-                }
                 graph.removeEdgeData(currentEdgeIds);
+                // Commit removals before reusing any of the same ontology edge
+                // IDs in the next focus layer. Removing and re-adding an edge
+                // in one G6 draw cycle can leave its data present while its
+                // canvas shape remains disposed.
+                await graph.draw();
+                if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
             }
 
             const adjacency = adjacencyIndex?.get(nodeId);
@@ -1093,9 +1129,9 @@
 
         if (pendingHighlightClear || !selectedNodeId) {
             pendingHighlightClear = false;
-            clearHighlight();
+            await clearHighlight();
             if (largeNodeFocusMode) {
-                applyLargeNodeFocusHighlight(
+                await applyLargeNodeFocusHighlight(
                     document.getElementById("searchInput")?.value || "",
                 );
             }
@@ -1104,7 +1140,7 @@
             && selectedNodeId === nodeId
             && !pendingEdgeNodeId
         ) {
-            highlightNeighbors(nodeId, true);
+            await highlightNeighbors(nodeId, true);
         }
     }
 
@@ -1127,36 +1163,56 @@
         document.querySelectorAll(".legend-item.active").forEach(el => el.classList.remove("active"));
     }
 
-    // ── Performance: cache previous states for differential updates ──
-    let _prevStates = null;
+    // G6 state transitions are asynchronous. Serialize and coalesce them so
+    // rapid clicks/hover changes cannot apply an obsolete highlight after a
+    // newer selection has already replaced the visible edge layer.
+    let _prevStates = Object.create(null);
+    let stateRevision = 0;
+    let stateApplyChain = Promise.resolve();
+
+    function sameState(previous, next) {
+        return Boolean(previous)
+            && previous.length === next.length
+            && previous.every((value, index) => value === next[index]);
+    }
 
     function _applyStates(states) {
-        // Differential state update: only send changes to G6
-        if (_prevStates) {
-            const diff = {};
-            let hasDiff = false;
-            for (const id in states) {
-                const prev = _prevStates[id];
-                const next = states[id];
-                if (!prev || prev.length !== next.length || prev.join() !== next.join()) {
-                    diff[id] = next;
-                    hasDiff = true;
-                }
-            }
-            // Also clear any elements in prev that are not in new states
-            for (const id in _prevStates) {
-                if (!(id in states)) {
-                    diff[id] = [];
-                    hasDiff = true;
-                }
-            }
-            if (hasDiff) {
-                graph.setElementState(diff);
-            }
-        } else {
-            graph.setElementState(states);
+        const requested = Object.create(null);
+        for (const [id, values] of Object.entries(states || {})) {
+            requested[id] = [...values];
         }
-        _prevStates = states;
+        const revision = ++stateRevision;
+
+        stateApplyChain = stateApplyChain
+            .catch((error) => {
+                console.debug("Previous graph state update skipped:", error);
+            })
+            .then(async () => {
+                if (!graph || revision !== stateRevision) return;
+
+                const currentIds = new Set([
+                    ...graph.getNodeData().map((item) => item.id),
+                    ...graph.getEdgeData().map((item) => item.id),
+                    ...graph.getComboData().map((item) => item.id),
+                ]);
+                const diff = {};
+                const ids = new Set([
+                    ...Object.keys(_prevStates),
+                    ...Object.keys(requested),
+                ]);
+                for (const id of ids) {
+                    if (!currentIds.has(id)) continue;
+                    const previous = _prevStates[id] || [];
+                    const next = requested[id] || [];
+                    if (!sameState(previous, next)) diff[id] = next;
+                }
+                if (Object.keys(diff).length) {
+                    await graph.setElementState(diff);
+                }
+                _prevStates = requested;
+            });
+
+        return stateApplyChain;
     }
 
     function setFocusBackdrop(focusedNodeId, visibleNeighborIds = new Set()) {
@@ -1178,7 +1234,7 @@
         }));
     }
 
-    function highlightNeighbors(nodeId, isSelection) {
+    async function highlightNeighbors(nodeId, isSelection) {
         if (!graph) return;
         const edgesData = graph.getEdgeData();
         const states = {};
@@ -1208,26 +1264,12 @@
             setFocusBackdrop(nodeId, visibleNeighborIds);
         }
 
-        _applyStates(states);
+        await _applyStates(states);
     }
 
     function clearHighlight() {
-        if (!graph) return;
-        // Only send diff: reset elements that had non-empty state
-        if (_prevStates) {
-            const diff = {};
-            let hasDiff = false;
-            for (const id in _prevStates) {
-                if (_prevStates[id].length > 0) {
-                    diff[id] = [];
-                    hasDiff = true;
-                }
-            }
-            if (hasDiff) {
-                graph.setElementState(diff);
-            }
-            _prevStates = null;
-        }
+        if (!graph) return Promise.resolve();
+        return _applyStates({});
     }
 
     // ══════════════════════════════════════════════════════
@@ -1308,7 +1350,7 @@
                 states[node.id] = ["highlighted"];
             }
         }
-        _applyStates(states);
+        return _applyStates(states);
     }
 
     // ══════════════════════════════════════════════════════
@@ -1319,28 +1361,59 @@
         const enabled = priorityNodes.has(nodeId);
         button.classList.toggle("active", enabled);
         button.setAttribute("aria-pressed", String(enabled));
-        button.querySelector(".compact-switch-label").textContent = enabled ? "启用" : "关闭";
-        button.title = enabled ? "取消重点节点并恢复原始大小" : "设为重点大节点";
+        button.querySelector(".compact-switch-label").textContent = enabled ? "关注" : "关闭";
+        button.title = enabled
+            ? "取消关注，移出中央区域并恢复正常大小"
+            : "关注并移到中央区域";
     }
 
     async function setSelectedNodePriority(enabled) {
         if (!selectedNodeId || !graph) return;
-        if (enabled) priorityNodes.add(selectedNodeId);
-        else priorityNodes.delete(selectedNodeId);
-        persistPriorityNodes();
-        const node = graph.getNodeData(selectedNodeId);
-        if (node) {
-            graph.updateNodeData([{
-                id: selectedNodeId,
-                style: {
-                    ...(node.style || {}),
-                    size: getNodeSize(selectedNodeId, node),
-                },
-            }]);
+        const nodeId = selectedNodeId;
+        graphMutationBusy = true;
+        try {
+            if (edgeRenderWorker) {
+                try { await edgeRenderWorker; } catch (_) {}
+            }
+            if (selectedNodeId !== nodeId) return;
+
+            if (enabled) priorityNodes.add(nodeId);
+            else priorityNodes.delete(nodeId);
+            persistPriorityNodes();
+
+            // Rebuild deterministic positions, then update every node in one
+            // draw. The followed node moves into/out of the focus area while
+            // all other nodes close the gap and retain stable ordering.
+            indexOverviewData(rawData);
+            const updates = graph.getNodeData().map((node) => {
+                const position = presetPositions.get(node.id);
+                const sourceNode = nodeInfoCache.get(node.id) || node;
+                return {
+                    id: node.id,
+                    style: {
+                        ...(node.style || {}),
+                        size: getNodeSize(node.id, sourceNode),
+                        x: position?.x,
+                        y: position?.y,
+                    },
+                };
+            });
+            graph.updateNodeData(updates);
             await graph.draw();
+
+            if (selectedNodeId === nodeId) {
+                if (largeNodeFocusMode) {
+                    await applyLargeNodeFocusHighlight(
+                        document.getElementById("searchInput")?.value || "",
+                    );
+                } else {
+                    await highlightNeighbors(nodeId, true);
+                }
+            }
+            syncNodePrioritySwitch(nodeId);
+        } finally {
+            graphMutationBusy = false;
         }
-        syncNodePrioritySwitch(selectedNodeId);
-        if (largeNodeFocusMode) applyLargeNodeFocusHighlight();
     }
 
     function setupNodePriorityControl() {
