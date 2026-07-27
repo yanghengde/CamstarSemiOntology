@@ -13,6 +13,8 @@ class ChatRequest(BaseModel):
     session_id: str | None = None
     product_line: str = "general"
     history: list[dict] | None = None
+    assistant_mode: str = "sql"
+    selected_classes: list[str] | None = None
 
 
 class ClearRequest(BaseModel):
@@ -35,7 +37,10 @@ async def chat(req: ChatRequest):
             _chat_sessions[session_id] = []
         history = _chat_sessions[session_id]
 
-    vec_col = _get_vector_collection()
+    # SQL generation relies on the authoritative physical CSV schema and
+    # ontology joins. Skip ChromaDB to reduce latency and avoid irrelevant
+    # modeling prose influencing table/column selection.
+    vec_col = None if req.assistant_mode == "sql" else _get_vector_collection()
 
     from src.qa.logger import ChatTrace, CHAT_LOG_ENABLED
     trace = ChatTrace(session_id, question) if CHAT_LOG_ENABLED else None
@@ -46,7 +51,13 @@ async def chat(req: ChatRequest):
         import re
 
         # 1. Extract keywords from current question
-        keywords = extract_keywords(question)
+        selected_classes = req.selected_classes or []
+        keywords = list(
+            dict.fromkeys(
+                selected_classes
+                + extract_keywords(question, fallback=not bool(selected_classes))
+            )
+        )
 
         # 2. Extract classes from recent history (last 4 turns) to enable follow-ups and pronoun resolution
         history_classes = []
@@ -85,7 +96,15 @@ async def chat(req: ChatRequest):
         full_answer = ""
         error_msg = None
         try:
-            async for chunk in query_stream(question, history, vec_col, trace=trace, product_line=req.product_line):
+            async for chunk in query_stream(
+                question,
+                history,
+                vec_col,
+                trace=trace,
+                product_line=req.product_line,
+                assistant_mode=req.assistant_mode,
+                selected_classes=req.selected_classes,
+            ):
                 if isinstance(chunk, dict) and chunk.get("type") == "status":
                     yield f"data: {json.dumps({'type': 'status', 'content': chunk['content']}, ensure_ascii=False)}\n\n"
                 else:

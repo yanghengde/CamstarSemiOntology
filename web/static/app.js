@@ -836,6 +836,7 @@
     }
     // Expose for chat.js
     window._selectNode = selectNode;
+    window._getSelectedNodeId = () => selectedNodeId;
 
     function queueIncidentEdgeRender(nodeId) {
         pendingEdgeNodeId = nodeId;

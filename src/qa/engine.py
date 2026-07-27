@@ -64,6 +64,15 @@ _llm_client = None
 _async_llm_client = None
 _class_names = None
 
+UNSAFE_SQL_REQUEST = re.compile(
+    r"\b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE|DROP|ALTER|CREATE|EXEC(?:UTE)?)\b"
+    r"|(?:帮我|请|给我|写|生成|执行|直接|需要|想要).{0,20}"
+    r"(?:删除|删掉|清空|更新|修改|写入|插入|新增|建表|删表)"
+    r"|(?:删除|删掉|清空|更新|修改|写入|插入|新增|建表|删表).{0,12}(?:SQL|语句)"
+    r"|^\s*(?:删除|删掉|清空|更新|修改|写入|插入|新增|建表|删表)",
+    re.IGNORECASE,
+)
+
 
 def _get_llm():
     global _llm_client
@@ -95,7 +104,7 @@ def _get_class_names():
     return _class_names
 
 
-def extract_keywords(question: str) -> list[str]:
+def extract_keywords(question: str, fallback: bool = True) -> list[str]:
     """
     Extract relevant ontology keywords from the user question.
     Uses a two-pronged approach:
@@ -117,7 +126,8 @@ def extract_keywords(question: str) -> list[str]:
             keywords.append(en)
 
     # Deduplicate and return
-    return list(dict.fromkeys(keywords)) or ["Workflow"]  # fallback
+    result = list(dict.fromkeys(keywords))
+    return result or (["Workflow"] if fallback else [])
 
 
 async def query(
@@ -125,12 +135,21 @@ async def query(
     history: list[dict] | None = None,
     vector_collection=None,
     product_line: str = "general",
+    assistant_mode: str = "sql",
+    selected_classes: list[str] | None = None,
 ) -> str:
     """
     Non-streaming query: returns complete answer string.
     """
     chunks = []
-    async for chunk in query_stream(question, history, vector_collection, product_line=product_line):
+    async for chunk in query_stream(
+        question,
+        history,
+        vector_collection,
+        product_line=product_line,
+        assistant_mode=assistant_mode,
+        selected_classes=selected_classes,
+    ):
         if isinstance(chunk, str):
             chunks.append(chunk)
     return "".join(chunks)
@@ -142,15 +161,32 @@ async def query_stream(
     vector_collection=None,
     trace: ChatTrace | None = None,
     product_line: str = "general",
+    assistant_mode: str = "sql",
+    selected_classes: list[str] | None = None,
 ):
     """
     Streaming query: yields answer chunks as they arrive from DeepSeek.
     Pure Graph RAG strategy: Graph + Vector + LLM streaming.
     If 'trace' is provided, each step's timing and metadata are logged.
     """
+    if assistant_mode == "sql" and UNSAFE_SQL_REQUEST.search(question):
+        yield (
+            "### 安全限制\n"
+            "Camstar SQL 助手只生成只读 `SELECT` 或以 `SELECT` 结束的 CTE，"
+            "不提供 `INSERT`、`UPDATE`、`DELETE`、`MERGE`、DDL 或存储过程执行语句。"
+            "该请求未执行，也未生成修改数据的替代语句。"
+        )
+        return
+
     # 1. Extract entities/keywords
     step_kw = trace.add_step("关键词提取") if trace else None
-    keywords = extract_keywords(question)
+    selected_classes = selected_classes or []
+    keywords = list(
+        dict.fromkeys(
+            selected_classes
+            + extract_keywords(question, fallback=not bool(selected_classes))
+        )
+    )
     if step_kw:
         step_kw.done(output={"keywords": keywords})
 
@@ -168,7 +204,11 @@ async def query_stream(
     # 3. Vector retrieval (supplementary context)
     step_vec = trace.add_step("向量检索") if trace else None
     vector_context = "未配置向量检索。"
-    if vector_collection is not None:
+    if assistant_mode == "sql":
+        vector_context = "SQL模式仅使用物理数据库架构与本体关系。"
+        if step_vec:
+            step_vec.done(output={"chunks_retrieved": 0, "skipped_for_sql": True})
+    elif vector_collection is not None:
         try:
             results = vector_collection.query(
                 query_texts=[question],
@@ -188,7 +228,19 @@ async def query_stream(
 
     # 4. Build prompt
     step_prompt = trace.add_step("提示词构建") if trace else None
-    messages = build_prompt(question, graph_context, vector_context, history, product_line=product_line)
+    sql_schema_context = ""
+    if assistant_mode == "sql":
+        from src.qa.sql_schema_retriever import build_sql_schema_context
+        sql_schema_context = build_sql_schema_context(keywords)
+    messages = build_prompt(
+        question,
+        graph_context,
+        vector_context,
+        history,
+        product_line=product_line,
+        assistant_mode=assistant_mode,
+        sql_schema_context=sql_schema_context,
+    )
     if step_prompt:
         step_prompt.done(output={
             "system_tokens": len(messages[0]["content"]) // 3 if messages else 0,
@@ -205,7 +257,7 @@ async def query_stream(
             model=model,
             messages=messages,
             stream=True,
-            temperature=0.3,
+            temperature=0.1 if assistant_mode == "sql" else 0.3,
             max_tokens=4096,
         )
 

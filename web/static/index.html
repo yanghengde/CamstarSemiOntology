@@ -105,7 +105,7 @@
                 </div>
             </div>
             <div class="topbar-divider"></div>
-            <button class="icon-btn icon-btn-chat" id="chatToggleBtn" title="Opcenter 问答助手">
+            <button class="icon-btn icon-btn-chat" id="chatToggleBtn" title="Camstar SQL 助手">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
@@ -239,8 +239,8 @@
             <div class="chat-header-left">
                 <img src="/static/siemens_logo.svg" alt="Bot" class="chat-header-icon"
                     style="width:20px;height:20px;border-radius:4px;" />
-                <span class="chat-header-title">Opcenter 问答助手</span>
-                <span class="chat-header-badge">RAG</span>
+                <span class="chat-header-title">Camstar SQL 助手</span>
+                <span class="chat-header-badge">READ ONLY</span>
             </div>
             <div class="chat-header-right">
                 <button class="icon-btn" id="chatClearBtn" title="清空对话">
@@ -261,13 +261,13 @@
             <div class="chat-welcome">
                 <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon"
                     style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
-                <p>你好！我是 Opcenter 问答助手。</p>
-                <p class="chat-welcome-sub">可以问我Opcenter Modeling 建模相关的问题</p>
+                <p>你好！我是 Camstar SQL 助手。</p>
+                <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 T-SQL</p>
             </div>
         </div>
         <div class="chat-input-area" style="position: relative;">
             <div id="mentionDropdown" class="mention-dropdown"></div>
-            <textarea id="chatInput" placeholder="输入你的问题... (输入 @ 引用节点)" rows="1"></textarea>
+            <textarea id="chatInput" placeholder="描述查询需求…（可输入 @ 引用表）" rows="1"></textarea>
             <button id="chatSend" class="chat-send-btn" title="发送">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="22" y1="2" x2="11" y2="13" />

@@ -1,5 +1,5 @@
 /**
- * Opcenter QA Chat Panel
+ * Camstar read-only SQL Assistant
  * ───────────────────────
  * Floating resizable chat panel with SSE streaming, multi-turn memory,
  * and graph node linking via [[ClassName]] markers.
@@ -28,8 +28,8 @@
     // ── Welcome HTML template ──
     const WELCOME_HTML = `<div class="chat-welcome">
         <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
-        <p>你好！我是 Opcenter 问答助手。</p>
-        <p class="chat-welcome-sub">可以问我Opcenter Modeling 建模相关的问题</p>
+        <p>你好！我是 Camstar SQL 助手。</p>
+        <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 T-SQL</p>
     </div>`;
 
     /** Reset session: clear backend history, new session ID, restore welcome */
@@ -294,6 +294,7 @@
 
         try {
             const product_line = (typeof window._getCurrentProductLine === "function") ? window._getCurrentProductLine() : "general";
+            const selectedNode = (typeof window._getSelectedNodeId === "function") ? window._getSelectedNodeId() : null;
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -301,7 +302,9 @@
                     question,
                     session_id: sessionId,
                     product_line,
-                    history: historyToSend
+                    history: historyToSend,
+                    assistant_mode: "sql",
+                    selected_classes: selectedNode ? [selectedNode] : []
                 }),
                 signal: abortController.signal
             });
@@ -353,6 +356,7 @@
 
             // Final render with links
             contentEl.innerHTML = renderMarkdown(fullText);
+            addSqlCopyButtons(contentEl);
             
             // Append in-bubble highlight link if highlightData exists
             if (highlightData) {
@@ -406,6 +410,25 @@
             .replace(/\[\[(\w+)\]\]/g, '<span class="chat-class-link" data-class="$1">$1</span>')
             .replace(/\n/g, '<br/>');
         return html;
+    }
+
+    function addSqlCopyButtons(container) {
+        container.querySelectorAll("pre.chat-code").forEach((pre) => {
+            if (pre.querySelector(".sql-copy-btn")) return;
+            pre.style.position = "relative";
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "sql-copy-btn";
+            button.textContent = "复制 SQL";
+            button.style.cssText = "position:absolute;right:8px;top:8px;padding:4px 8px;border:1px solid rgba(0,255,185,.35);border-radius:4px;background:#062734;color:#00ffb9;font-size:11px;cursor:pointer";
+            button.addEventListener("click", async () => {
+                const code = pre.querySelector("code")?.textContent || "";
+                await navigator.clipboard.writeText(code);
+                button.textContent = "已复制";
+                setTimeout(() => { button.textContent = "复制 SQL"; }, 1200);
+            });
+            pre.appendChild(button);
+        });
     }
 
     // ── Click on [[ClassName]] links in chat ──
