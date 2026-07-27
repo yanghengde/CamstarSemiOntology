@@ -168,6 +168,7 @@
     const presetPositions = new Map();
     let adjacencyIndex = null;
     let edgeInfoById = new Map();
+    let overviewApiEdges = [];
     let detailPrefetchPromise = null;
     let edgeRenderToken = 0;
     let pendingEdgeNodeId = null;
@@ -192,10 +193,9 @@
         priorityNodes = new Set();
     }
 
-    // Keep high-degree nodes responsive. The detail panel still exposes the
-    // complete schema and relationship list; the canvas only draws a useful
-    // summary of the immediate neighborhood.
-    const MAX_CANVAS_NEIGHBORS = 28;
+    // Parallel relationships to the same neighbor are collapsed, but every
+    // direct neighbor remains visible on the canvas.
+    const MAX_OVERVIEW_EDGES = 360;
     const INITIAL_PROPERTY_ROWS = 60;
 
     function defaultNodeSize(nodeOrData) {
@@ -282,42 +282,59 @@
     function indexOverviewData(data) {
         nodeInfoCache.clear();
         presetPositions.clear();
-        const moduleGroups = new Map();
         for (const node of data?.nodes || []) {
             nodeInfoCache.set(node.id, node);
-            const module = COMBO_LABELS[node.data?.module]
-                ? node.data.module
-                : "other";
-            if (!moduleGroups.has(module)) moduleGroups.set(module, []);
-            moduleGroups.get(module).push(node.id);
         }
 
-        const modules = [...moduleGroups.keys()].sort();
-        const moduleColumns = Math.max(1, Math.ceil(Math.sqrt(modules.length)));
-        const largestGroup = Math.max(
-            1,
-            ...modules.map((module) => moduleGroups.get(module).length),
+        // Compact deterministic sunflower layout. The former module-block
+        // layout spread every module using the largest module's dimensions,
+        // so fitView reduced the complete ontology to unreadable dots.
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        const orderedNodes = [...(data?.nodes || [])].sort((a, b) => {
+            const aRank = priorityNodes.has(a.id) ? 0 : (isLargeNode(a) ? 1 : 2);
+            const bRank = priorityNodes.has(b.id) ? 0 : (isLargeNode(b) ? 1 : 2);
+            if (aRank !== bRank) return aRank - bRank;
+            const moduleOrder = (a.data?.module || "other")
+                .localeCompare(b.data?.module || "other");
+            return moduleOrder || a.id.localeCompare(b.id);
+        });
+        const coreNodes = orderedNodes.filter((node) =>
+            priorityNodes.has(node.id) || isLargeNode(node),
         );
-        const blockSize = Math.max(
-            700,
-            Math.ceil(Math.sqrt(largestGroup)) * 105 + 220,
+        const regularNodes = orderedNodes.filter((node) =>
+            !priorityNodes.has(node.id) && !isLargeNode(node),
         );
+        const anchorIndex = coreNodes.findIndex((node) => node.id === "Workflow");
+        const anchorNode = anchorIndex >= 0 ? coreNodes.splice(anchorIndex, 1)[0] : null;
+        if (anchorNode) presetPositions.set(anchorNode.id, { x: 0, y: 0 });
 
-        modules.forEach((module, moduleIndex) => {
-            const ids = moduleGroups.get(module).sort();
-            const innerColumns = Math.max(1, Math.ceil(Math.sqrt(ids.length)));
-            const rows = Math.ceil(ids.length / innerColumns);
-            const centerX = (moduleIndex % moduleColumns) * blockSize;
-            const centerY = Math.floor(moduleIndex / moduleColumns) * blockSize;
-            ids.forEach((id, index) => {
-                const column = index % innerColumns;
-                const row = Math.floor(index / innerColumns);
-                presetPositions.set(id, {
-                    x: centerX + (column - (innerColumns - 1) / 2) * 105,
-                    y: centerY + (row - (rows - 1) / 2) * 105,
-                });
+        // Keep large/priority objects on a well-spaced inner ring. Previously
+        // Product and Workflow overlapped, hiding their short relationship line.
+        const coreRadius = Math.max(
+            180,
+            coreNodes.length * 130 / (2 * Math.PI),
+        );
+        coreNodes.forEach((node, index) => {
+            const angle = index / Math.max(1, coreNodes.length) * Math.PI * 2
+                - Math.PI / 2;
+            presetPositions.set(node.id, {
+                x: Math.cos(angle) * coreRadius * 1.2,
+                y: Math.sin(angle) * coreRadius * 0.78,
             });
         });
+
+        const innerRadius = coreRadius + 110;
+        regularNodes.forEach((node, index) => {
+            const radius = Math.sqrt(
+                innerRadius * innerRadius + index * 34 * 34,
+            );
+            const angle = index * goldenAngle;
+            presetPositions.set(node.id, {
+                x: Math.cos(angle) * radius * 1.25,
+                y: Math.sin(angle) * radius * 0.78,
+            });
+        });
+
         adjacencyIndex = new Map();
         edgeInfoById = new Map();
         for (const node of data?.nodes || []) {
@@ -328,9 +345,9 @@
             });
         }
         (data?.edges || []).forEach((edge, index) => {
-            const edgeId = `e-${index}`;
-            edge.id = edge.id || edgeId;
-            edgeInfoById.set(edge.id, edge);
+            const edgeId = edge.id || `e-${index}`;
+            edge.id = edgeId;
+            edgeInfoById.set(edgeId, edge);
             const source = adjacencyIndex.get(edge.source);
             const target = adjacencyIndex.get(edge.target);
             if (!source || !target) return;
@@ -339,6 +356,59 @@
             target.neighbors.add(edge.source);
             target.incoming.add(edgeId);
         });
+        overviewApiEdges = selectOverviewEdges(data?.edges || []);
+    }
+
+    function selectOverviewEdges(edges) {
+        const uniquePairs = new Map();
+        for (const edge of edges) {
+            const pairKey = edge.source < edge.target
+                ? `${edge.source}\u0000${edge.target}`
+                : `${edge.target}\u0000${edge.source}`;
+            if (!uniquePairs.has(pairKey)) uniquePairs.set(pairKey, edge);
+        }
+
+        const score = (edge) => {
+            const sourceNode = nodeInfoCache.get(edge.source);
+            const targetNode = nodeInfoCache.get(edge.target);
+            const largeScore =
+                (sourceNode && isLargeNode(sourceNode) ? 1 : 0)
+                + (targetNode && isLargeNode(targetNode) ? 1 : 0);
+            const degreeScore =
+                (adjacencyIndex.get(edge.source)?.neighbors.size || 0)
+                + (adjacencyIndex.get(edge.target)?.neighbors.size || 0);
+            return largeScore * 10000 + degreeScore;
+        };
+        const scored = [...uniquePairs.values()].sort((a, b) =>
+            score(b) - score(a)
+            || a.source.localeCompare(b.source)
+            || a.target.localeCompare(b.target),
+        );
+
+        const selected = [];
+        const selectedIds = new Set();
+        const coveredNodes = new Set();
+        const addEdge = (edge) => {
+            if (selectedIds.has(edge.id) || selected.length >= MAX_OVERVIEW_EDGES) return;
+            selected.push(edge);
+            selectedIds.add(edge.id);
+            coveredNodes.add(edge.source);
+            coveredNodes.add(edge.target);
+        };
+
+        // Cover the graph broadly first, then use the remaining budget for
+        // core/high-degree relationships.
+        for (const edge of scored) {
+            if (!coveredNodes.has(edge.source) || !coveredNodes.has(edge.target)) {
+                addEdge(edge);
+            }
+            if (selected.length >= MAX_OVERVIEW_EDGES) break;
+        }
+        for (const edge of scored) {
+            addEdge(edge);
+            if (selected.length >= MAX_OVERVIEW_EDGES) break;
+        }
+        return selected;
     }
 
     function scheduleDetailPrefetch() {
@@ -670,7 +740,6 @@
                     type: "drag-element",
                     state: null, // Only drag the hovered node, not all 'selected' nodes
                 },
-                "optimize-viewport-transform",
             ],
 
             // ── Plugins ──
@@ -695,6 +764,7 @@
             if (selectedNodeId === nodeId) {
                 clearSelection();
                 closePanel();
+                if (!largeNodeFocusMode) await restoreOverviewEdges();
                 return;
             }
 
@@ -778,11 +848,12 @@
         // (skip if an edge was just clicked — guard prevents race condition)
         let edgeClickGuard = false;
 
-        graph.on("canvas:click", () => {
+        graph.on("canvas:click", async () => {
             if (edgeClickGuard) { edgeClickGuard = false; return; }
             clearSelection();
             closePanel();
             hideEdgePopup();
+            if (!largeNodeFocusMode) await restoreOverviewEdges();
         });
 
         // ── Edge click → show action popup (preserve node selection) ──
@@ -899,6 +970,22 @@
         await graph.draw();
     }
 
+    async function restoreOverviewEdges() {
+        if (!graph || !rawData || largeNodeFocusMode) return;
+        await hideAllCanvasEdges();
+        setFocusBackdrop(null);
+        const resetStates = {};
+        for (const node of graph.getNodeData()) resetStates[node.id] = [];
+        await graph.setElementState(resetStates);
+        _prevStates = null;
+        const overviewEdges = buildGraphData(
+            { nodes: [], edges: overviewApiEdges },
+            false,
+        ).edges;
+        if (overviewEdges.length) graph.addEdgeData(overviewEdges);
+        await graph.draw();
+    }
+
     async function locateNodeWithoutEdges(nodeId, openDetail = true) {
         if (!graph || !nodeInfoCache.has(nodeId)) return;
         selectNode(nodeId);
@@ -973,8 +1060,7 @@
                 byNeighbor.get(neighbor).push(edge);
             }
             const visibleGroups = [...byNeighbor.entries()]
-                .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
-                .slice(0, MAX_CANVAS_NEIGHBORS);
+                .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
             const visibleApiEdges = visibleGroups.map(([neighbor, edges]) => {
                 const representative = edges[0];
                 if (edges.length === 1) return representative;
@@ -1026,6 +1112,7 @@
         edgeRenderToken++;
         pendingEdgeNodeId = null;
         selectedNodeId = null;
+        setFocusBackdrop(null);
         if (graphMutationBusy) {
             pendingHighlightClear = true;
         } else {
@@ -1072,52 +1159,53 @@
         _prevStates = states;
     }
 
+    function setFocusBackdrop(focusedNodeId, visibleNeighborIds = new Set()) {
+        if (!graph) return;
+        const enabled = Boolean(focusedNodeId);
+        graph.updateNodeData(graph.getNodeData().map((node) => {
+            const isVisible = !enabled
+                || node.id === focusedNodeId
+                || visibleNeighborIds.has(node.id);
+            return {
+                id: node.id,
+                style: {
+                    ...(node.style || {}),
+                    opacity: isVisible ? 1 : 0.12,
+                    labelOpacity: isVisible ? 1 : 0.06,
+                    iconOpacity: isVisible ? 1 : 0.16,
+                },
+            };
+        }));
+    }
+
     function highlightNeighbors(nodeId, isSelection) {
         if (!graph) return;
         const edgesData = graph.getEdgeData();
-        if (!adjacencyIndex) {
-            adjacencyIndex = new Map();
-            for (const edge of edgesData) {
-                if (!adjacencyIndex.has(edge.source)) {
-                    adjacencyIndex.set(edge.source, {
-                        neighbors: new Set(),
-                        outgoing: new Set(),
-                        incoming: new Set(),
-                    });
-                }
-                if (!adjacencyIndex.has(edge.target)) {
-                    adjacencyIndex.set(edge.target, {
-                        neighbors: new Set(),
-                        outgoing: new Set(),
-                        incoming: new Set(),
-                    });
-                }
-                adjacencyIndex.get(edge.source).neighbors.add(edge.target);
-                adjacencyIndex.get(edge.source).outgoing.add(edge.id);
-                adjacencyIndex.get(edge.target).neighbors.add(edge.source);
-                adjacencyIndex.get(edge.target).incoming.add(edge.id);
-            }
-        }
-        const adjacency = adjacencyIndex.get(nodeId);
-        const neighborIds = adjacency?.neighbors || new Set();
-        const outEdgeIds = adjacency?.outgoing || new Set();
-        const inEdgeIds = adjacency?.incoming || new Set();
-
         const states = {};
         states[nodeId] = isSelection ? ["selected"] : ["active"];
-        for (const neighborId of neighborIds) {
+
+        // Use the actually rendered relationship layer as the focus scope.
+        // Every direct neighbor is retained; only parallel relationships to
+        // the same neighbor are collapsed into one representative edge.
+        const visibleNeighborIds = new Set();
+        for (let i = 0, len = edgesData.length; i < len; i++) {
+            const edge = edgesData[i];
+            if (edge.source === nodeId) {
+                visibleNeighborIds.add(edge.target);
+                states[edge.id] = ["activeOut"];
+            } else if (edge.target === nodeId) {
+                visibleNeighborIds.add(edge.source);
+                states[edge.id] = ["activeIn"];
+            }
+        }
+        for (const neighborId of visibleNeighborIds) {
             states[neighborId] = ["active"];
         }
 
-        // Only incident edges are present in the layered canvas, so there is
-        // no benefit in assigning an inactive state to every graph element.
-        for (let i = 0, len = edgesData.length; i < len; i++) {
-            const edge = edgesData[i];
-            if (outEdgeIds.has(edge.id)) {
-                states[edge.id] = ["activeOut"];
-            } else if (inEdgeIds.has(edge.id)) {
-                states[edge.id] = ["activeIn"];
-            }
+        if (isSelection) {
+            // Apply the shadow as base opacity rather than a persistent G6
+            // state, so it can be restored deterministically on canvas clear.
+            setFocusBackdrop(nodeId, visibleNeighborIds);
         }
 
         _applyStates(states);
@@ -1231,6 +1319,7 @@
         const enabled = priorityNodes.has(nodeId);
         button.classList.toggle("active", enabled);
         button.setAttribute("aria-pressed", String(enabled));
+        button.querySelector(".compact-switch-label").textContent = enabled ? "启用" : "关闭";
         button.title = enabled ? "取消重点节点并恢复原始大小" : "设为重点大节点";
     }
 
@@ -1716,7 +1805,7 @@
                 <div class="meta-row"><span class="meta-label">中文名</span><span class="meta-value">${chName || "—"}</span></div>
                 <div class="meta-row"><span class="meta-label">模块</span><span class="meta-value" style="color:${(COLORS[module] || COLORS.other).fill}">${module.toUpperCase()}</span></div>
                 <div class="meta-row"><span class="meta-label">描述</span><span class="meta-value">${desc || "—"}</span></div>
-                <div class="meta-row"><span class="meta-label">图上邻居</span><span class="meta-value">${Math.min(adjacencyIndex?.get(className)?.neighbors?.size || 0, MAX_CANVAS_NEIGHBORS)} / ${adjacencyIndex?.get(className)?.neighbors?.size || 0}</span></div>
+                <div class="meta-row"><span class="meta-label">图上邻居</span><span class="meta-value">${adjacencyIndex?.get(className)?.neighbors?.size || 0}（全部显示）</span></div>
                 <div class="meta-row"><span class="meta-label">完整关系</span><span class="meta-value">${(detail.outgoing || []).length + (detail.incoming || []).length}（见下方清单）</span></div>
             `;
 
@@ -1805,22 +1894,33 @@
         let debounceTimer;
         let isComposing = false;
 
-        priorityButton.addEventListener("click", (event) => {
+        priorityButton.addEventListener("click", async (event) => {
             event.preventDefault();
             largeNodeFocusMode = !largeNodeFocusMode;
             priorityButton.classList.toggle("active", largeNodeFocusMode);
             priorityButton.setAttribute("aria-pressed", String(largeNodeFocusMode));
+            priorityButton.querySelector(".compact-switch-label").textContent =
+                largeNodeFocusMode ? "启用" : "关闭";
             priorityButton.title = largeNodeFocusMode
                 ? "关闭大节点高亮"
                 : "高亮大节点（不显示关系线）";
-            if (largeNodeFocusMode) {
-                hideAllCanvasEdges()
-                    .then(() => applyLargeNodeFocusHighlight(input.value))
-                    .catch((error) => console.debug("Large-node edge cleanup skipped:", error));
-            } else {
-                triggerSearch(input.value.trim());
+            try {
+                if (largeNodeFocusMode) {
+                    setFocusBackdrop(null);
+                    await hideAllCanvasEdges();
+                    applyLargeNodeFocusHighlight(input.value);
+                } else if (selectedNodeId) {
+                    queueIncidentEdgeRender(selectedNodeId);
+                    triggerSearch(input.value.trim());
+                } else {
+                    await restoreOverviewEdges();
+                    triggerSearch(input.value.trim());
+                }
+            } catch (error) {
+                console.debug("Large-node mode switch skipped:", error);
+            } finally {
+                input.focus();
             }
-            input.focus();
         });
 
         // 阻断拼音输入法输入期间的频繁检索重绘
@@ -2263,7 +2363,6 @@
                         type: 'drag-element',
                         enableTransient: true,
                     },
-                    'optimize-viewport-transform',
                     'click-select'
                 ],
             });
@@ -2765,8 +2864,10 @@
             rawData = await fetchJSON("/api/graph/overview");
             window.rawData = rawData; // Expose for chat.js
             indexOverviewData(rawData);
-            const data = buildGraphData(rawData, comboEnabled);
-            data.edges = [];
+            const data = buildGraphData(
+                { ...rawData, edges: overviewApiEdges },
+                comboEnabled,
+            );
 
             // Init G6
             await initGraph(container, data);

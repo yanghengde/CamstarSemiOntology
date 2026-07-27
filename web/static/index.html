@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/style.css?v=20260727-switch" />
 </head>
 
 <body>
@@ -39,11 +39,12 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <input type="text" id="searchInput" placeholder="搜索类名、属性..." autocomplete="off" />
-                <button type="button" id="btnPrioritySearch" class="search-priority-toggle" aria-pressed="false" title="高亮大节点（不显示关系线）">
-                    <span class="search-priority-label">大节点</span>
-                    <span class="mini-switch-track"><span class="mini-switch-thumb"></span></span>
-                </button>
             </div>
+            <button type="button" id="btnPrioritySearch" class="compact-switch search-priority-toggle"
+                aria-pressed="false" aria-label="大节点高亮" title="高亮大节点（不显示关系线）">
+                <span class="compact-switch-label">关闭</span>
+                <span class="compact-switch-thumb" aria-hidden="true"></span>
+            </button>
         </div>
         <div class="topbar-right">
             <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> 类</div>
@@ -127,9 +128,10 @@
             <div class="panel-header">
                 <h2 id="panelTitle">节点详情</h2>
                 <div class="panel-header-actions">
-                    <button type="button" class="node-priority-switch" id="btnNodePriority" aria-pressed="false" title="设为重点大节点">
-                        <span>重点</span>
-                        <span class="mini-switch-track"><span class="mini-switch-thumb"></span></span>
+                    <button type="button" class="compact-switch node-priority-switch" id="btnNodePriority"
+                        aria-pressed="false" aria-label="重点节点" title="设为重点大节点">
+                        <span class="compact-switch-label">关闭</span>
+                        <span class="compact-switch-thumb" aria-hidden="true"></span>
                     </button>
                     <button class="icon-btn panel-close" id="btnClosePanel">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -327,7 +329,7 @@
     <!-- ── AntV G6 v5 Engine Local Offline Assets ── -->
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=20260727-all-neighbors"></script>
     <script src="/static/chat.js"></script>
 </body>
 
