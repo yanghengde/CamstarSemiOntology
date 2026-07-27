@@ -167,7 +167,15 @@
     const nodeInfoCache = new Map();
     const presetPositions = new Map();
     let adjacencyIndex = null;
+    let edgeInfoById = new Map();
     let detailPrefetchPromise = null;
+    let edgeRenderToken = 0;
+
+    // Keep high-degree nodes responsive. The detail panel still exposes the
+    // complete schema and relationship list; the canvas only draws a useful
+    // summary of the immediate neighborhood.
+    const MAX_CANVAS_NEIGHBORS = 28;
+    const INITIAL_PROPERTY_ROWS = 60;
 
     // ── Layout presets ──
     const LAYOUTS = {
@@ -270,6 +278,7 @@
             });
         });
         adjacencyIndex = new Map();
+        edgeInfoById = new Map();
         for (const node of data?.nodes || []) {
             adjacencyIndex.set(node.id, {
                 neighbors: new Set(),
@@ -280,6 +289,7 @@
         (data?.edges || []).forEach((edge, index) => {
             const edgeId = `e-${index}`;
             edge.id = edge.id || edgeId;
+            edgeInfoById.set(edge.id, edge);
             const source = adjacencyIndex.get(edge.source);
             const target = adjacencyIndex.get(edge.target);
             if (!source || !target) return;
@@ -646,8 +656,10 @@
                 return;
             }
 
-            await renderIncidentEdges(nodeId);
             selectNode(nodeId);
+            // Open the panel immediately. Edge drawing is intentionally
+            // asynchronous so a dense node cannot block click feedback.
+            void renderIncidentEdges(nodeId);
             if (relMode) {
                 await showRelOnly(nodeId);
             } else {
@@ -823,22 +835,69 @@
 
     async function renderIncidentEdges(nodeId) {
         if (!graph || !rawData) return;
+        const token = ++edgeRenderToken;
         const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
-        if (currentEdgeIds.length) graph.removeEdgeData(currentEdgeIds);
-        const incidentApiEdges = rawData.edges.filter(
-            (edge) => edge.source === nodeId || edge.target === nodeId,
-        );
-        if (incidentApiEdges.length) {
+        if (currentEdgeIds.length) {
+            // Removed elements must not remain in the differential state cache.
+            if (_prevStates) {
+                for (const edgeId of currentEdgeIds) delete _prevStates[edgeId];
+            }
+            graph.removeEdgeData(currentEdgeIds);
+        }
+
+        const adjacency = adjacencyIndex?.get(nodeId);
+        const incidentEdgeIds = [
+            ...(adjacency?.outgoing || []),
+            ...(adjacency?.incoming || []),
+        ];
+        const incidentApiEdges = incidentEdgeIds
+            .map((edgeId) => edgeInfoById.get(edgeId))
+            .filter(Boolean);
+
+        // Collapse parallel relations to one representative edge per neighbor.
+        // Prefer neighbors with more relations, then use a stable name order.
+        const byNeighbor = new Map();
+        for (const edge of incidentApiEdges) {
+            const neighbor = edge.source === nodeId ? edge.target : edge.source;
+            if (!byNeighbor.has(neighbor)) byNeighbor.set(neighbor, []);
+            byNeighbor.get(neighbor).push(edge);
+        }
+        const visibleGroups = [...byNeighbor.entries()]
+            .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+            .slice(0, MAX_CANVAS_NEIGHBORS);
+        const visibleApiEdges = visibleGroups.map(([neighbor, edges]) => {
+            const representative = edges[0];
+            if (edges.length === 1) return representative;
+            const firstLabel = representative.data?.label || "关系";
+            return {
+                ...representative,
+                data: {
+                    ...representative.data,
+                    label: `${firstLabel} (+${edges.length - 1})`,
+                    description: `${nodeId} 与 ${neighbor} 之间共 ${edges.length} 条关系；详情面板中可查看全部。`,
+                    relationCount: edges.length,
+                },
+            };
+        });
+
+        // Yield once so the selected state and detail panel paint first.
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
+        if (visibleApiEdges.length) {
             const incidentEdges = buildGraphData(
-                { nodes: [], edges: incidentApiEdges },
+                { nodes: [], edges: visibleApiEdges },
                 false,
             ).edges;
             graph.addEdgeData(incidentEdges);
         }
         await graph.draw();
+        if (token === edgeRenderToken && selectedNodeId === nodeId) {
+            highlightNeighbors(nodeId, true);
+        }
     }
 
     function clearSelection() {
+        edgeRenderToken++;
         selectedNodeId = null;
         clearHighlight();
         // Clear legend active states
@@ -909,26 +968,19 @@
         const inEdgeIds = adjacency?.incoming || new Set();
 
         const states = {};
-        const nodesData = graph.getNodeData();
-        for (let i = 0, len = nodesData.length; i < len; i++) {
-            const node = nodesData[i];
-            if (node.id === nodeId) {
-                states[node.id] = isSelection ? ["selected"] : ["active"];
-            } else if (neighborIds.has(node.id)) {
-                states[node.id] = ["active"];
-            } else {
-                states[node.id] = ["inactive"];
-            }
+        states[nodeId] = isSelection ? ["selected"] : ["active"];
+        for (const neighborId of neighborIds) {
+            states[neighborId] = ["active"];
         }
 
+        // Only incident edges are present in the layered canvas, so there is
+        // no benefit in assigning an inactive state to every graph element.
         for (let i = 0, len = edgesData.length; i < len; i++) {
             const edge = edgesData[i];
             if (outEdgeIds.has(edge.id)) {
                 states[edge.id] = ["activeOut"];
             } else if (inEdgeIds.has(edge.id)) {
                 states[edge.id] = ["activeIn"];
-            } else {
-                states[edge.id] = ["inactive"];
             }
         }
 
@@ -1467,20 +1519,38 @@
                 <div class="meta-row"><span class="meta-label">中文名</span><span class="meta-value">${chName || "—"}</span></div>
                 <div class="meta-row"><span class="meta-label">模块</span><span class="meta-value" style="color:${(COLORS[module] || COLORS.other).fill}">${module.toUpperCase()}</span></div>
                 <div class="meta-row"><span class="meta-label">描述</span><span class="meta-value">${desc || "—"}</span></div>
+                <div class="meta-row"><span class="meta-label">图上邻居</span><span class="meta-value">${Math.min(adjacencyIndex?.get(className)?.neighbors?.size || 0, MAX_CANVAS_NEIGHBORS)} / ${adjacencyIndex?.get(className)?.neighbors?.size || 0}</span></div>
+                <div class="meta-row"><span class="meta-label">完整关系</span><span class="meta-value">${(detail.outgoing || []).length + (detail.incoming || []).length}（见下方清单）</span></div>
             `;
 
             // ── Properties ──
             if (detail.properties && detail.properties.length > 0) {
-                let html = `<table class="prop-table"><thead><tr><th>属性名</th><th>类型</th><th>描述</th></tr></thead><tbody>`;
-                for (const p of detail.properties) {
-                    html += `<tr>
-                        <td style="color:var(--text-primary);font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
-                        <td><span class="type-badge">${p.dataType || "String"}</span></td>
-                        <td>${p.description || "—"}</td>
-                    </tr>`;
-                }
-                html += `</tbody></table>`;
-                propTable.innerHTML = html;
+                const renderProperties = (showAll = false) => {
+                    const visibleProperties = showAll
+                        ? detail.properties
+                        : detail.properties.slice(0, INITIAL_PROPERTY_ROWS);
+                    let html = `<table class="prop-table"><thead><tr><th>属性名</th><th>类型</th><th>描述</th></tr></thead><tbody>`;
+                    for (const p of visibleProperties) {
+                        html += `<tr>
+                            <td style="color:var(--text-primary);font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+                            <td><span class="type-badge">${p.dataType || "String"}</span></td>
+                            <td>${p.description || "—"}</td>
+                        </tr>`;
+                    }
+                    html += `</tbody></table>`;
+                    if (!showAll && detail.properties.length > INITIAL_PROPERTY_ROWS) {
+                        html += `<button type="button" class="detail-expand-btn" style="width:100%;margin-top:8px;padding:8px;border:1px solid rgba(0,255,185,.35);border-radius:6px;background:rgba(0,255,185,.08);color:var(--si-green);cursor:pointer">
+                            显示其余 ${detail.properties.length - INITIAL_PROPERTY_ROWS} 个字段
+                        </button>`;
+                    }
+                    propTable.innerHTML = html;
+                    propTable.querySelector(".detail-expand-btn")?.addEventListener(
+                        "click",
+                        () => renderProperties(true),
+                        { once: true },
+                    );
+                };
+                renderProperties();
             } else {
                 propTable.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">暂无属性</div>`;
             }
