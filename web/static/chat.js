@@ -34,7 +34,7 @@
     const WELCOME_HTML = `<div class="chat-welcome">
         <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
         <p>你好！我是 Camstar SQL 助手。</p>
-        <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 Oracle SQL</p>
+        <p class="chat-welcome-sub">可从左侧加入已知对象，或输入 @表名；我会依据真实物理字段和关系生成只读 Oracle SQL</p>
     </div>`;
 
     function stopStreaming() {
@@ -68,13 +68,74 @@
         chatInput.style.height = "auto";
     }
 
-    function updateContextBar(context) {
-        const classes = context?.selected_classes || [];
-        chatContextClasses.textContent = classes.length
-            ? classes.join(" · ")
-            : "尚未引用表";
-        chatContextClasses.title = classes.join(", ");
+    function getKnownClasses(context = currentSession?.context) {
+        return [...(context?.known_classes || [])];
     }
+
+    function updateContextBar(context) {
+        const classes = getKnownClasses(context);
+        chatContextClasses.innerHTML = classes.length
+            ? classes.map((className) => `
+                <span class="chat-context-chip" data-class="${escapeHtml(className)}">
+                    <span class="chat-context-chip-name" title="在图中定位 ${escapeHtml(className)}">${escapeHtml(className)}</span>
+                    <button type="button" class="chat-context-chip-remove"
+                        data-remove-class="${escapeHtml(className)}"
+                        aria-label="删除 ${escapeHtml(className)}"
+                        title="从上下文删除">×</button>
+                </span>
+            `).join("")
+            : `<span class="chat-context-empty">尚未添加已知对象</span>`;
+        chatContextClasses.title = classes.join(", ");
+        window.dispatchEvent(new CustomEvent("chat-context-change", {
+            detail: { classes },
+        }));
+    }
+
+    async function saveKnownClasses(classes) {
+        const session = await ensureSession();
+        const normalized = [...new Set(classes)].slice(0, 8);
+        const response = await fetch(
+            `/api/chat/sessions/${encodeURIComponent(session.id)}/context`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ known_classes: normalized }),
+            },
+        );
+        if (!response.ok) {
+            let detail = `HTTP ${response.status}`;
+            try {
+                const payload = await response.json();
+                detail = payload.detail || payload.error || detail;
+            } catch (_) {}
+            throw new Error(detail);
+        }
+        const updatedSession = await response.json();
+        currentSession = updatedSession;
+        sessionId = updatedSession.id;
+        sessionStorage.setItem("chat_session_id", sessionId);
+        updateContextBar(updatedSession.context);
+        await refreshSessionList();
+        return getKnownClasses(updatedSession.context);
+    }
+
+    window._hasChatContextClass = (className) =>
+        getKnownClasses().includes(className);
+
+    window._addChatContextClass = async (className) => {
+        const session = await ensureSession();
+        const current = getKnownClasses(session.context);
+        if (current.includes(className)) return current;
+        if (current.length >= 8) {
+            throw new Error("当前会话最多添加 8 个已知对象");
+        }
+        const classes = await saveKnownClasses([...current, className]);
+        if (chatPanel.classList.contains("chat-hidden")) {
+            chatPanel.classList.remove("chat-hidden");
+            chatBtn.classList.add("active");
+        }
+        return classes;
+    };
 
     async function createNewSession() {
         stopStreaming();
@@ -159,7 +220,7 @@
             ? items.map((item) => `
                 <div class="chat-session-item ${item.id === sessionId ? "active" : ""}" data-session-id="${item.id}">
                     <div class="chat-session-item-title">${escapeHtml(item.title || "未命名会话")}</div>
-                    <div class="chat-session-item-meta">${escapeHtml(formatSessionTime(item.updated_at))} · ${item.message_count || 0} 条消息${item.selected_classes?.length ? ` · ${escapeHtml(item.selected_classes.join(", "))}` : ""}</div>
+                    <div class="chat-session-item-meta">${escapeHtml(formatSessionTime(item.updated_at))} · ${item.message_count || 0} 条消息${item.known_classes?.length ? ` · 已知对象 ${escapeHtml(item.known_classes.join(", "))}` : ""}</div>
                     <div class="chat-session-item-preview">${escapeHtml(item.preview || "暂无消息")}</div>
                 </div>
             `).join("")
@@ -336,7 +397,12 @@
         const selected = (typeof window._getSelectedNodeId === "function")
             ? window._getSelectedNodeId()
             : null;
-        const subject = selected ? `[[${selected}]]` : "当前选中的表";
+        const knownClasses = getKnownClasses();
+        const subject = selected
+            ? `[[${selected}]]`
+            : knownClasses.length
+                ? knownClasses.map((name) => `[[${name}]]`).join("、")
+                : "当前选中的表";
         const prompts = {
             fields: `请列出 ${subject} 最常用于写SQL的物理字段、主键和外键，并说明适合的查询场景。`,
             time: `请基于 ${subject} 生成一个Oracle SQL时间范围查询模板，使用 :StartTime 和 :EndTime 参数。`,
@@ -351,6 +417,29 @@
         const opening = chatSessionMenu.classList.contains("chat-session-menu-hidden");
         chatSessionMenu.classList.toggle("chat-session-menu-hidden");
         if (opening) await refreshSessionList();
+    });
+
+    chatContextClasses.addEventListener("click", async (event) => {
+        const removeButton = event.target.closest("button[data-remove-class]");
+        if (removeButton) {
+            if (isStreaming) return;
+            const className = removeButton.dataset.removeClass;
+            removeButton.disabled = true;
+            try {
+                await saveKnownClasses(
+                    getKnownClasses().filter((name) => name !== className),
+                );
+            } catch (error) {
+                removeButton.disabled = false;
+                console.error("Remove SQL context failed:", error);
+            }
+            return;
+        }
+
+        const chip = event.target.closest(".chat-context-chip[data-class]");
+        if (chip && typeof window._locateNodeWithoutEdges === "function") {
+            window._locateNodeWithoutEdges(chip.dataset.class, true);
+        }
     });
 
     chatSessionList.addEventListener("click", async (event) => {
@@ -456,6 +545,7 @@
         try {
             const product_line = (typeof window._getCurrentProductLine === "function") ? window._getCurrentProductLine() : "general";
             const selectedNode = (typeof window._getSelectedNodeId === "function") ? window._getSelectedNodeId() : null;
+            const knownClasses = getKnownClasses();
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -465,7 +555,10 @@
                     product_line,
                     assistant_mode: "sql",
                     sql_dialect: "oracle",
-                    selected_classes: selectedNode ? [selectedNode] : []
+                    selected_classes: [
+                        ...knownClasses,
+                        ...(selectedNode ? [selectedNode] : []),
+                    ]
                 }),
                 signal: abortController.signal
             });

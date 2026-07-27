@@ -16,6 +16,7 @@ def build_prompt(
     assistant_mode: str = "sql",
     sql_schema_context: str = "",
     sql_domain_context: str = "",
+    known_classes: list[str] | None = None,
     sql_dialect: str = "oracle",
 ) -> list[dict]:
     """
@@ -100,6 +101,15 @@ def build_prompt(
 
     # Build user message with compact context
     parts = []
+    if assistant_mode == "sql" and known_classes:
+        known_list = "、".join(f"[[{name}]]" for name in known_classes)
+        parts.append(
+            "## 用户明确指定的已知对象（优先约束）\n"
+            f"{known_list}\n"
+            "生成 SQL、选择表及推理 JOIN 路径时必须优先考虑这些对象。"
+            "能用物理外键连通时给出经过验证的连接；无法连通时明确说明缺少连接证据，"
+            "不得为了全部使用而臆造 JOIN。"
+        )
     if assistant_mode == "sql" and sql_schema_context:
         parts.append(f"## 物理数据库架构（唯一SQL事实来源）\n{sql_schema_context}")
     if assistant_mode == "sql" and sql_domain_context:

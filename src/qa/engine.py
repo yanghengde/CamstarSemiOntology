@@ -137,6 +137,7 @@ async def query(
     product_line: str = "general",
     assistant_mode: str = "sql",
     selected_classes: list[str] | None = None,
+    known_classes: list[str] | None = None,
     sql_dialect: str = "oracle",
 ) -> str:
     """
@@ -150,6 +151,7 @@ async def query(
         product_line=product_line,
         assistant_mode=assistant_mode,
         selected_classes=selected_classes,
+        known_classes=known_classes,
         sql_dialect=sql_dialect,
     ):
         if isinstance(chunk, str):
@@ -165,6 +167,7 @@ async def query_stream(
     product_line: str = "general",
     assistant_mode: str = "sql",
     selected_classes: list[str] | None = None,
+    known_classes: list[str] | None = None,
     sql_dialect: str = "oracle",
 ):
     """
@@ -184,10 +187,15 @@ async def query_stream(
     # 1. Extract entities/keywords
     step_kw = trace.add_step("关键词提取") if trace else None
     selected_classes = selected_classes or []
+    known_classes = known_classes or []
     keywords = list(
         dict.fromkeys(
-            selected_classes
-            + extract_keywords(question, fallback=not bool(selected_classes))
+            known_classes
+            + selected_classes
+            + extract_keywords(
+                question,
+                fallback=not bool(known_classes or selected_classes),
+            )
         )
     )
     if step_kw:
@@ -248,6 +256,7 @@ async def query_stream(
         assistant_mode=assistant_mode,
         sql_schema_context=sql_schema_context,
         sql_domain_context=sql_domain_context,
+        known_classes=known_classes,
         sql_dialect=sql_dialect,
     )
     if step_prompt:

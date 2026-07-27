@@ -2,7 +2,7 @@ import os
 import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from web.shared import _get_vector_collection, PROJECT_ROOT
 from src.qa.session_store import (
     append_exchange,
@@ -11,6 +11,7 @@ from src.qa.session_store import (
     get_or_create_session,
     list_sessions,
     load_session,
+    set_known_classes,
     update_context,
 )
 
@@ -36,6 +37,10 @@ class SessionCreateRequest(BaseModel):
     product_line: str = "general"
 
 
+class SessionContextUpdateRequest(BaseModel):
+    known_classes: list[str] = Field(default_factory=list)
+
+
 @router.post("/api/chat/sessions")
 async def chat_session_create(req: SessionCreateRequest):
     return create_session(
@@ -59,6 +64,35 @@ async def chat_session_get(session_id: str):
     if session is None:
         raise HTTPException(status_code=404, detail="Chat session not found")
     return session
+
+
+@router.put("/api/chat/sessions/{session_id}/context")
+async def chat_session_context_update(
+    session_id: str,
+    req: SessionContextUpdateRequest,
+):
+    from src.qa.engine import _get_class_names
+
+    known_class_names = set(_get_class_names())
+    normalized = list(dict.fromkeys(
+        class_name.strip()
+        for class_name in req.known_classes
+        if class_name and class_name.strip()
+    ))
+    if len(normalized) > 8:
+        raise HTTPException(status_code=400, detail="最多可添加 8 个已知对象")
+    invalid = [name for name in normalized if name not in known_class_names]
+    if invalid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"未知本体对象: {', '.join(invalid)}",
+        )
+    try:
+        return set_known_classes(session_id, normalized)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Chat session not found") from exc
 
 
 @router.delete("/api/chat/sessions/{session_id}")
@@ -103,23 +137,26 @@ async def chat(req: ChatRequest):
 
         # 1. Extract keywords from the current question and the persisted
         # conversation context. Referenced tables accumulate across turns.
-        selected_classes = req.selected_classes or []
-        persisted_classes = list(
-            session.get("context", {}).get("selected_classes", [])
+        known_classes = list(
+            session.get("context", {}).get("known_classes", [])
         )
+        selected_classes = req.selected_classes or []
+        question_classes = extract_keywords(question, fallback=False)
         keywords = list(
             dict.fromkeys(
-                selected_classes
-                + extract_keywords(
-                    question,
-                    fallback=not bool(selected_classes or persisted_classes),
-                )
+                known_classes
+                + selected_classes
+                + question_classes
             )
         )
 
-        history_classes = persisted_classes
-        if history:
-            for turn in history[-30:]:
+        # Only fall back to recent history when the current request and the
+        # user-managed context provide no objects. This keeps a removed known
+        # object from silently becoming active again on the next unrelated
+        # question, while still supporting pronoun-style follow-ups.
+        history_classes = []
+        if not keywords and history:
+            for turn in history[-8:]:
                 content = turn.get("content", "") or ""
                 # Match [[ClassName]] format
                 found = re.findall(r'\[\[(\w+)\]\]', content)
@@ -133,6 +170,8 @@ async def chat(req: ChatRequest):
                 for name in _get_class_names():
                     if name in content and name not in history_classes:
                         history_classes.append(name)
+        if not keywords and not history_classes:
+            keywords = extract_keywords(question, fallback=True)
 
         # Combine, keeping current keywords first
         all_classes = list(dict.fromkeys(keywords + history_classes))
@@ -166,6 +205,7 @@ async def chat(req: ChatRequest):
                 product_line=req.product_line,
                 assistant_mode=req.assistant_mode,
                 selected_classes=all_classes,
+                known_classes=known_classes,
                 sql_dialect=req.sql_dialect,
             ):
                 if isinstance(chunk, dict) and chunk.get("type") == "status":

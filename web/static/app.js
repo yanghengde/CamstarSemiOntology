@@ -179,7 +179,6 @@
     const PRIORITY_NODE_STORAGE_KEY = "camstar_priority_nodes_v2";
     const DEFAULT_CORE_NODE_IDS = new Set(["Workflow", "Product", "MfgOrder"]);
     let priorityNodes = new Set();
-    let largeNodeFocusMode = false;
     try {
         const saved = JSON.parse(localStorage.getItem(PRIORITY_NODE_STORAGE_KEY) || "[]");
         priorityNodes = new Set(Array.isArray(saved) ? saved : []);
@@ -799,19 +798,11 @@
             if (selectedNodeId === nodeId) {
                 clearSelection();
                 closePanel();
-                if (!largeNodeFocusMode) await restoreOverviewEdges();
+                await restoreOverviewEdges();
                 return;
             }
 
             selectNode(nodeId);
-            if (largeNodeFocusMode) {
-                await hideAllCanvasEdges();
-                applyLargeNodeFocusHighlight(
-                    document.getElementById("searchInput")?.value || "",
-                );
-                await showClassDetail(nodeId);
-                return;
-            }
             // Open the panel immediately. Edge drawing is intentionally
             // serialized so rapid clicks cannot mutate G6 concurrently.
             queueIncidentEdgeRender(nodeId);
@@ -888,7 +879,7 @@
             clearSelection();
             closePanel();
             hideEdgePopup();
-            if (!largeNodeFocusMode) await restoreOverviewEdges();
+            await restoreOverviewEdges();
         });
 
         // ── Edge click → show action popup (preserve node selection) ──
@@ -965,12 +956,12 @@
 
         // ── Hover preview (only when nothing is selected) ──
         graph.on("node:mouseenter", (evt) => {
-            if (largeNodeFocusMode || selectedNodeId || graphMutationBusy) return;
+            if (selectedNodeId || graphMutationBusy) return;
             highlightNeighbors(evt.target.id, false);
         });
 
         graph.on("node:mouseleave", () => {
-            if (largeNodeFocusMode || selectedNodeId || graphMutationBusy) return;
+            if (selectedNodeId || graphMutationBusy) return;
             clearHighlight();
         });
 
@@ -1004,7 +995,7 @@
     }
 
     async function restoreOverviewEdges() {
-        if (!graph || !rawData || largeNodeFocusMode) return;
+        if (!graph || !rawData) return;
         await hideAllCanvasEdges();
         setFocusBackdrop(null);
         const overviewEdges = buildGraphData(
@@ -1019,13 +1010,7 @@
         if (!graph || !nodeInfoCache.has(nodeId)) return;
         selectNode(nodeId);
         await hideAllCanvasEdges();
-        if (largeNodeFocusMode) {
-            await applyLargeNodeFocusHighlight(
-                document.getElementById("searchInput")?.value || "",
-            );
-        } else {
-            await _applyStates({ [nodeId]: ["selected"] });
-        }
+        await _applyStates({ [nodeId]: ["selected"] });
         await graph.focusElement(nodeId, true);
         if (openDetail) await showClassDetail(nodeId);
     }
@@ -1130,11 +1115,6 @@
         if (pendingHighlightClear || !selectedNodeId) {
             pendingHighlightClear = false;
             await clearHighlight();
-            if (largeNodeFocusMode) {
-                await applyLargeNodeFocusHighlight(
-                    document.getElementById("searchInput")?.value || "",
-                );
-            }
         } else if (
             token === edgeRenderToken
             && selectedNodeId === nodeId
@@ -1153,11 +1133,6 @@
             pendingHighlightClear = true;
         } else {
             clearHighlight();
-            if (largeNodeFocusMode) {
-                applyLargeNodeFocusHighlight(
-                    document.getElementById("searchInput")?.value || "",
-                );
-            }
         }
         // Clear legend active states
         document.querySelectorAll(".legend-item.active").forEach(el => el.classList.remove("active"));
@@ -1338,21 +1313,6 @@
         }
     }
 
-    function applyLargeNodeFocusHighlight(queryText = "") {
-        if (!graph || !rawData || !largeNodeFocusMode) return;
-        const query = queryText.trim().toLowerCase();
-        const states = {};
-        for (const node of rawData.nodes) {
-            if (!isLargeNode(node)) continue;
-            const label = (node.data?.label || node.id).toLowerCase();
-            const chineseName = (node.data?.chineseName || "").toLowerCase();
-            if (!query || label.includes(query) || chineseName.includes(query)) {
-                states[node.id] = ["highlighted"];
-            }
-        }
-        return _applyStates(states);
-    }
-
     // ══════════════════════════════════════════════════════
     //  Per-node priority switch
     // ══════════════════════════════════════════════════════
@@ -1402,13 +1362,7 @@
             await graph.draw();
 
             if (selectedNodeId === nodeId) {
-                if (largeNodeFocusMode) {
-                    await applyLargeNodeFocusHighlight(
-                        document.getElementById("searchInput")?.value || "",
-                    );
-                } else {
-                    await highlightNeighbors(nodeId, true);
-                }
+                await highlightNeighbors(nodeId, true);
             }
             syncNodePrioritySwitch(nodeId);
         } finally {
@@ -1421,6 +1375,46 @@
         button.addEventListener("click", () => {
             if (!selectedNodeId) return;
             setSelectedNodePriority(!priorityNodes.has(selectedNodeId));
+        });
+    }
+
+    function syncChatContextButton(className) {
+        const button = document.getElementById("btnAddChatContext");
+        const isClass = Boolean(className && nodeInfoCache.has(className));
+        button.hidden = !isClass;
+        button.dataset.className = isClass ? className : "";
+        if (!isClass) return;
+
+        const added = typeof window._hasChatContextClass === "function"
+            && window._hasChatContextClass(className);
+        button.classList.toggle("active", added);
+        button.disabled = added;
+        button.querySelector("span").textContent = added ? "已加入" : "加入上下文";
+        button.title = added
+            ? "该对象已在当前 SQL 会话的上下文中"
+            : "将当前对象加入 SQL 助手的已知对象";
+    }
+
+    function setupChatContextControl() {
+        const button = document.getElementById("btnAddChatContext");
+        button.addEventListener("click", async () => {
+            const className = button.dataset.className;
+            if (!className || button.disabled) return;
+            button.disabled = true;
+            try {
+                if (typeof window._addChatContextClass !== "function") {
+                    throw new Error("SQL 助手尚未加载完成");
+                }
+                await window._addChatContextClass(className);
+                syncChatContextButton(className);
+            } catch (error) {
+                button.disabled = false;
+                button.title = error.message || "加入上下文失败";
+                console.error("Add SQL context failed:", error);
+            }
+        });
+        window.addEventListener("chat-context-change", () => {
+            syncChatContextButton(selectedNodeId);
         });
     }
 
@@ -1840,6 +1834,7 @@
 
         panelTitle.textContent = className;
         syncNodePrioritySwitch(className);
+        syncChatContextButton(className);
 
         let detail;
         if (classDetailCache.has(className)) {
@@ -1963,38 +1958,8 @@
     // ══════════════════════════════════════════════════════
     function setupSearch() {
         const input = document.getElementById("searchInput");
-        const priorityButton = document.getElementById("btnPrioritySearch");
         let debounceTimer;
         let isComposing = false;
-
-        priorityButton.addEventListener("click", async (event) => {
-            event.preventDefault();
-            largeNodeFocusMode = !largeNodeFocusMode;
-            priorityButton.classList.toggle("active", largeNodeFocusMode);
-            priorityButton.setAttribute("aria-pressed", String(largeNodeFocusMode));
-            priorityButton.querySelector(".compact-switch-label").textContent =
-                largeNodeFocusMode ? "启用" : "关闭";
-            priorityButton.title = largeNodeFocusMode
-                ? "关闭大节点高亮"
-                : "高亮大节点（不显示关系线）";
-            try {
-                if (largeNodeFocusMode) {
-                    setFocusBackdrop(null);
-                    await hideAllCanvasEdges();
-                    applyLargeNodeFocusHighlight(input.value);
-                } else if (selectedNodeId) {
-                    queueIncidentEdgeRender(selectedNodeId);
-                    triggerSearch(input.value.trim());
-                } else {
-                    await restoreOverviewEdges();
-                    triggerSearch(input.value.trim());
-                }
-            } catch (error) {
-                console.debug("Large-node mode switch skipped:", error);
-            } finally {
-                input.focus();
-            }
-        });
 
         // 阻断拼音输入法输入期间的频繁检索重绘
         input.addEventListener("compositionstart", () => {
@@ -2019,13 +1984,6 @@
         function triggerSearch(text) {
             const query = text.toLowerCase();
             if (!graph || !rawData) return;
-
-            if (largeNodeFocusMode) {
-                hideAllCanvasEdges()
-                    .then(() => applyLargeNodeFocusHighlight(query))
-                    .catch((error) => console.debug("Large-node edge cleanup skipped:", error));
-                return;
-            }
 
             if (!query) {
                 clearHighlight();
@@ -2092,6 +2050,7 @@
         const sectionProperties = document.getElementById("sectionProperties");
 
         panelTitle.textContent = className + " — 关系视图";
+        syncChatContextButton(className);
 
         let detail;
         if (classDetailCache.has(className)) {
@@ -2826,6 +2785,7 @@
 
         const label = COMBO_LABELS[moduleKey] || moduleKey;
         const color = (COLORS[moduleKey] || COLORS.other).fill;
+        syncChatContextButton(null);
 
         panelTitle.innerHTML = `<span style="color:${color}">■</span> ${label} 概览`;
         sectionProperties.style.display = "none"; // Hide properties for module view
@@ -2963,6 +2923,7 @@
             // Setup UI
             setupSearch();
             setupNodePriorityControl();
+            setupChatContextControl();
             setupToolbar();
             setupLegend();
             setupResize();

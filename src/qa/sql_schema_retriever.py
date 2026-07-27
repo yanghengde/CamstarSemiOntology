@@ -40,8 +40,8 @@ def build_sql_schema_context(
     class_names: list[str],
     *,
     question: str = "",
-    max_tables: int = 6,
-    max_fields: int = 420,
+    max_tables: int = 8,
+    max_fields: int = 560,
 ) -> str:
     """Format exact physical tables, fields, PKs and FKs for an LLM prompt."""
     tables, fields_by_table = _schema()

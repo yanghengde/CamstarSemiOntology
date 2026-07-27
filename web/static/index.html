@@ -40,11 +40,6 @@
                 </svg>
                 <input type="text" id="searchInput" placeholder="搜索类名、属性..." autocomplete="off" />
             </div>
-            <button type="button" id="btnPrioritySearch" class="compact-switch search-priority-toggle"
-                aria-pressed="false" aria-label="大节点高亮" title="高亮大节点（不显示关系线）">
-                <span class="compact-switch-label">关闭</span>
-                <span class="compact-switch-thumb" aria-hidden="true"></span>
-            </button>
         </div>
         <div class="topbar-right">
             <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> 类</div>
@@ -128,6 +123,14 @@
             <div class="panel-header">
                 <h2 id="panelTitle">节点详情</h2>
                 <div class="panel-header-actions">
+                    <button type="button" class="detail-context-btn" id="btnAddChatContext"
+                        aria-label="加入SQL上下文" title="将当前对象加入 SQL 助手的已知对象">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        <span>加入上下文</span>
+                    </button>
                     <button type="button" class="compact-switch node-priority-switch" id="btnNodePriority"
                         aria-pressed="false" aria-label="关注节点" title="关注并移到中央区域">
                         <span class="compact-switch-label">关闭</span>
@@ -282,8 +285,10 @@
             </div>
         </div>
         <div class="chat-context-bar">
-            <span class="chat-context-label">当前上下文</span>
-            <span id="chatContextClasses" class="chat-context-classes">尚未引用表</span>
+            <span class="chat-context-label">上下文对象</span>
+            <div id="chatContextClasses" class="chat-context-classes">
+                <span class="chat-context-empty">尚未添加已知对象</span>
+            </div>
         </div>
         <div class="chat-quick-actions" id="chatQuickActions">
             <button type="button" data-prompt="fields">查看物理字段</button>
@@ -303,7 +308,7 @@
                 <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon"
                     style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
                 <p>你好！我是 Camstar SQL 助手。</p>
-                <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 Oracle SQL</p>
+                <p class="chat-welcome-sub">可从左侧加入已知对象，或输入 @表名；我会依据真实物理字段和关系生成只读 Oracle SQL</p>
             </div>
         </div>
         <div class="chat-input-area" style="position: relative;">
@@ -329,8 +334,8 @@
     <!-- ── AntV G6 v5 Engine Local Offline Assets ── -->
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
-    <script src="/static/app.js?v=20260727-follow-center"></script>
-    <script src="/static/chat.js"></script>
+    <script src="/static/app.js?v=20260728-sql-context"></script>
+    <script src="/static/chat.js?v=20260728-sql-context"></script>
 </body>
 
 </html>

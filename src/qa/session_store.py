@@ -63,6 +63,7 @@ def create_session(
         "product_line": product_line,
         "context": {
             "selected_classes": [],
+            "known_classes": [],
         },
         "messages": [],
     }
@@ -80,7 +81,9 @@ def load_session(session_id: str) -> dict[str, Any] | None:
             payload = json.loads(path.read_text(encoding="utf-8-sig"))
         except (OSError, json.JSONDecodeError):
             return None
-    payload.setdefault("context", {"selected_classes": []})
+    context = payload.setdefault("context", {})
+    context.setdefault("selected_classes", [])
+    context.setdefault("known_classes", [])
     payload.setdefault("messages", [])
     return payload
 
@@ -119,6 +122,25 @@ def update_context(
                 accumulated.append(class_name)
         if product_line:
             payload["product_line"] = product_line
+        payload["updated_at"] = _now()
+        _write_atomic(_path(session_id), payload)
+        return payload
+
+
+def set_known_classes(
+    session_id: str,
+    known_classes: list[str],
+) -> dict[str, Any]:
+    """Replace the user-managed known-object list for one conversation."""
+    with _lock:
+        payload = load_session(session_id)
+        if payload is None:
+            raise FileNotFoundError(session_id)
+        context = payload.setdefault("context", {})
+        context.setdefault("selected_classes", [])
+        context["known_classes"] = list(dict.fromkeys(
+            class_name for class_name in known_classes if class_name
+        ))
         payload["updated_at"] = _now()
         _write_atomic(_path(session_id), payload)
         return payload
@@ -195,6 +217,9 @@ def list_sessions(limit: int = 100) -> list[dict[str, Any]]:
                     "message_count": len(messages),
                     "selected_classes": payload.get("context", {}).get(
                         "selected_classes", []
+                    ),
+                    "known_classes": payload.get("context", {}).get(
+                        "known_classes", []
                     ),
                     "preview": " ".join(last_message.split())[:100],
                 }
