@@ -6,7 +6,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -41,6 +41,17 @@ app.include_router(chat_router)
 @app.get("/")
 def index():
     return FileResponse(os.path.join(os.path.dirname(__file__), "static", "index.html"))
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    from web.shared import driver
+
+    try:
+        driver.verify_connectivity()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Neo4j is unavailable") from exc
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

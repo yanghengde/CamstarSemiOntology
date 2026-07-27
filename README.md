@@ -231,6 +231,20 @@ LLM_MODEL=deepseek-chat
 
 ## 🏃 启动 Web 系统
 
+### Docker / Ubuntu 26.04
+
+项目已提供 `Dockerfile` 和 `compose.yaml`，可一并运行 FastAPI、Neo4j、
+本体自动初始化、Chroma 向量库、会话与日志持久化。完整迁移、备份和安全配置见
+[`docs/docker_deployment_ubuntu.md`](docs/docker_deployment_ubuntu.md)。
+
+```bash
+docker compose build
+docker compose up -d
+docker compose ps
+```
+
+首次启动会把当前 `data/`、`logs/` 复制到 Docker 命名卷，并自动加载全部本体。
+
 一切就绪后，通过以下命令启动 FastAPI 服务器：
 
 ```bash

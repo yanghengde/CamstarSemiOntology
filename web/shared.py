@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, PROJECT_ROOT)
 
-load_dotenv(os.path.join(PROJECT_ROOT, ".env"), override=True)
+# Explicit container/process environment must win over a developer's local file.
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"), override=False)
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
