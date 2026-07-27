@@ -1446,6 +1446,43 @@ html, body {
     color: var(--text-primary);
 }
 
+.chat-dialect-control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.chat-dialect-select {
+    min-width: 104px;
+    height: 28px;
+    padding: 0 28px 0 10px;
+    border: 1px solid rgba(0, 255, 185, 0.34);
+    border-radius: 7px;
+    outline: none;
+    background:
+        linear-gradient(45deg, transparent 50%, var(--si-green) 50%) calc(100% - 13px) 11px / 5px 5px no-repeat,
+        linear-gradient(135deg, var(--si-green) 50%, transparent 50%) calc(100% - 8px) 11px / 5px 5px no-repeat,
+        rgba(0, 39, 59, 0.92);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.chat-dialect-select:hover,
+.chat-dialect-select:focus {
+    border-color: var(--si-green);
+    box-shadow: 0 0 0 2px rgba(0, 255, 185, 0.1);
+}
+
+.chat-dialect-select option {
+    background: #00263a;
+    color: var(--text-primary);
+}
+
 .chat-header-badge {
     font-size: 9px;
     font-weight: 700;

@@ -45,9 +45,14 @@
             <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> 类</div>
             <div class="stat-chip" id="statProps"><span class="stat-num">-</span> 属性</div>
             <div class="stat-chip" id="statRels"><span class="stat-num">-</span> 关系</div>
-            <a href="/static/industry.html" class="nav-link-btn" style="color: #00FFB9; text-decoration: none; border: 1px solid rgba(0, 255, 185, 0.4); padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; background: rgba(0, 255, 185, 0.04); transition: all 0.2s;" title="行业/产品线设置">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            <a href="/static/industry.html" class="nav-link-btn"
+                style="color: #00FFB9; text-decoration: none; border: 1px solid rgba(0, 255, 185, 0.4); padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; background: rgba(0, 255, 185, 0.04); transition: all 0.2s;"
+                title="行业/产品线设置">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="vertical-align: middle;">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
                 </svg>
                 行业设置
             </a>
@@ -105,7 +110,7 @@
                 </div>
             </div>
             <div class="topbar-divider"></div>
-            <button class="icon-btn icon-btn-chat" id="chatToggleBtn" title="Camstar SQL 助手">
+            <button class="icon-btn icon-btn-chat" id="chatToggleBtn" title="SQL 助手">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
@@ -123,10 +128,10 @@
             <div class="panel-header">
                 <h2 id="panelTitle">节点详情</h2>
                 <div class="panel-header-actions">
-                    <button type="button" class="detail-context-btn" id="btnAddChatContext"
-                        aria-label="加入SQL上下文" title="将当前对象加入 SQL 助手的已知对象">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                    <button type="button" class="detail-context-btn" id="btnAddChatContext" aria-label="加入SQL上下文"
+                        title="将当前对象加入 SQL 助手的已知对象">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M12 5v14M5 12h14" />
                         </svg>
                         <span>加入上下文</span>
@@ -137,7 +142,8 @@
                         <span class="compact-switch-thumb" aria-hidden="true"></span>
                     </button>
                     <button class="icon-btn panel-close" id="btnClosePanel">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
@@ -182,14 +188,16 @@
         <div class="edge-popup-actions">
             <button class="edge-popup-btn edge-popup-btn-wiki" id="edgePopupGenerate" title="用 AI 生成 Wiki">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
                 </svg>
                 生成 Wiki
             </button>
             <button class="edge-popup-btn edge-popup-btn-edit" id="edgePopupEdit" title="编辑 Wiki" style="display:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
                 编辑
             </button>
@@ -254,7 +262,13 @@
             <div class="chat-header-left">
                 <img src="/static/siemens_logo.svg" alt="Bot" class="chat-header-icon"
                     style="width:20px;height:20px;border-radius:4px;" />
-                <span class="chat-header-title">Camstar SQL 助手</span>
+                <label class="chat-dialect-control" for="chatSqlDialect">
+                    <span class="sr-only"> </span>
+                    <select id="chatSqlDialect" class="chat-dialect-select" title="选择生成 SQL 使用的数据库语法">
+                        <option value="oracle">Oracle</option>
+                        <option value="sqlserver">SQL Server</option>
+                    </select>
+                </label>
                 <span class="chat-header-badge">READ ONLY</span>
             </div>
             <div class="chat-header-right">
@@ -307,8 +321,8 @@
             <div class="chat-welcome">
                 <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon"
                     style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
-                <p>你好！我是 Camstar SQL 助手。</p>
-                <p class="chat-welcome-sub">可从左侧加入已知对象，或输入 @表名；我会依据真实物理字段和关系生成只读 Oracle SQL</p>
+                <p>你好！请描述需要查询的业务数据。</p>
+                <p class="chat-welcome-sub">可从左侧加入已知对象，或输入 @表名；我会依据真实物理字段和关系生成只读 SQL</p>
             </div>
         </div>
         <div class="chat-input-area" style="position: relative;">
@@ -335,7 +349,7 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/app.js?v=20260728-sql-context"></script>
-    <script src="/static/chat.js?v=20260728-sql-context"></script>
+    <script src="/static/chat.js?v=20260728-sql-dialect"></script>
 </body>
 
 </html>

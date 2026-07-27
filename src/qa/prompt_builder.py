@@ -25,11 +25,31 @@ def build_prompt(
     """
     if assistant_mode == "sql":
         dialect = (sql_dialect or "oracle").lower()
-        if dialect != "oracle":
+        if dialect not in {"oracle", "sqlserver"}:
             dialect = "oracle"
+        if dialect == "sqlserver":
+            dialect_name = "SQL Server"
+            pagination_rule = (
+                "4. 明细查询默认使用 `SELECT TOP (100)`，除非用户明确指定数量；不要 SELECT *，只选择需要的列。"
+                "禁止使用 Oracle 的 FETCH FIRST、ROWNUM、NVL、SYSDATE 等语法。\n"
+            )
+            parameter_rule = (
+                "5. 表名和字段名按物理架构原样输出并使用清晰别名；所有筛选值必须使用 SQL Server "
+                "`@参数名`，即使用户给出了数字或文本值也不能直接写入 SQL 字面量。\n"
+            )
+        else:
+            dialect_name = "Oracle"
+            pagination_rule = (
+                "4. 明细查询默认使用 `FETCH FIRST 100 ROWS ONLY`，除非用户明确指定数量；不要 SELECT *，只选择需要的列。"
+                "禁止使用 SQL Server 的 TOP、方括号标识符、GETDATE、ISNULL 等语法。\n"
+            )
+            parameter_rule = (
+                "5. 表名和字段名按物理架构原样输出并使用清晰别名；所有筛选值必须使用 Oracle `:参数名`，"
+                "即使用户给出了数字或文本值也不能直接写入 SQL 字面量。\n"
+            )
         system_prompt = (
             "你是 Siemens Opcenter Execution（Camstar）只读 SQL 助手，服务对象是需要查询后台业务数据的 IT 人员。"
-            "当前数据库方言为 Oracle SQL。\n\n"
+            f"当前数据库方言为 {dialect_name} SQL，所有 SQL 必须严格使用该方言。\n\n"
             "强制规则：\n"
             "1. 表名、字段名、主键和外键连接条件只能使用“物理数据库架构”中明确出现的内容；"
             "本体 camelCase 属性不能直接当作物理列名。不得猜测任何表或列。SQL、说明和注意事项中都不得"
@@ -38,10 +58,8 @@ def build_prompt(
             "不要用同名字段臆造连接。\n"
             "3. 只生成只读 SELECT 或以 SELECT 结束的 CTE。拒绝生成或改写 INSERT、UPDATE、DELETE、"
             "MERGE、TRUNCATE、DROP、ALTER、CREATE、EXEC 等会修改数据或结构的语句。\n"
-            "4. 明细查询默认使用 `FETCH FIRST 100 ROWS ONLY`，除非用户明确指定数量；不要 SELECT *，只选择需要的列。"
-            "禁止使用 SQL Server 的 TOP、方括号标识符、GETDATE、ISNULL 等语法。\n"
-            "5. 表名和字段名按物理架构原样输出并使用清晰别名；所有筛选值必须使用 Oracle `:参数名`，"
-            "即使用户给出了数字或文本值也不能直接写入 SQL 字面量。\n"
+            f"{pagination_rule}"
+            f"{parameter_rule}"
             "6. 若需求、时间范围、状态含义或目标表不明确，先给可确认的查询骨架，并明确标出待确认参数；"
             "不得把不确定业务含义说成事实。不得根据 DataTypeCode 猜测业务枚举值，也不得虚构状态值说明。\n"
             "7. 输出固定包含：`### SQL`（sql代码块）、`### 说明`、`### 使用的表与连接`、`### 注意事项`。"

@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Literal
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -24,7 +25,7 @@ class ChatRequest(BaseModel):
     history: list[dict] | None = None
     assistant_mode: str = "sql"
     selected_classes: list[str] | None = None
-    sql_dialect: str = "oracle"
+    sql_dialect: Literal["oracle", "sqlserver"] = "oracle"
 
 
 class ClearRequest(BaseModel):

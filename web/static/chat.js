@@ -29,13 +29,60 @@
     const chatSessionCount = document.getElementById("chatSessionCount");
     const chatContextClasses = document.getElementById("chatContextClasses");
     const chatQuickActions = document.getElementById("chatQuickActions");
+    const chatSqlDialect = document.getElementById("chatSqlDialect");
 
-    // ── Welcome HTML template ──
-    const WELCOME_HTML = `<div class="chat-welcome">
-        <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
-        <p>你好！我是 Camstar SQL 助手。</p>
-        <p class="chat-welcome-sub">可从左侧加入已知对象，或输入 @表名；我会依据真实物理字段和关系生成只读 Oracle SQL</p>
-    </div>`;
+    const SQL_DIALECT_COOKIE = "camstar_sql_dialect";
+    const SQL_DIALECTS = {
+        oracle: {
+            label: "Oracle",
+            params: ":StartTime 和 :EndTime",
+        },
+        sqlserver: {
+            label: "SQL Server",
+            params: "@StartTime 和 @EndTime",
+        },
+    };
+
+    function readCookie(name) {
+        const prefix = `${encodeURIComponent(name)}=`;
+        const part = document.cookie
+            .split("; ")
+            .find((item) => item.startsWith(prefix));
+        return part ? decodeURIComponent(part.slice(prefix.length)) : "";
+    }
+
+    function normalizeSqlDialect(value) {
+        return Object.hasOwn(SQL_DIALECTS, value) ? value : "oracle";
+    }
+
+    let selectedSqlDialect = normalizeSqlDialect(readCookie(SQL_DIALECT_COOKIE));
+
+    function persistSqlDialect(value) {
+        document.cookie = `${encodeURIComponent(SQL_DIALECT_COOKIE)}=${encodeURIComponent(value)}; Max-Age=31536000; Path=/; SameSite=Lax`;
+    }
+
+    function getWelcomeHtml() {
+        const label = SQL_DIALECTS[selectedSqlDialect].label;
+        return `<div class="chat-welcome">
+            <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
+            <p>你好！请描述需要查询的业务数据。</p>
+            <p class="chat-welcome-sub">可从左侧加入已知对象，或输入 @表名；我会依据真实物理字段和关系生成只读 ${label} SQL</p>
+        </div>`;
+    }
+
+    function applySqlDialect(value, persist = true) {
+        selectedSqlDialect = normalizeSqlDialect(value);
+        chatSqlDialect.value = selectedSqlDialect;
+        if (persist) persistSqlDialect(selectedSqlDialect);
+        if (!chatHistoryArray.length) {
+            chatMessages.innerHTML = getWelcomeHtml();
+        }
+    }
+
+    applySqlDialect(selectedSqlDialect, !readCookie(SQL_DIALECT_COOKIE));
+    chatSqlDialect.addEventListener("change", () => {
+        applySqlDialect(chatSqlDialect.value);
+    });
 
     function stopStreaming() {
         // Abort any in-flight stream
@@ -57,7 +104,7 @@
             content: message.content || "",
         }));
         updateContextBar(session.context);
-        chatMessages.innerHTML = chatHistoryArray.length ? "" : WELCOME_HTML;
+        chatMessages.innerHTML = chatHistoryArray.length ? "" : getWelcomeHtml();
         for (const message of chatHistoryArray) {
             const bubble = appendMessage(message.role, message.content);
             if (message.role === "assistant") {
@@ -403,11 +450,12 @@
             : knownClasses.length
                 ? knownClasses.map((name) => `[[${name}]]`).join("、")
                 : "当前选中的表";
+        const dialect = SQL_DIALECTS[selectedSqlDialect];
         const prompts = {
             fields: `请列出 ${subject} 最常用于写SQL的物理字段、主键和外键，并说明适合的查询场景。`,
-            time: `请基于 ${subject} 生成一个Oracle SQL时间范围查询模板，使用 :StartTime 和 :EndTime 参数。`,
-            move: "请生成按Container名称和时间范围查询完整过站Move轨迹的Oracle SQL。",
-            throughput: "请生成按工序和时间范围统计产出数量的Oracle SQL，并说明数量和去重口径。",
+            time: `请基于 ${subject} 生成一个${dialect.label} SQL时间范围查询模板，使用 ${dialect.params} 参数。`,
+            move: `请生成按Container名称和时间范围查询完整过站Move轨迹的${dialect.label} SQL。`,
+            throughput: `请生成按工序和时间范围统计产出数量的${dialect.label} SQL，并说明数量和去重口径。`,
         };
         chatInput.value = prompts[button.dataset.prompt] || "";
         chatInput.focus();
@@ -554,7 +602,7 @@
                     session_id: sessionId,
                     product_line,
                     assistant_mode: "sql",
-                    sql_dialect: "oracle",
+                    sql_dialect: selectedSqlDialect,
                     selected_classes: [
                         ...knownClasses,
                         ...(selectedNode ? [selectedNode] : []),
