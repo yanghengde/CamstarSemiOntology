@@ -160,13 +160,20 @@
     let rawData = null;
     let comboEnabled = false;
     let relMode = false;  // Relationship focus mode
-    let layoutMode = "radial";  // Current layout
+    let layoutMode = "preset";  // Fast deterministic initial layout
     let selectedNodeId = null;   // Persistent selection
     const API = "";  // same origin
     const classDetailCache = new Map(); // Client-side cache for class detail API responses
+    const nodeInfoCache = new Map();
+    const presetPositions = new Map();
+    let adjacencyIndex = null;
+    let detailPrefetchPromise = null;
 
     // ── Layout presets ──
     const LAYOUTS = {
+        "preset": {
+            type: "preset",
+        },
         "dagre-tb": {
             type: "dagre",
             rankdir: "TB",
@@ -209,7 +216,7 @@
         "force": "⬤ 力导向",
         "radial": "◎ 径向",
     };
-    const LAYOUT_KEYS = Object.keys(LAYOUTS);
+    const LAYOUT_KEYS = ["dagre-tb", "dagre-lr", "force", "radial"];
 
     // ══════════════════════════════════════════════════════
     //  Fetch helpers
@@ -218,6 +225,87 @@
         const res = await fetch(API + url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
+    }
+
+    function indexOverviewData(data) {
+        nodeInfoCache.clear();
+        presetPositions.clear();
+        const moduleGroups = new Map();
+        for (const node of data?.nodes || []) {
+            nodeInfoCache.set(node.id, node);
+            const module = COMBO_LABELS[node.data?.module]
+                ? node.data.module
+                : "other";
+            if (!moduleGroups.has(module)) moduleGroups.set(module, []);
+            moduleGroups.get(module).push(node.id);
+        }
+
+        const modules = [...moduleGroups.keys()].sort();
+        const moduleColumns = Math.max(1, Math.ceil(Math.sqrt(modules.length)));
+        const largestGroup = Math.max(
+            1,
+            ...modules.map((module) => moduleGroups.get(module).length),
+        );
+        const blockSize = Math.max(
+            700,
+            Math.ceil(Math.sqrt(largestGroup)) * 105 + 220,
+        );
+
+        modules.forEach((module, moduleIndex) => {
+            const ids = moduleGroups.get(module).sort();
+            const innerColumns = Math.max(1, Math.ceil(Math.sqrt(ids.length)));
+            const rows = Math.ceil(ids.length / innerColumns);
+            const centerX = (moduleIndex % moduleColumns) * blockSize;
+            const centerY = Math.floor(moduleIndex / moduleColumns) * blockSize;
+            ids.forEach((id, index) => {
+                const column = index % innerColumns;
+                const row = Math.floor(index / innerColumns);
+                presetPositions.set(id, {
+                    x: centerX + (column - (innerColumns - 1) / 2) * 105,
+                    y: centerY + (row - (rows - 1) / 2) * 105,
+                });
+            });
+        });
+        adjacencyIndex = new Map();
+        for (const node of data?.nodes || []) {
+            adjacencyIndex.set(node.id, {
+                neighbors: new Set(),
+                outgoing: new Set(),
+                incoming: new Set(),
+            });
+        }
+        (data?.edges || []).forEach((edge, index) => {
+            const edgeId = `e-${index}`;
+            edge.id = edge.id || edgeId;
+            const source = adjacencyIndex.get(edge.source);
+            const target = adjacencyIndex.get(edge.target);
+            if (!source || !target) return;
+            source.neighbors.add(edge.target);
+            source.outgoing.add(edgeId);
+            target.neighbors.add(edge.source);
+            target.incoming.add(edgeId);
+        });
+    }
+
+    function scheduleDetailPrefetch() {
+        if (detailPrefetchPromise) return;
+        const prefetch = () => {
+            detailPrefetchPromise = fetchJSON("/api/graph/details")
+                .then((details) => {
+                    for (const [className, detail] of Object.entries(details)) {
+                        classDetailCache.set(className, detail);
+                    }
+                })
+                .catch((error) => {
+                    detailPrefetchPromise = null;
+                    console.debug("Class detail prefetch skipped:", error);
+                });
+        };
+        if ("requestIdleCallback" in window) {
+            window.requestIdleCallback(prefetch);
+        } else {
+            window.setTimeout(prefetch, 2000);
+        }
     }
 
     // ══════════════════════════════════════════════════════
@@ -230,6 +318,7 @@
                 mod = "other";
             }
             const c = COLORS[mod] || COLORS.other;
+            const position = presetPositions.get(n.id);
             return {
                 id: n.id,
                 combo: useCombo ? mod : undefined,
@@ -238,6 +327,8 @@
                     stroke: c.stroke,
                     shadowColor: c.fill,
                     zIndex: 10,
+                    x: position?.x,
+                    y: position?.y,
                 },
                 data: {
                     ...n.data,
@@ -247,7 +338,7 @@
         });
 
         const edges = apiData.edges.map((e, i) => ({
-            id: `e-${i}`,
+            id: e.id || `e-${i}`,
             source: e.source,
             target: e.target,
             data: {
@@ -340,7 +431,7 @@
                     fill: (d) => (COLORS[d.data?.module] || COLORS.other).fill,
                     stroke: (d) => (COLORS[d.data?.module] || COLORS.other).stroke,
                     lineWidth: 2,
-                    labelText: (d) => d.data?.chineseName ? (d.data.label || d.id) + '\n(' + d.data.chineseName + ')' : (d.data?.label || d.id),
+                    labelText: (d) => d.data?.label || d.id,
                     labelFill: "#E8F0F2",
                     labelFontSize: 11,
                     labelFontWeight: 500,
@@ -393,7 +484,7 @@
 
             // ── Edge defaults ──
             edge: {
-                type: "quadratic",
+                type: "line",
                 style: {
                     zIndex: 0,
                     stroke: "rgba(0,255,185,0.2)",
@@ -402,9 +493,8 @@
                     halo: 6,
                     haloOpacity: 0,
                     haloPointerEvents: "auto",
-                    endArrowSize: 6,
-                    endArrow: true,
-                    labelText: (d) => d.data?.label || "",
+                    endArrow: false,
+                    labelText: "",
                     labelOpacity: 0,
                     labelBackgroundOpacity: 0,
                     labelFill: "rgba(0,255,185,0.55)",
@@ -529,31 +619,15 @@
             ],
 
             // ── Plugins ──
-            plugins: [
-                {
-                    type: "minimap",
-                    size: [160, 100],
-                    style: {
-                        position: "absolute",
-                        bottom: "20px",
-                        right: "20px",
-                        background: "rgba(0,0,40,0.7)",
-                        border: "1px solid rgba(0,153,153,0.2)",
-                        borderRadius: "8px",
-                    },
-                },
-            ],
+            plugins: [],
 
             // ── Animation (reduced duration for snappier interactions) ──
-            animation: {
-                duration: 300,
-                easing: "ease-out",
-            },
+            animation: false,
 
             data,
         });
 
-        graph.render();
+        const initialRender = graph.render();
 
         // Expose graph for chat.js linking
         window._g6Graph = graph;
@@ -569,6 +643,7 @@
                 return;
             }
 
+            await renderIncidentEdges(nodeId);
             selectNode(nodeId);
             if (relMode) {
                 await showRelOnly(nodeId);
@@ -727,6 +802,8 @@
             if (selectedNodeId) return;
             clearHighlight();
         });
+
+        return initialRender;
     }
 
     // ══════════════════════════════════════════════════════
@@ -740,6 +817,23 @@
     }
     // Expose for chat.js
     window._selectNode = selectNode;
+
+    async function renderIncidentEdges(nodeId) {
+        if (!graph || !rawData) return;
+        const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
+        if (currentEdgeIds.length) graph.removeEdgeData(currentEdgeIds);
+        const incidentApiEdges = rawData.edges.filter(
+            (edge) => edge.source === nodeId || edge.target === nodeId,
+        );
+        if (incidentApiEdges.length) {
+            const incidentEdges = buildGraphData(
+                { nodes: [], edges: incidentApiEdges },
+                false,
+            ).edges;
+            graph.addEdgeData(incidentEdges);
+        }
+        await graph.draw();
+    }
 
     function clearSelection() {
         selectedNodeId = null;
@@ -782,22 +876,34 @@
 
     function highlightNeighbors(nodeId, isSelection) {
         if (!graph) return;
-        const neighborIds = new Set();
-        const outEdgeIds = new Set();
-        const inEdgeIds = new Set();
-
-        // Find connected edges and neighbor nodes
         const edgesData = graph.getEdgeData();
-        for (let i = 0, len = edgesData.length; i < len; i++) {
-            const edge = edgesData[i];
-            if (edge.source === nodeId) {
-                outEdgeIds.add(edge.id);
-                neighborIds.add(edge.target);
-            } else if (edge.target === nodeId) {
-                inEdgeIds.add(edge.id);
-                neighborIds.add(edge.source);
+        if (!adjacencyIndex) {
+            adjacencyIndex = new Map();
+            for (const edge of edgesData) {
+                if (!adjacencyIndex.has(edge.source)) {
+                    adjacencyIndex.set(edge.source, {
+                        neighbors: new Set(),
+                        outgoing: new Set(),
+                        incoming: new Set(),
+                    });
+                }
+                if (!adjacencyIndex.has(edge.target)) {
+                    adjacencyIndex.set(edge.target, {
+                        neighbors: new Set(),
+                        outgoing: new Set(),
+                        incoming: new Set(),
+                    });
+                }
+                adjacencyIndex.get(edge.source).neighbors.add(edge.target);
+                adjacencyIndex.get(edge.source).outgoing.add(edge.id);
+                adjacencyIndex.get(edge.target).neighbors.add(edge.source);
+                adjacencyIndex.get(edge.target).incoming.add(edge.id);
             }
         }
+        const adjacency = adjacencyIndex.get(nodeId);
+        const neighborIds = adjacency?.neighbors || new Set();
+        const outEdgeIds = adjacency?.outgoing || new Set();
+        const inEdgeIds = adjacency?.incoming || new Set();
 
         const states = {};
         const nodesData = graph.getNodeData();
@@ -1337,7 +1443,7 @@
             panel.classList.remove("panel-hidden");
 
             try {
-                detail = await fetchJSON(`/api/graph/class/${className}`);
+                detail = await fetchJSON(`/api/graph/class/${encodeURIComponent(className)}`);
                 classDetailCache.set(className, detail);
             } catch (err) {
                 sectionMeta.innerHTML = `<div class="meta-row"><span class="meta-value" style="color:#FF6666">加载失败: ${err.message}</span></div>`;
@@ -1349,7 +1455,7 @@
 
             // ── Meta ──
             // find node in rawData for extra info
-            const nodeInfo = rawData?.nodes?.find((n) => n.id === className);
+            const nodeInfo = nodeInfoCache.get(className);
             const module = nodeInfo?.data?.module || "other";
             const chName = nodeInfo?.data?.chineseName || "";
             const desc = nodeInfo?.data?.description || "";
@@ -1533,7 +1639,7 @@
             panel.classList.remove("panel-hidden");
 
             try {
-                detail = await fetchJSON(`/api/graph/class/${className}`);
+                detail = await fetchJSON(`/api/graph/class/${encodeURIComponent(className)}`);
                 classDetailCache.set(className, detail);
             } catch (err) {
                 sectionMeta.innerHTML = `<div class="meta-row"><span class="meta-value" style="color:#FF6666">加载失败: ${err.message}</span></div>`;
@@ -1542,7 +1648,7 @@
         }
 
         try {
-            const nodeInfo = rawData?.nodes?.find(n => n.id === className);
+            const nodeInfo = nodeInfoCache.get(className);
             const module = nodeInfo?.data?.module || "other";
             const chName = nodeInfo?.data?.chineseName || "";
 
@@ -2350,10 +2456,13 @@
             // Fetch overview data (Level 0)
             rawData = await fetchJSON("/api/graph/overview");
             window.rawData = rawData; // Expose for chat.js
+            indexOverviewData(rawData);
             const data = buildGraphData(rawData, comboEnabled);
+            data.edges = [];
 
             // Init G6
-            initGraph(container, data);
+            await initGraph(container, data);
+            scheduleDetailPrefetch();
 
             // Load stats
             await loadStats();

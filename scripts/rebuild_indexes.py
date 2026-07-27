@@ -40,9 +40,14 @@ INDEXES = [
         "description": "Layer Index (stats aggregation, layer-based filtering)",
     },
     {
+        "name": "ontology_class_module",
+        "cypher": "CREATE INDEX ontology_class_module IF NOT EXISTS FOR (c:OntologyClass) ON (c.module)",
+        "description": "Module Index (module filtering and focused graph loading)",
+    },
+    {
         "name": "ontology_class_fulltext",
-        "cypher": "CREATE FULLTEXT INDEX ontology_class_fulltext IF NOT EXISTS FOR (c:OntologyClass) ON EACH [c.name, c.chineseName]",
-        "description": "FULLTEXT Name + ChineseName (Graph-RAG keyword matching)",
+        "cypher": "CREATE FULLTEXT INDEX ontology_class_fulltext IF NOT EXISTS FOR (c:OntologyClass) ON EACH [c.name, c.chineseName, c.description]",
+        "description": "FULLTEXT Name + ChineseName + Description",
     },
     {
         "name": "ontology_property_name",
@@ -55,9 +60,34 @@ INDEXES = [
         "description": "Property ClassName Index (class detail queries)",
     },
     {
+        "name": "ontology_property_data_type",
+        "cypher": "CREATE INDEX ontology_property_data_type IF NOT EXISTS FOR (p:OntologyProperty) ON (p.dataType)",
+        "description": "Property Data Type Index",
+    },
+    {
+        "name": "ontology_property_class_type",
+        "cypher": "CREATE INDEX ontology_property_class_type IF NOT EXISTS FOR (p:OntologyProperty) ON (p.className, p.dataType)",
+        "description": "Composite Class + Data Type Index",
+    },
+    {
         "name": "ontology_property_fulltext",
         "cypher": "CREATE FULLTEXT INDEX ontology_property_fulltext IF NOT EXISTS FOR (p:OntologyProperty) ON EACH [p.name, p.description]",
         "description": "FULLTEXT Property Name + Description (RAG property search)",
+    },
+    {
+        "name": "ontology_relation_name",
+        "cypher": "CREATE INDEX ontology_relation_name IF NOT EXISTS FOR ()-[r:ONTOLOGY_RELATION]-() ON (r.name)",
+        "description": "Relationship Name Index",
+    },
+    {
+        "name": "ontology_relation_cardinality",
+        "cypher": "CREATE INDEX ontology_relation_cardinality IF NOT EXISTS FOR ()-[r:ONTOLOGY_RELATION]-() ON (r.cardinality)",
+        "description": "Relationship Cardinality Index",
+    },
+    {
+        "name": "ontology_relation_fulltext",
+        "cypher": "CREATE FULLTEXT INDEX ontology_relation_fulltext IF NOT EXISTS FOR ()-[r:ONTOLOGY_RELATION]-() ON EACH [r.name, r.description]",
+        "description": "FULLTEXT Relationship Name + Description",
     },
 ]
 
@@ -69,28 +99,34 @@ def ensure_indexes(session=None, verbose=True):
     Returns True if all operations succeed.
     """
     def _run(sess):
+        errors = []
         # Create constraints first (they also create backing indexes)
         for c in CONSTRAINTS:
             try:
-                sess.run(c["cypher"])
+                sess.run(c["cypher"]).consume()
                 if verbose:
                     print(f"  [OK] Constraint: {c['name']} ({c['description']})")
             except Exception as e:
+                errors.append(f"{c['name']}: {e}")
                 if verbose:
                     print(f"  [FAIL] Constraint {c['name']}: {e}")
 
         # Create indexes
         for idx in INDEXES:
             try:
-                sess.run(idx["cypher"])
+                sess.run(idx["cypher"]).consume()
                 if verbose:
                     print(f"  [OK] Index: {idx['name']} ({idx['description']})")
             except Exception as e:
+                errors.append(f"{idx['name']}: {e}")
                 if verbose:
                     print(f"  [FAIL] Index {idx['name']}: {e}")
+        if errors:
+            raise RuntimeError("Index creation failed: " + "; ".join(errors))
 
     if session:
         _run(session)
+        session.run("CALL db.awaitIndexes(300)").consume()
     else:
         # Standalone mode: create own driver/session
         uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
@@ -99,6 +135,7 @@ def ensure_indexes(session=None, verbose=True):
         driver = GraphDatabase.driver(uri, auth=(user, password))
         with driver.session() as sess:
             _run(sess)
+            sess.run("CALL db.awaitIndexes(300)").consume()
         driver.close()
 
     return True

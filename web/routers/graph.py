@@ -122,59 +122,97 @@ def _graph_overview_cached():
 def graph_overview(refresh: bool = False):
     if refresh:
         _graph_overview_cached.cache_clear()
-    return _graph_overview_cached()
+    response = JSONResponse(content=_graph_overview_cached())
+    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
+    return response
+
+
+CLASS_DETAIL_QUERY = """
+    MATCH (c:OntologyClass {name: $name})
+    RETURN c.name AS className,
+           [(c)-[:HAS_PROPERTY]->(p:OntologyProperty) |
+             {name: p.name, dataType: p.dataType, description: p.description}
+           ] AS properties,
+           [(c)-[r:ONTOLOGY_RELATION]->(target:OntologyClass) |
+             {targetClass: target.name, relName: r.name,
+              cardinality: r.cardinality, description: r.description}
+           ] AS outgoing,
+           [(source:OntologyClass)-[r:ONTOLOGY_RELATION]->(c) |
+             {sourceClass: source.name, relName: r.name,
+              cardinality: r.cardinality, description: r.description}
+           ] AS incoming
+"""
+
+
+def _normalize_class_detail(record, class_name: str):
+    if record is None:
+        return {
+            "className": class_name,
+            "properties": [],
+            "outgoing": [],
+            "incoming": [],
+        }
+    return {
+        "className": record["className"],
+        "properties": sorted(record["properties"], key=lambda item: item["name"] or ""),
+        "outgoing": sorted(
+            record["outgoing"],
+            key=lambda item: (item["targetClass"] or "", item["relName"] or ""),
+        ),
+        "incoming": sorted(
+            record["incoming"],
+            key=lambda item: (item["sourceClass"] or "", item["relName"] or ""),
+        ),
+    }
 
 
 @lru_cache(maxsize=512)
 def _graph_class_detail_cached(class_name: str):
     with driver.session() as session:
-        result = session.run("""
-            MATCH (c:OntologyClass {name: $name})-[:HAS_PROPERTY]->(p:OntologyProperty)
-            RETURN p.name AS name,
-                   p.dataType AS dataType,
-                   p.description AS description
-            ORDER BY p.name
-        """, name=class_name)
-        properties = [dict(r) for r in result]
+        record = session.run(CLASS_DETAIL_QUERY, name=class_name).single()
+    return _normalize_class_detail(record, class_name)
 
-        result = session.run("""
-            MATCH (c:OntologyClass {name: $name})-[r:ONTOLOGY_RELATION]->(target:OntologyClass)
-            RETURN target.name AS targetClass,
-                   r.name AS relName,
-                   r.cardinality AS cardinality,
-                   r.description AS description
-        """, name=class_name)
-        outgoing = [dict(r) for r in result]
 
-        result = session.run("""
-            MATCH (source:OntologyClass)-[r:ONTOLOGY_RELATION]->(c:OntologyClass {name: $name})
-            RETURN source.name AS sourceClass,
-                   r.name AS relName,
-                   r.cardinality AS cardinality,
-                   r.description AS description
-        """, name=class_name)
-        incoming = [dict(r) for r in result]
-
-    return {
-        "className": class_name,
-        "properties": properties,
-        "outgoing": outgoing,
-        "incoming": incoming,
-    }
+@lru_cache(maxsize=1)
+def _all_class_details_cached():
+    query = CLASS_DETAIL_QUERY.replace(
+        "MATCH (c:OntologyClass {name: $name})",
+        "MATCH (c:OntologyClass)",
+    )
+    with driver.session() as session:
+        return {
+            record["className"]: _normalize_class_detail(
+                record,
+                record["className"],
+            )
+            for record in session.run(query)
+        }
 
 
 @router.get("/api/graph/class/{class_name}")
 def graph_class_detail(class_name: str, refresh: bool = False):
     if refresh:
         _graph_class_detail_cached.cache_clear()
+        _all_class_details_cached.cache_clear()
 
     response = JSONResponse(content=_graph_class_detail_cached(class_name))
     response.headers["Cache-Control"] = "public, max-age=3600"
     return response
 
 
-@router.get("/api/stats")
-def stats():
+@router.get("/api/graph/details")
+def all_graph_details(refresh: bool = False):
+    """Return every class detail once for idle client-side prefetch."""
+    if refresh:
+        _graph_class_detail_cached.cache_clear()
+        _all_class_details_cached.cache_clear()
+    response = JSONResponse(content=_all_class_details_cached())
+    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
+    return response
+
+
+@lru_cache(maxsize=1)
+def _stats_cached():
     query = """
     MATCH (c:OntologyClass)
     WITH count(c) AS classCount
@@ -184,8 +222,14 @@ def stats():
     RETURN classCount, propCount, count(r) AS relationCount
     """
     with driver.session() as session:
-        record = session.run(query).single()
-        
+        return dict(session.run(query).single())
+
+
+@router.get("/api/stats")
+def stats(refresh: bool = False):
+    if refresh:
+        _stats_cached.cache_clear()
+    record = _stats_cached()
     return {
         "classCount": record["classCount"],
         "propertyCount": record["propCount"],
