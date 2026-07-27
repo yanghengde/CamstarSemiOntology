@@ -129,10 +129,10 @@
         spc: "SPC 统计过程控制",
         semiconductor_action_approval_esign: "Semiconductor 动作审批与电子签名",
         semiconductor_bin_overlay: "Semiconductor Bin与Overlay",
-        semiconductor_cio_core: "CIO 连接与消息",
-        semiconductor_cio_orchestration: "CIO 编排与派工",
+        semiconductor_cio_core: "系统集成（已清理）",
+        semiconductor_cio_orchestration: "系统集成编排（已清理）",
         semiconductor_carrier_material_tool: "Semiconductor 载具物料工装",
-        semiconductor_cio_bases: "CIO 与半导体Base",
+        semiconductor_cio_bases: "半导体修订基础对象",
         semiconductor_foundation: "Semiconductor 半导体基础",
         semiconductor_legacy_name_replacements: "Semiconductor 旧名称物理替代",
         semiconductor_physical_resource_replacements: "Semiconductor 物理位置与资源BOM",
@@ -222,7 +222,10 @@
     //  Fetch helpers
     // ══════════════════════════════════════════════════════
     async function fetchJSON(url) {
-        const res = await fetch(API + url);
+        // Neo4j can be reloaded while the web service stays online. Let the
+        // server-side LRU cache provide speed, but never reuse a stale browser
+        // copy of graph data after an ontology scope change.
+        const res = await fetch(API + url, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
     }

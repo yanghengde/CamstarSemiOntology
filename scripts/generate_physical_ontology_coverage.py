@@ -16,6 +16,7 @@ from validate_ontology_vs_csv import DEFAULT_FIELDS, DEFAULT_ONTOLOGY_DIR, DEFAU
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = PROJECT_ROOT / "docs" / "physical_ontology_coverage.csv"
 DEFAULT_SUMMARY = PROJECT_ROOT / "docs" / "physical_ontology_coverage_summary.md"
+DEFAULT_SCOPE = PROJECT_ROOT / "src" / "ontology" / "sql_learning_scope.json"
 
 RUNTIME_PATTERN = re.compile(
     r"(History|Hist|Runtime|TxnData|TransactionData|Audit|Cache|Log$|"
@@ -56,6 +57,17 @@ def load_owners(ontology_dir: Path) -> dict[str, str]:
             if item.get("className"):
                 owners[item["className"]] = path.name
     return owners
+
+
+def load_exclusions(scope_path: Path) -> set[str]:
+    if not scope_path.exists():
+        return set()
+    payload = json.loads(scope_path.read_text(encoding="utf-8-sig"))
+    return {
+        class_name
+        for category in payload.get("categories", [])
+        for class_name in category.get("classes", [])
+    }
 
 
 def classify(
@@ -104,11 +116,13 @@ def main() -> int:
     parser.add_argument("--ontology-dir", type=Path, default=DEFAULT_ONTOLOGY_DIR)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)
+    parser.add_argument("--scope", type=Path, default=DEFAULT_SCOPE)
     args = parser.parse_args()
 
     tables = read_csv(args.tables)
     fields = read_csv(args.fields)
     owners = load_owners(args.ontology_dir)
+    exclusions = load_exclusions(args.scope)
     fields_by_class: dict[str, list[dict[str, str]]] = defaultdict(list)
     incoming: Counter[str] = Counter()
     for field in fields:
@@ -121,7 +135,11 @@ def main() -> int:
     for table in sorted(tables, key=lambda row: row["CDOName"].lower()):
         name = table["CDOName"]
         table_fields = fields_by_class[name]
-        if name in owners:
+        if name in exclusions:
+            classification = "excluded_from_sql_learning"
+            rationale = "物理表保留，但按SQL学习范围从业务图谱中排除"
+            status = "excluded"
+        elif name in owners:
             classification = "modeled"
             rationale = "存在与物理CDOName精确同名的本体类"
             status = "modeled"
@@ -163,7 +181,8 @@ def main() -> int:
         "",
         f"- 物理表总数：{len(rows)}",
         f"- 已建本体：{classifications['modeled']}",
-        f"- 未建顶级本体：{len(rows) - classifications['modeled']}",
+        f"- SQL学习范围排除：{classifications['excluded_from_sql_learning']}",
+        f"- 其他未建顶级本体：{len(rows) - classifications['modeled'] - classifications['excluded_from_sql_learning']}",
         "",
         "| 规则分类 | 数量 |",
         "|---|---:|",
@@ -173,8 +192,8 @@ def main() -> int:
     lines += [
         "",
         "完整逐表清单见 `docs/physical_ontology_coverage.csv`。分类为规则初筛，"
-        "高置信顶级和支撑候选已完成审核并生成；运行/历史、明细/关联、"
-        "非顶级记录和内部表不提升为顶级本体。",
+        "高置信顶级和支撑候选已完成审核并生成；SQL学习范围排除项仍完整"
+        "保留在物理CSV中，但不进入业务关系图。",
         "",
     ]
     args.summary.write_text("\n".join(lines), encoding="utf-8")
