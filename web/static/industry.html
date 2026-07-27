@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>行业与产品线设置 | Siemens Opcenter</title>
+    <link rel="icon" type="image/svg+xml" href="/static/siemens_logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <style>
+        #industry-layout {
+            display: flex;
+            height: calc(100vh - var(--topbar-h));
+            margin-top: var(--topbar-h);
+            background: var(--bg-primary);
+        }
+
+        .left-pane {
+            width: 450px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(0, 8, 16, 0.98) 100%);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow-y: auto;
+            backdrop-filter: blur(16px);
+        }
+
+        .right-pane {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 24px;
+            background:
+                radial-gradient(circle at 75% 20%, rgba(0, 153, 153, 0.05) 0%, transparent 50%),
+                var(--bg-primary);
+        }
+
+        .pane-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--si-green);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 8px;
+        }
+
+        .industry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .industry-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .industry-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 185, 0.2);
+            border-radius: 4px;
+        }
+
+        .industry-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.22s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .industry-card:hover {
+            border-color: var(--si-green);
+            background: rgba(0, 255, 185, 0.04);
+            transform: translateY(-1px);
+        }
+
+        .industry-card.active {
+            border-color: var(--si-green);
+            background: rgba(0, 255, 185, 0.08);
+            box-shadow: 0 0 10px rgba(0, 255, 185, 0.12);
+        }
+
+        .industry-icon {
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .industry-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .industry-name-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .industry-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .industry-badge {
+            font-family: 'Fira Code', monospace;
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+        }
+
+        .industry-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .industry-delete-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: all 0.2s ease;
+            padding: 4px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .industry-card:hover .industry-delete-btn {
+            opacity: 0.6;
+        }
+
+        .industry-delete-btn:hover {
+            opacity: 1 !important;
+            color: #FF5252 !important;
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        /* Form styling */
+        .editor-section {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(0, 5, 15, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            border-color: var(--si-green);
+            box-shadow: 0 0 6px rgba(0, 255, 185, 0.15);
+        }
+
+        .form-control:disabled {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-muted);
+            border-color: rgba(255, 255, 255, 0.05);
+            cursor: not-allowed;
+        }
+
+        textarea.form-control {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-picker-input {
+            width: 40px;
+            height: 32px;
+            padding: 0;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: rgba(0, 255, 185, 0.12);
+            border-color: rgba(0, 255, 185, 0.3);
+            color: var(--si-green);
+        }
+
+        .btn-primary:hover {
+            background: rgba(0, 255, 185, 0.22);
+            border-color: var(--si-green);
+            box-shadow: 0 0 10px rgba(0, 255, 185, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .btn-add {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            height: 24px;
+        }
+
+        /* Right Panel Prompt Box styles */
+        .prompt-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .prompt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed rgba(0, 255, 185, 0.2);
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .prompt-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--si-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-copy {
+            background: rgba(0, 255, 185, 0.08);
+            border: 1px solid rgba(0, 255, 185, 0.3);
+            color: var(--si-green);
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--si-green);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .prompt-body-wrapper {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+
+        .prompt-body {
+            position: absolute;
+            inset: 0;
+            background: #00040A;
+            border: 1px solid rgba(0, 153, 153, 0.15);
+            border-radius: 8px;
+            padding: 14px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: #A0C0D0;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .prompt-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .prompt-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 185, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Tips panel */
+        .tips-panel {
+            background: rgba(0, 188, 212, 0.05);
+            border: 1px solid rgba(0, 188, 212, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 14px 18px;
+            color: #80DEEA;
+            font-size: 11.5px;
+            line-height: 1.6;
+            flex-shrink: 0;
+        }
+
+        .tips-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #E0F7FA;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .accent {
+            color: var(--si-green);
+        }
+        
+        .nav-back-btn {
+            color: var(--text-secondary);
+            text-decoration: none;
+            border: 1px solid var(--border-subtle);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            background: var(--bg-glass);
+        }
+
+        .nav-back-btn:hover {
+            border-color: var(--si-green);
+            color: var(--si-green);
+            background: rgba(0, 255, 185, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ── Top Navigation Bar ── -->
+    <header id="topbar">
+        <div class="topbar-left">
+            <div class="siemens-logo">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <circle cx="14" cy="14" r="13" stroke="#00FFB9" stroke-width="2" fill="none" />
+                    <text x="14" y="18" text-anchor="middle" fill="#00FFB9" font-size="12" font-weight="700"
+                        font-family="Inter">S</text>
+                </svg>
+            </div>
+            <h1>Opcenter <span class="accent">Ontology</span> Explorer — 行业设置</h1>
+        </div>
+        <div class="topbar-right">
+            <a href="/" class="nav-back-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                返回图谱
+            </a>
+        </div>
+    </header>
+
+    <main id="industry-layout">
+        <!-- Left panel: Industry List and Form Editor -->
+        <section class="left-pane">
+            <div class="pane-title">
+                <span>行业列表</span>
+                <button class="btn btn-secondary btn-add" id="btnNew">＋ 新建行业</button>
+            </div>
+
+            <!-- List of existing industries -->
+            <div class="industry-list" id="industryList">
+                <!-- Dynamically loaded -->
+            </div>
+
+            <!-- Editor Form -->
+            <div class="editor-section" id="editorSection">
+                <div class="pane-title">
+                    <span id="editorTitle">编辑行业信息</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="industryId">行业唯一ID (ID)</label>
+                    <input type="text" id="industryId" class="form-control" placeholder="例如: semiconductor, automotive" />
+                </div>
+
+                <div class="form-group">
+                    <label for="industryName">行业名称 (Name)</label>
+                    <input type="text" id="industryName" class="form-control" placeholder="例如: 半导体制造, 汽车零部件" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="industryIcon">行业图标 (Icon)</label>
+                        <input type="text" id="industryIcon" class="form-control" placeholder="填入单个Emoji，如 ⚡" />
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="industryColor">代表色彩 (Color)</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="industryColorPicker" class="color-picker-input" value="#999999" />
+                            <input type="text" id="industryColor" class="form-control" style="font-family: monospace;" placeholder="#999999" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="industryDesc">行业建模场景描述 (Description)</label>
+                    <textarea id="industryDesc" class="form-control" placeholder="描述此行业下特定的 MES 建模特征，如：主打WIP跟踪、批次物料追溯、设备配方下发等"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-secondary" id="btnReset">重置</button>
+                    <button class="btn btn-primary" id="btnSave">💾 保存设置</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right panel: Prompts and instructions -->
+        <section class="right-pane">
+            <div class="prompt-container">
+                <div class="prompt-header">
+                    <div class="prompt-title">
+                        <span>🤖 关系建模 AI 提示词 (Prompt)</span>
+                    </div>
+                    <button class="btn-copy" id="btnCopyPrompt">📋 复制当前提示词</button>
+                </div>
+                <div class="prompt-body-wrapper">
+                    <div class="prompt-body" id="promptText">
+                        <!-- Dynamically formatted prompt will go here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="tips-panel">
+                <div class="tips-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span>提示说明</span>
+                </div>
+                <p>1. 设置完成后，点击左上角的「保存设置」会写入系统配置文件 `product_lines.json` 中。</p>
+                <p>2. 返回图谱主页后，顶部的「产品线选择下拉框」中将立即展现新添加的行业。在图谱中点击关系边，生成的 Wiki 均会在该行业目录下独立存储。</p>
+                <p>3. 右侧的「AI 提示词」是专为在 MES 建模语境下生成的上下文提示词。将该提示词输入 LLM（例如 DeepSeek 或 Claude），可用来快速生成规范的本体关系 Wiki 文件。</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Store lines loaded from API
+        let productLines = [];
+        let activeLineId = "general";
+        let isCreatingNew = false;
+
+        // Load lines from API
+        async function loadProductLines() {
+            try {
+                const res = await fetch("/api/product-lines");
+                const data = await res.json();
+                productLines = data.product_lines || [];
+                renderList();
+                
+                // Set active to default or first one
+                if (productLines.length > 0) {
+                    selectProductLine(activeLineId || productLines[0].id);
+                }
+            } catch (err) {
+                console.error("加载产品线失败:", err);
+                alert("加载行业列表失败: " + err.message);
+            }
+        }
+
+        // Render lists
+        function renderList() {
+            const listEl = document.getElementById("industryList");
+            listEl.innerHTML = "";
+
+            productLines.forEach(pl => {
+                const card = document.createElement("div");
+                card.className = `industry-card ${pl.id === activeLineId ? "active" : ""}`;
+                card.onclick = () => selectProductLine(pl.id);
+
+                const icon = document.createElement("div");
+                icon.className = "industry-icon";
+                icon.style.color = pl.color || "#009999";
+                icon.textContent = pl.icon || "📦";
+
+                const info = document.createElement("div");
+                info.className = "industry-info";
+
+                const nameRow = document.createElement("div");
+                nameRow.className = "industry-name-row";
+                
+                const name = document.createElement("span");
+                name.className = "industry-name";
+                name.textContent = pl.name;
+
+                const badge = document.createElement("span");
+                badge.className = "industry-badge";
+                badge.textContent = pl.id;
+
+                nameRow.appendChild(name);
+                nameRow.appendChild(badge);
+
+                const desc = document.createElement("div");
+                desc.className = "industry-desc";
+                desc.textContent = pl.description || "无描述";
+
+                info.appendChild(nameRow);
+                info.appendChild(desc);
+
+                card.appendChild(icon);
+                card.appendChild(info);
+
+                // Delete button (except for default/general)
+                if (pl.id !== "general" && pl.id !== "default" && pl.id !== "default_industry") {
+                    const delBtn = document.createElement("button");
+                    delBtn.className = "industry-delete-btn";
+                    delBtn.innerHTML = `
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    `;
+                    delBtn.title = "删除此行业";
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteProductLine(pl.id);
+                    };
+                    card.appendChild(delBtn);
+                }
+
+                listEl.appendChild(card);
+            });
+        }
+
+        // Select an item
+        function selectProductLine(id) {
+            activeLineId = id;
+            isCreatingNew = false;
+            
+            const pl = productLines.find(p => p.id === id);
+            if (!pl) return;
+
+            // Update UI selected states
+            document.querySelectorAll(".industry-card").forEach(c => {
+                c.classList.remove("active");
+            });
+            renderList();
+
+            // Update back button link
+            const backBtn = document.querySelector('.nav-back-btn');
+            if (backBtn) {
+                backBtn.href = `/?product_line=${id}`;
+            }
+
+            // Populate form
+            document.getElementById("editorTitle").textContent = "编辑行业信息";
+            const idInput = document.getElementById("industryId");
+            idInput.value = pl.id;
+            idInput.disabled = true; // Lock ID for editing
+
+            document.getElementById("industryName").value = pl.name;
+            document.getElementById("industryIcon").value = pl.icon || "📦";
+            document.getElementById("industryColor").value = pl.color || "#999999";
+            document.getElementById("industryColorPicker").value = pl.color || "#999999";
+            document.getElementById("industryDesc").value = pl.description || "";
+
+            generatePrompt(pl);
+        }
+
+        // Color picker and text sync
+        document.getElementById("industryColorPicker").addEventListener("input", (e) => {
+            document.getElementById("industryColor").value = e.target.value;
+        });
+        document.getElementById("industryColor").addEventListener("input", (e) => {
+            const val = e.target.value;
+            if (/^#[0-9A-F]{6}$/i.test(val)) {
+                document.getElementById("industryColorPicker").value = val;
+            }
+        });
+
+        // Trigger New
+        document.getElementById("btnNew").onclick = () => {
+            isCreatingNew = true;
+            activeLineId = null;
+
+            document.querySelectorAll(".industry-card").forEach(c => c.classList.remove("active"));
+
+            document.getElementById("editorTitle").textContent = "新建行业";
+            const idInput = document.getElementById("industryId");
+            idInput.value = "";
+            idInput.disabled = false;
+            idInput.placeholder = "例如: semiconductor (小写字母/下划线)";
+
+            document.getElementById("industryName").value = "";
+            document.getElementById("industryIcon").value = "⚡";
+            document.getElementById("industryColor").value = "#00FFB9";
+            document.getElementById("industryColorPicker").value = "#00FFB9";
+            document.getElementById("industryDesc").value = "";
+
+            document.getElementById("promptText").textContent = "请先保存新行业后生成提示词。";
+        };
+
+        // Reset
+        document.getElementById("btnReset").onclick = () => {
+            if (isCreatingNew) {
+                document.getElementById("btnNew").onclick();
+            } else if (activeLineId) {
+                selectProductLine(activeLineId);
+            }
+        };
+
+        // Save
+        document.getElementById("btnSave").onclick = async () => {
+            const id = document.getElementById("industryId").value.trim().toLowerCase();
+            const name = document.getElementById("industryName").value.trim();
+            const icon = document.getElementById("industryIcon").value.trim();
+            const color = document.getElementById("industryColor").value.trim();
+            const description = document.getElementById("industryDesc").value.trim();
+
+            if (!id || !/^[a-z0-9_]+$/.test(id)) {
+                alert("请输入合法的行业ID！仅允许小写字母、数字和下划线。");
+                return;
+            }
+
+            if (!name) {
+                alert("请输入行业名称！");
+                return;
+            }
+
+            const payload = { id, name, icon, color, description };
+
+            if (isCreatingNew) {
+                // Check duplicate
+                if (productLines.some(p => p.id === id)) {
+                    alert("行业ID已存在，请使用其他ID！");
+                    return;
+                }
+                productLines.push(payload);
+                activeLineId = id;
+            } else {
+                const idx = productLines.findIndex(p => p.id === id);
+                if (idx !== -1) {
+                    productLines[idx] = payload;
+                }
+            }
+
+            // Save to backend
+            try {
+                const btn = document.getElementById("btnSave");
+                btn.disabled = true;
+                btn.textContent = "⏳ 保存中...";
+
+                const res = await fetch("/api/product-lines", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ product_lines: productLines })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    await loadProductLines();
+                    isCreatingNew = false;
+                } else {
+                    alert("保存失败！");
+                }
+            } catch (err) {
+                console.error("保存失败:", err);
+                alert("保存失败: " + err.message);
+            } finally {
+                const btn = document.getElementById("btnSave");
+                btn.disabled = false;
+                btn.textContent = "💾 保存设置";
+            }
+        };
+
+        // Delete
+        async function deleteProductLine(id) {
+            if (id === "general" || id === "default") {
+                alert("无法删除通用行业线！");
+                return;
+            }
+            if (!confirm(`确认要删除行业 "${id}" 吗？此操作不可撤销，但不会删除已生成的 Wiki 文件。`)) {
+                return;
+            }
+
+            productLines = productLines.filter(p => p.id !== id);
+            activeLineId = "general";
+
+            try {
+                const res = await fetch("/api/product-lines", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ product_lines: productLines })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadProductLines();
+                } else {
+                    alert("删除失败！");
+                }
+            } catch (err) {
+                console.error("删除失败:", err);
+                alert("删除失败: " + err.message);
+            }
+        }
+
+        // Generate copyable prompt
+        function generatePrompt(pl) {
+            const promptText = `你是一个 Siemens Opcenter (Camstar) MES 领域专家。
+当前我们正在针对【${pl.name} (${pl.id})】行业进行本体图谱关系（Relationship）的知识建模。
+业务场景背景: ${pl.description || "无"}
+
+请为以下本体关系生成规范的 Markdown 知识库文档：
+
+关系: [FromClass] --[[RelationName]]--> [ToClass]
+关系修饰(基数): [Cardinality, 如 ONE_TO_MANY 或 MANY_TO_ONE]
+关系描述: [Description]
+
+请直接以以下 Markdown 格式生成高质量的技术文档（全部使用中文撰写，技术术语和 Opcenter 字段保留英文，直接输出内容，不要包裹在代码块中）：
+
+# [FromClass] → [RelationName] → [ToClass]
+
+> **产品线**: ${pl.name}
+> **基数**: [Cardinality]
+> **生成时间**: ${new Date().toISOString().slice(0, 10)}
+> **来源**: ${pl.name} 领域专家组
+
+## 关系说明
+(详细阐述此关系在 Opcenter Modeler 的物理及逻辑含义。结合【${pl.name}】的生产场景，解释 [FromClass] 为何要关联到 [ToClass]，以及该关联在底层物理表中的映射逻辑，长度2-3段。)
+
+## 业务场景
+
+### 何时需要配置此关系？
+(详细列出 2-3 个在【${pl.name}】产线或工厂建模中的实际业务场景，必须结合该行业的工艺，例如主板防错、特定工序的物料消耗等。)
+
+### 【${pl.name}】建模典型示例
+(给出具体的实例配置步骤：
+1. 命名实例。如工作中心命名为 "Assembly_Line_01"，工序命名为 "Function_Test"。
+2. 描述在 Modeler (或 Web Portal) 中的配置路径及参数值。
+3. 展现其产生的控制行为，如锁机、提示或限制路由。)
+
+## 配置要点
+(提供 5-8 条高阶配置指导和防呆防错技巧。包括但不限于：外键为空时的容错、多态引用处理、变更管理锁定影响、加载器依赖的前置加载顺序等。)
+
+## 常见问题 FAQ
+
+**Q: 在配置 [RelationName] 时，如果 [ToClass] 没有激活/被冻结(isFrozen)，会发生什么？**
+A: (详细解答)
+
+**Q: 可以通过批量导入(Data Exchange)工具批量设置该关系吗？如何保证引用一致性？**
+A: (详细解答)
+
+**Q: 如果遇到多版本覆盖，应如何在 Revisioned 级别与 Base 级别之间平衡关联关系？**
+A: (详细解答)`;
+
+            document.getElementById("promptText").textContent = promptText;
+        }
+
+        // Copy button
+        document.getElementById("btnCopyPrompt").onclick = () => {
+            const text = document.getElementById("promptText").textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById("btnCopyPrompt");
+                const oldText = btn.textContent;
+                btn.textContent = "✅ 已复制到剪贴板！";
+                btn.style.background = "var(--si-green)";
+                btn.style.color = "#000";
+                setTimeout(() => {
+                    btn.textContent = oldText;
+                    btn.style.background = "";
+                    btn.style.color = "";
+                }, 2000);
+            }).catch(err => {
+                alert("复制失败: " + err);
+            });
+        };
+
+        // Initial load
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const plParam = urlParams.get("product_line") || urlParams.get("industry") || localStorage.getItem("selected_product_line");
+            if (plParam) {
+                activeLineId = plParam;
+            }
+            loadProductLines();
+        };
+    </script>
+</body>
+
+</html>

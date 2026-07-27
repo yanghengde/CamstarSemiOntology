@@ -1,0 +1,2710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MES 需求-数字化本体图谱映射工作室 | Siemens Opcenter</title>
+    <link rel="icon" type="image/svg+xml" href="/static/siemens_logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <style>
+        /* ── Page Custom Layout ── */
+        #studio-layout {
+            display: flex;
+            height: calc(100vh - var(--topbar-h));
+            margin-top: var(--topbar-h);
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
+        /* ── Left Input Pane ── */
+        .input-pane {
+            width: 380px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(0, 8, 16, 0.98) 100%);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden; /* Changed from auto to hidden to allow separate scroll areas */
+            backdrop-filter: blur(16px);
+        }
+
+        /* ── Presets Scroll Area ── */
+        .presets-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-right: 4px;
+        }
+
+        /* ── Scenario QA Agent Widget ── */
+        .qa-agent-wrapper {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 16px;
+            display: flex;
+            flex-direction: column;
+            height: 380px; /* Perfectly sized for bottom-left Q&A */
+            flex-shrink: 0;
+            background: rgba(0, 10, 20, 0.4);
+            margin: 0 -20px -20px -20px;
+            padding: 16px 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .qa-agent-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .qa-agent-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--si-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-shadow: 0 0 8px rgba(0, 255, 185, 0.2);
+        }
+
+        .qa-agent-clear-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-secondary);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .qa-agent-clear-btn:hover {
+            border-color: var(--si-green);
+            color: var(--si-green);
+            background: rgba(0, 255, 185, 0.05);
+        }
+
+        .qa-agent-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid rgba(0, 153, 153, 0.15);
+            border-radius: 6px;
+            background: rgba(0, 4, 8, 0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+            scrollbar-width: thin;
+        }
+
+        .qa-agent-msg {
+            font-size: 11.5px;
+            line-height: 1.5;
+            padding: 8px 10px;
+            border-radius: 6px;
+            max-width: 90%;
+            word-break: break-word;
+            animation: qa-slide-up 0.2s ease;
+        }
+
+        @keyframes qa-slide-up {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .qa-agent-msg-system {
+            background: rgba(0, 18, 36, 0.85);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            align-self: flex-start;
+        }
+
+        .qa-agent-msg-user {
+            background: rgba(0, 255, 185, 0.08);
+            border: 1px solid rgba(0, 255, 185, 0.25);
+            color: #00FFB9;
+            align-self: flex-end;
+        }
+
+        .qa-agent-typing {
+            font-style: italic;
+            color: var(--text-muted);
+            animation: qa-pulse 1.5s infinite;
+        }
+
+        @keyframes qa-pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .qa-agent-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .qa-agent-input {
+            flex: 1;
+            background: rgba(0, 5, 10, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: var(--text-primary);
+            font-size: 11px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .qa-agent-input:focus {
+            border-color: var(--si-green);
+            box-shadow: 0 0 6px rgba(0, 255, 185, 0.2);
+        }
+
+        .qa-agent-send-btn {
+            background: rgba(0, 255, 185, 0.08);
+            border: 1px solid rgba(0, 255, 185, 0.35);
+            color: var(--si-green);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .qa-agent-send-btn:hover {
+            background: rgba(0, 255, 185, 0.2);
+            border-color: var(--si-green);
+            box-shadow: 0 0 8px rgba(0, 255, 185, 0.3);
+        }
+
+        .qa-agent-stop-btn {
+            background: rgba(255, 102, 102, 0.08);
+            border: 1px solid rgba(255, 102, 102, 0.35);
+            color: #FF6666;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .qa-agent-stop-btn:hover {
+            background: rgba(255, 102, 102, 0.2);
+            border-color: #FF6666;
+            box-shadow: 0 0 8px rgba(255, 102, 102, 0.3);
+        }
+
+        /* ── Clickable High-Fidelity Scenario Badge ── */
+        .qa-badge-link {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 255, 185, 0.12);
+            border: 1px solid rgba(0, 255, 185, 0.45);
+            color: #00FFB9;
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin: 0 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .qa-badge-link:hover {
+            background: var(--si-green);
+            color: #000D1A;
+            box-shadow: 0 0 8px rgba(0, 255, 185, 0.5);
+            transform: scale(1.05);
+        }
+
+        .pane-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--si-green);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 8px;
+        }
+
+        .preset-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-card:hover {
+            border-color: var(--si-green);
+            background: rgba(0, 255, 185, 0.04);
+            transform: translateY(-1px);
+        }
+
+        .preset-card.active {
+            border-color: var(--si-green);
+            background: rgba(0, 255, 185, 0.08);
+            box-shadow: 0 0 10px rgba(0, 255, 185, 0.15);
+        }
+
+        .preset-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .preset-title-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .preset-delete-btn {
+            background: transparent;
+            border: none;
+            padding: 2px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -2px;
+        }
+
+        .preset-card:hover .preset-delete-btn,
+        .preset-card.active .preset-delete-btn {
+            opacity: 0.6;
+        }
+
+        .preset-delete-btn:hover {
+            opacity: 1 !important;
+            color: #FF4D4D !important;
+        }
+
+        .preset-planner-btn {
+            background: transparent;
+            border: none;
+            padding: 2px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -2px;
+        }
+
+        .preset-card:hover .preset-planner-btn,
+        .preset-card.active .preset-planner-btn {
+            opacity: 0.6;
+        }
+
+        .preset-planner-btn:hover {
+            opacity: 1 !important;
+            color: var(--si-green) !important;
+            filter: drop-shadow(0 0 4px rgba(0, 255, 185, 0.4));
+        }
+
+        /* ── Active Scenario Top Header ── */
+        .scenario-active-header {
+            background: linear-gradient(90deg, rgba(0, 153, 153, 0.12) 0%, rgba(0, 255, 185, 0.03) 100%);
+            border: 1px solid rgba(0, 255, 185, 0.25);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            animation: card-slide-in 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .preset-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .custom-textarea {
+            width: 100%;
+            flex: 1;
+            min-height: 120px;
+            background: rgba(0, 0, 10, 0.4);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 12px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            margin-top: 10px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .custom-textarea:focus {
+            border-color: var(--si-green);
+            box-shadow: 0 0 0 3px rgba(0, 255, 185, 0.1);
+        }
+
+        .studio-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 12px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(0, 255, 185, 0.12);
+            border: 1px solid rgba(0, 255, 185, 0.3);
+            color: var(--si-green);
+        }
+
+        .studio-btn:hover {
+            background: rgba(0, 255, 185, 0.22);
+            border-color: var(--si-green);
+            box-shadow: 0 0 12px rgba(0, 255, 185, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* ── Center Content & Blueprint Panel ── */
+        .center-pane {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(0, 153, 153, 0.05) 0%, transparent 40%),
+                var(--bg-primary);
+            position: relative;
+            transition:
+                flex-basis 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.18s ease;
+        }
+
+        .blueprint-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ── Roadmap Steps ── */
+        .roadmap-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            position: relative;
+            animation: card-slide-in 0.3s ease;
+        }
+
+        @keyframes card-slide-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .roadmap-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .step-badge {
+            background: var(--si-petrol-dark);
+            color: var(--si-green);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border-subtle);
+            text-transform: uppercase;
+        }
+
+        .step-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+            margin-left: 12px;
+        }
+
+        .step-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        /* ── Entity Twin Cards ── */
+        .twins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .twin-card {
+            background: rgba(0, 12, 24, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .twin-card:hover {
+            border-color: var(--si-green);
+            box-shadow: 0 0 10px rgba(0, 255, 185, 0.1);
+        }
+
+        .twin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .twin-name {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            color: var(--si-green);
+        }
+
+        .twin-chinese {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .twin-props {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border-top: 1px solid rgba(0, 153, 153, 0.1);
+            padding-top: 6px;
+        }
+
+        .prop-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .prop-name {
+            font-family: 'Fira Code', monospace;
+            color: var(--text-secondary);
+        }
+
+        .prop-type {
+            color: var(--text-muted);
+        }
+
+        /* ── Relationship badge ── */
+        .twin-relation {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            background: rgba(0, 255, 185, 0.06);
+            border: 1px solid rgba(0, 255, 185, 0.2);
+            color: var(--si-green);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            margin-top: 8px;
+        }
+
+        /* ── Code Sandbox ── */
+        .code-sandbox {
+            background: #00040A;
+            border: 1px solid rgba(0, 153, 153, 0.15);
+            border-radius: 8px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .sandbox-header {
+            background: rgba(0, 15, 30, 0.9);
+            padding: 6px 12px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(0, 153, 153, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sandbox-body {
+            padding: 10px 14px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #A0C0D0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        /* ── Right Graph Widget ── */
+        .right-pane {
+            width: 400px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(0, 8, 16, 0.98) 100%);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition:
+                width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.28s ease;
+        }
+
+        #studio-layout.graph-expanded .center-pane {
+            flex: 0 0 0;
+            width: 0;
+            min-width: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #studio-layout.graph-expanded .right-pane {
+            width: calc(100vw - 380px);
+            box-shadow: -18px 0 36px rgba(0, 0, 0, 0.36);
+        }
+
+        .graph-preview-toggle {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 185, 0.22);
+            background: rgba(0, 255, 185, 0.06);
+            color: var(--si-green);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .graph-preview-toggle:hover {
+            border-color: rgba(0, 255, 185, 0.5);
+            background: rgba(0, 255, 185, 0.12);
+            box-shadow: 0 0 14px rgba(0, 255, 185, 0.18);
+        }
+
+        .graph-preview-toggle .icon-minimize {
+            display: none;
+        }
+
+        #studio-layout.graph-expanded .graph-preview-toggle .icon-maximize {
+            display: none;
+        }
+
+        #studio-layout.graph-expanded .graph-preview-toggle .icon-minimize {
+            display: block;
+        }
+
+        #studioGraph {
+            flex: 1;
+            width: 100%;
+            background: #000D1A;
+            position: relative;
+        }
+
+        #studioGraph::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(0, 153, 153, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+
+        .empty-blueprint {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            gap: 16px;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            opacity: 0.3;
+            color: var(--si-green);
+        }
+
+        /* ── Nav Links ── */
+        .nav-back-btn {
+            color: var(--text-secondary);
+            text-decoration: none;
+            border: 1px solid var(--border-subtle);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            background: var(--bg-glass);
+        }
+
+        .nav-back-btn:hover {
+            border-color: var(--si-green);
+            color: var(--si-green);
+            background: rgba(0, 255, 185, 0.08);
+        }
+
+        /* ── Custom Interactive Tooltip styles ── */
+        .studio-tooltip {
+            position: fixed;
+            background: rgba(0, 18, 36, 0.85);
+            border: 1px solid var(--si-green);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            box-shadow: 0 4px 16px rgba(0, 255, 185, 0.2);
+            pointer-events: none;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            max-width: 280px;
+            line-height: 1.5;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .studio-tooltip-hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .tt-title {
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            color: var(--si-green);
+            font-size: 13px;
+            margin-bottom: 4px;
+            border-bottom: 1px dashed rgba(0, 255, 185, 0.2);
+            padding-bottom: 4px;
+        }
+
+        .tt-sub {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .tt-desc {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .tt-meta {
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        /* ── AI Intelligent Planner Modal styles ── */
+        .planner-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            background: rgba(0, 8, 16, 0.85);
+            backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.25s ease;
+        }
+
+        .planner-modal-hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .planner-modal-content {
+            width: 900px;
+            max-width: 95vw;
+            height: 600px;
+            max-height: 85vh;
+            background: rgba(0, 18, 36, 0.95);
+            border: 1px solid rgba(0, 255, 185, 0.35);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 255, 185, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .planner-modal-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .planner-modal-header h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .planner-badge {
+            background: rgba(0, 255, 185, 0.08);
+            border: 1px solid rgba(0, 255, 185, 0.3);
+            color: var(--si-green);
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .planner-modal-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Chat side */
+        .planner-chat-container {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-subtle);
+            background: rgba(0, 8, 16, 0.2);
+            overflow: hidden;
+        }
+
+        .planner-chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .planner-chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: rgba(0, 18, 36, 0.95);
+        }
+
+        .planner-chat-input-area textarea {
+            flex: 1;
+            background: rgba(0, 8, 16, 0.5);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 12px;
+            line-height: 1.5;
+            resize: none;
+            height: 36px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .planner-chat-input-area textarea:focus {
+            border-color: var(--si-green);
+        }
+
+        .planner-send-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 185, 0.4);
+            background: rgba(0, 255, 185, 0.05);
+            color: var(--si-green);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .planner-send-btn:hover {
+            background: rgba(0, 255, 185, 0.15);
+            box-shadow: 0 0 8px rgba(0, 255, 185, 0.25);
+        }
+
+        /* Proposal side */
+        .planner-proposal-container {
+            flex: 0.8;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 8, 16, 0.4);
+            overflow: hidden;
+        }
+
+        .proposal-header {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--si-green);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 18, 36, 0.3);
+        }
+
+        .proposal-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            background: rgba(0, 8, 16, 0.15);
+        }
+
+        .proposal-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(0, 18, 36, 0.95);
+        }
+
+        /* Messages bubble styles inside planner chat */
+        .planner-msg {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+        }
+
+        .planner-msg-user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .planner-msg-assistant {
+            align-self: flex-start;
+        }
+
+        .planner-msg-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            background: rgba(0, 255, 185, 0.1);
+            color: var(--si-green);
+            flex-shrink: 0;
+        }
+
+        .planner-msg-bubble {
+            background: rgba(0, 18, 36, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .planner-msg-user .planner-msg-bubble {
+            background: rgba(0, 153, 153, 0.15);
+            border-color: rgba(0, 153, 153, 0.4);
+            color: #00FFB9;
+        }
+
+        .planner-typing {
+            font-style: italic;
+            color: var(--text-secondary);
+            animation: plannerPulse 1.5s infinite;
+        }
+
+        @keyframes plannerPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 40000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast-msg {
+            background: rgba(0, 20, 36, 0.95);
+            border: 1px solid var(--si-green);
+            color: var(--text-primary);
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0, 255, 185, 0.2);
+            animation: toast-fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1), toast-fade-out 0.3s 2.7s forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes toast-fade-in {
+            from { transform: translateY(-12px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes toast-fade-out {
+            to { transform: translateY(-12px); opacity: 0; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ── Top Navigation Bar ── -->
+    <header id="topbar">
+        <div class="topbar-left">
+            <div class="siemens-logo">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <circle cx="14" cy="14" r="13" stroke="#00FFB9" stroke-width="2" fill="none" />
+                    <text x="14" y="18" text-anchor="middle" fill="#00FFB9" font-size="12" font-weight="700" font-family="Inter">S</text>
+                </svg>
+            </div>
+            <h1>Opcenter <span class="accent">Digital Mapping</span> Studio</h1>
+        </div>
+        <div class="topbar-right">
+            <a href="/" class="nav-back-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                    <line x1="18" y1="20" x2="6" y2="12" />
+                    <line x1="6" y1="12" x2="18" y2="4" />
+                </svg>
+                返回图谱浏览器
+            </a>
+            <button class="icon-btn" id="btnExportBlueprint" title="导出离线映射 HTML 规范" style="width: auto; padding: 0 12px; font-size: 12px; font-weight: 600; display: inline-flex; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                导出 HTML 蓝图
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Main Workspace Layout ── -->
+    <div id="studio-layout">
+        <!-- ── Left Column: Scenario Input ── -->
+        <aside class="input-pane">
+            <div class="pane-title" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="/static/image/industry_preset.svg" style="width: 18px; height: 18px; vertical-align: middle;" alt="Preset" />
+                    <span>行业预设场景</span>
+                </div>
+                <button class="icon-btn" id="btnLaunchPlanner" title="启动 AI 智能场景规划助手" style="width: auto; padding: 4px 10px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(0, 255, 185, 0.4); background: rgba(0, 255, 185, 0.05); color: #00FFB9; border-radius: 20px; cursor: pointer; transition: all 0.2s;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    AI 智能规划
+                </button>
+            </div>
+            
+            <!-- Include General Scenarios Filter & Fuzzy Search -->
+            <div class="include-general-wrapper" style="display: flex; align-items: center; justify-content: space-between; margin-top: -6px; margin-bottom: 8px; font-size: 11px; color: #8a9ba8; gap: 8px; padding-right: 4px;">
+                <div style="position: relative; flex: 1; max-width: 180px;">
+                    <input type="text" id="txtSearchScenarios" placeholder="🔍 过滤场景..." style="width: 100%; background: rgba(0, 5, 10, 0.6); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 8px; font-size: 11px; color: var(--text-primary); outline: none; transition: all 0.2s;" />
+                </div>
+                <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; flex-shrink: 0;">
+                    <input type="checkbox" id="chkIncludeGeneral" style="accent-color: #00FFB9; cursor: pointer;" checked />
+                    <span>包含通用场景</span>
+                </label>
+            </div>
+
+            <!-- Scrollable presets container -->
+            <div id="presetsScrollArea" class="presets-scroll-area">
+                <!-- Preset cards are inserted dynamically in JS -->
+            </div>
+
+            <!-- Sticky Scenario QA Agent Widget -->
+            <div class="qa-agent-wrapper">
+                <div class="qa-agent-header">
+                    <div class="qa-agent-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--si-green);">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>场景问答 AI 助理</span>
+                    </div>
+                    <button class="qa-agent-clear-btn" id="qaClearBtn">清空</button>
+                </div>
+                <div class="qa-agent-body" id="qaChatBody">
+                    <div class="qa-agent-msg qa-agent-msg-system">
+                        您好！我是西门子 Opcenter 场景导航 AI。我已为您对接 RAG 场景库。请输入您的查找意图进行多轮对话，例如：
+                        <br/><br/>
+                        💬 <i>“找一个与冷链过期自动 Hold 相关的场景”</i>
+                        <br/>
+                        💬 <i>“Nelson 判异规则是在哪里被触发的？”</i>
+                    </div>
+                </div>
+                <div class="qa-agent-input-wrapper">
+                    <input type="text" class="qa-agent-input" id="qaInput" placeholder="💬 意图查找场景..." autocomplete="off" />
+                    <button class="qa-agent-send-btn" id="qaSendBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                    <button class="qa-agent-stop-btn" id="qaStopBtn" title="中断生成">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="currentColor" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Middle Column: Mapped Blueprint ── -->
+        <main class="center-pane">
+            <div class="blueprint-container" id="blueprintContent">
+                <div class="empty-blueprint">
+                    <img src="/static/image/empty_blueprint.svg" style="width: 48px; height: 48px; opacity: 0.8;" alt="Blueprint Empty" />
+                    <h3>尚未生成映射蓝图</h3>
+                    <p style="font-size: 13px; max-width: 400px; line-height: 1.6;">请在左侧面板中选择一个行业场景模板，或者输入您自定义的业务需求场景描述，点击“开始数字化映射”按钮，我们将自动解析对应的数字化本体模型并生成映射图谱。</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- ── Right Column: Subgraph Visualizer ── -->
+        <aside class="right-pane" style="position: relative;">
+            <div class="pane-title" style="margin: 20px 20px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                <img src="/static/image/ontology_subgraph.svg" style="width: 18px; height: 18px; vertical-align: middle;" alt="Subgraph" />
+                <span>数字化本体子图</span>
+                <button id="btnToggleGraphPreview" class="graph-preview-toggle" type="button" title="放大图谱预览" aria-label="放大图谱预览" aria-pressed="false">
+                    <svg class="icon-maximize" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 3 21 3 21 9" />
+                        <polyline points="9 21 3 21 3 15" />
+                        <line x1="21" y1="3" x2="14" y2="10" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                    <svg class="icon-minimize" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 14 10 14 10 20" />
+                        <polyline points="20 10 14 10 14 4" />
+                        <line x1="14" y1="10" x2="21" y2="3" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                </button>
+            </div>
+            <div id="studioGraph" style="position: relative; height: 100%; width: 100%;"></div>
+            <div id="studioTooltip" class="studio-tooltip studio-tooltip-hidden"></div>
+        </aside>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+
+
+    <!-- ── AntV G6 v5 Engine Local Offline Assets ── -->
+    <script src="/static/lib/g6.js"></script>
+    <script>
+        // ── Data store ──
+        let rawOverview = null;
+        let graph = null;
+        let currentGraphNodes = [];
+        let currentGraphEdges = [];
+        let currentMapping = null;
+        let currentIndustry = "general";
+        let activeScenarios = [];
+        let graphPreviewExpanded = false;
+
+        // ── Rich Siemens Module Palette ──
+        const COLORS = {
+            workflow: { fill: "#009999", stroke: "#00B8B8" },
+            operation: { fill: "#FF6600", stroke: "#FF8833" },
+            spec: { fill: "#862996", stroke: "#A040B0" },
+            workcenter: { fill: "#2E86C1", stroke: "#5DADE2" },
+            factory: { fill: "#27AE60", stroke: "#52D68C" },
+            mfgline: { fill: "#00897B", stroke: "#4DB6AC" },
+            mfgcalendar: { fill: "#FF8F00", stroke: "#FFB74D" },
+            product: { fill: "#F39C12", stroke: "#F5B041" },
+            container: { fill: "#3498DB", stroke: "#5DADE2" },
+            carrier: { fill: "#039BE5", stroke: "#4FC3F7" },
+            businessrule: { fill: "#6A1B9A", stroke: "#AB47BC" },
+            datacollection: { fill: "#9B59B6", stroke: "#AF7AC5" },
+            quality: { fill: "#E74C3C", stroke: "#EC7063" },
+            electronic_procedure: { fill: "#1ABC9C", stroke: "#48C9B0" },
+            resource: { fill: "#F1C40F", stroke: "#F7DC6F" },
+            material: { fill: "#16A085", stroke: "#48C9B0" },
+            bom: { fill: "#673AB7", stroke: "#9575CD" },
+            erpbom: { fill: "#7B1FA2", stroke: "#BA68C8" },
+            employee: { fill: "#E67E22", stroke: "#EB984E" },
+            role: { fill: "#37474F", stroke: "#78909C" },
+            mfgorder: { fill: "#34495E", stroke: "#5D6D7E" },
+            part: { fill: "#0277BD", stroke: "#4FC3F7" },
+            organization: { fill: "#C62828", stroke: "#EF5350" },
+            billofprocess: { fill: "#4527A0", stroke: "#7E57C2" },
+            team: { fill: "#BF360C", stroke: "#FF7043" },
+            salesorder: { fill: "#1B5E20", stroke: "#66BB6A" },
+            maintenance: { fill: "#C0392B", stroke: "#D98880" },
+            sampling: { fill: "#9C27B0", stroke: "#BA68C8" },
+            document: { fill: "#607D8B", stroke: "#90A4AE" },
+            label: { fill: "#FF9800", stroke: "#FFB74D" },
+            tool: { fill: "#795548", stroke: "#A1887F" },
+            change_management: { fill: "#F44336", stroke: "#E57373" },
+            recipe: { fill: "#E91E63", stroke: "#F06292" },
+            inventory: { fill: "#8BC34A", stroke: "#AED581" },
+            rework: { fill: "#FF5722", stroke: "#FF8A65" },
+            timer: { fill: "#00BCD4", stroke: "#4DD0E1" },
+            checklist: { fill: "#5C6BC0", stroke: "#7986CB" },
+            setup: { fill: "#7E57C2", stroke: "#9575CD" },
+            packaging: { fill: "#8D6E63", stroke: "#A1887F" },
+            supplier: { fill: "#3F51B5", stroke: "#5C6BC0" },
+            esignature: { fill: "#00ACC1", stroke: "#26C6DA" },
+            alarm: { fill: "#F50057", stroke: "#FF4081" },
+            scrap: { fill: "#546E7A", stroke: "#78909C" },
+            equipmentstate: { fill: "#29B6F6", stroke: "#4FC3F7" },
+            shipping: { fill: "#827717", stroke: "#9E9D24" },
+            environment: { fill: "#00BFA5", stroke: "#1DE9B6" },
+            rma: { fill: "#D84315", stroke: "#F4511E" },
+            consumable: { fill: "#FFB300", stroke: "#FFCA28" },
+            spc: { fill: "#2979FF", stroke: "#82B1FF" },
+            other: { fill: "#505050", stroke: "#707070" }
+        };
+
+        // ── App Init ──
+        window.addEventListener("DOMContentLoaded", async () => {
+            // Read selected industry from URL parameters or localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            currentIndustry = urlParams.get("product_line") || urlParams.get("industry") || localStorage.getItem("selected_product_line") || "general";
+            localStorage.setItem("selected_product_line", currentIndustry);
+            
+            // Expose the current industry in the header as a badge
+            displayIndustryBadge();
+
+            // Load graph overview once for custom custom mapping scans
+            try {
+                const res = await fetch("/api/graph/overview");
+                rawOverview = await res.json();
+            } catch (e) {
+                console.error("Failed to load overview data:", e);
+            }
+
+            // Listen to checkbox change to reload scenario list
+            const chkIncludeGeneral = document.getElementById("chkIncludeGeneral");
+            if (chkIncludeGeneral) {
+                const savedPref = localStorage.getItem("studio_include_general");
+                if (savedPref !== null) {
+                    chkIncludeGeneral.checked = savedPref === "true";
+                }
+                chkIncludeGeneral.addEventListener("change", (e) => {
+                    localStorage.setItem("studio_include_general", e.target.checked);
+                    loadScenariosList();
+                });
+            }
+
+            // Listen to search scenarios input changes
+            const txtSearchScenarios = document.getElementById("txtSearchScenarios");
+            if (txtSearchScenarios) {
+                txtSearchScenarios.addEventListener("input", filterScenarios);
+            }
+
+            // Load presets dynamically from the polymorphic router
+            await loadScenariosList();
+
+            // Map button listener removed - custom mapping is now handled fully in the parallel AI planner co-pilot dialogue.
+
+            // Export button listener
+            document.getElementById("btnExportBlueprint").addEventListener("click", exportBlueprintHTML);
+
+            document.getElementById("btnToggleGraphPreview").addEventListener("click", () => {
+                setGraphPreviewExpanded(!graphPreviewExpanded);
+            });
+
+            window.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && graphPreviewExpanded) {
+                    setGraphPreviewExpanded(false);
+                }
+            });
+
+            window.addEventListener("resize", resizeStudioGraph);
+
+            // ── AI Intelligent Planner Workspace Redirect ──
+            const btnLaunchPlanner = document.getElementById("btnLaunchPlanner");
+            btnLaunchPlanner.addEventListener("click", () => {
+                window.location.href = `/static/planner.html?industry=${currentIndustry}`;
+            });
+
+            // Intercept back button if running inside parent iframe
+            const backBtn = document.querySelector(".nav-back-btn");
+            if (backBtn) {
+                backBtn.addEventListener("click", (e) => {
+                    if (window.parent && window.parent !== window && typeof window.parent.closeStudioIframe === "function") {
+                        e.preventDefault();
+                        window.parent.closeStudioIframe();
+                    }
+                });
+            }
+
+
+
+            // Expose globally accessible search callbacks to resolve card clicks
+            window.previewPresetInStudio = async function (id, name) {
+                try {
+                    const scrollArea = document.getElementById("presetsScrollArea");
+                    scrollArea.querySelectorAll(".preset-card").forEach(c => c.classList.remove("active"));
+                    const matchingCard = scrollArea.querySelector(`.preset-card[data-preset="${id}"]`);
+                    if (matchingCard) {
+                        matchingCard.classList.add("active");
+                        matchingCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+
+                    // Load G6 Subgraph
+                    await loadPreset(id);
+                    
+                    let displayName = name || id;
+                    const matchedSc = activeScenarios.find(sc => sc.scenario_id === id);
+                    if (matchedSc) {
+                        displayName = matchedSc.name;
+                    }
+                    showToast(`👁️ 已在右侧加载「${displayName}」的本体子图！`);
+                } catch (e) {
+                    console.error("Preview preset in studio failed:", e);
+                }
+            };
+
+            window.loadPresetInStudio = function (id) {
+                // Hotload routing redirect
+                window.location.href = `/static/planner.html?load_preset=${id}&industry=${currentIndustry}`;
+            };
+
+            // ── Scenario QA Agent Interactivity Logic ──
+            const qaChatBody = document.getElementById("qaChatBody");
+            const qaInput = document.getElementById("qaInput");
+            const qaSendBtn = document.getElementById("qaSendBtn");
+            const qaStopBtn = document.getElementById("qaStopBtn");
+            const qaClearBtn = document.getElementById("qaClearBtn");
+            let qaHistory = [];
+            let qaAbortController = null;
+
+            async function handleQaSend() {
+                const text = qaInput.value.trim();
+                if (!text) return;
+
+                // 1. Append User Message
+                appendQaMessage("user", text);
+                qaInput.value = "";
+                qaInput.focus();
+
+                // 2. Disable Controls & Show typing state
+                qaInput.disabled = true;
+                qaSendBtn.disabled = true;
+                qaSendBtn.style.display = "none";
+                qaStopBtn.style.display = "flex";
+                
+                // Create a placeholder message for the assistant stream
+                const assistantNode = appendQaMessage("system qa-agent-typing", "⚡ AI 助理正在检索场景库并思考中...");
+
+                qaAbortController = new AbortController();
+                const signal = qaAbortController.signal;
+
+                try {
+                    // Push to local conversation history
+                    qaHistory.push({ role: "user", content: text });
+
+                    const chkIncludeGeneral = document.getElementById("chkIncludeGeneral");
+                    const includeGeneral = chkIncludeGeneral ? chkIncludeGeneral.checked : true;
+
+                    // 3. Send Q&A request to Backend hybrid RAG API (Streaming)
+                    const res = await fetch("/api/scenarios/qa", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            question: text,
+                            history: qaHistory,
+                            industry: currentIndustry,
+                            include_general: includeGeneral
+                        }),
+                        signal: signal
+                    });
+                    
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullText = "";
+                    let buffer = "";
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop() || "";
+
+                        for (const line of lines) {
+                            if (!line.startsWith("data: ")) continue;
+                            try {
+                                const payload = JSON.parse(line.slice(6));
+                                if (payload.type === "chunk") {
+                                    if (assistantNode.classList.contains("qa-agent-typing")) {
+                                        assistantNode.classList.remove("qa-agent-typing");
+                                        assistantNode.innerHTML = "";
+                                    }
+                                    fullText += payload.content;
+                                    assistantNode.innerHTML = formatQaText(fullText);
+                                    qaChatBody.scrollTo({ top: qaChatBody.scrollHeight });
+                                } else if (payload.type === "error") {
+                                    assistantNode.innerHTML = `<span style="color:#FF6666">❌ ${payload.content}</span>`;
+                                }
+                            } catch (_) {}
+                        }
+                    }
+
+                    // Push assistant message to conversation history
+                    qaHistory.push({ role: "assistant", content: fullText });
+
+                    // Keep history capped to avoid prompt bloating
+                    if (qaHistory.length > 20) {
+                        qaHistory = qaHistory.slice(-20);
+                    }
+
+                } catch (err) {
+                    if (err.name === "AbortError") {
+                        if (assistantNode.classList.contains("qa-agent-typing")) {
+                            assistantNode.classList.remove("qa-agent-typing");
+                        }
+                        assistantNode.innerHTML = `<span style="color:#FFA500; font-weight:600;">⚠️ 问答已由用户中断。</span>`;
+                    } else {
+                        console.error("QA Agent error:", err);
+                        assistantNode.innerHTML = `❌ 场景导航助理连接异常，请确保后台服务器在线：${err.message}`;
+                    }
+                } finally {
+                    qaInput.disabled = false;
+                    qaSendBtn.disabled = false;
+                    qaSendBtn.style.display = "flex";
+                    qaStopBtn.style.display = "none";
+                    qaAbortController = null;
+                    qaInput.focus();
+                }
+            }
+
+            function appendQaMessage(role, content) {
+                const msgNode = document.createElement("div");
+                msgNode.className = `qa-agent-msg qa-agent-msg-${role.includes("user") ? "user" : "system"}`;
+                if (role.includes("typing")) {
+                    msgNode.classList.add("qa-agent-typing");
+                }
+                msgNode.innerHTML = content;
+                qaChatBody.appendChild(msgNode);
+                
+                // Smooth scroll to bottom
+                qaChatBody.scrollTo({ top: qaChatBody.scrollHeight, behavior: 'smooth' });
+                return msgNode;
+            }
+
+            function formatQaText(text) {
+                // Convert [SC_xxx] to clickable link/badge
+                let html = text.replace(/\[(SC_\d+)\]/g, (match, sid) => {
+                    let scName = sid;
+                    const found = activeScenarios.find(s => s.scenario_id === sid);
+                    if (found) {
+                        scName = found.name;
+                    }
+                    return `<span class="qa-badge-link" onclick="window.previewPresetInStudio('${sid}', '${scName}')" title="点击在右侧直接预览此场景子图">${sid}</span>`;
+                });
+
+                // Simple bold markdown
+                html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                // Simple paragraph and line breaks
+                html = html.replace(/\n/g, '<br/>');
+
+                return html;
+            }
+
+            // Bind Event Listeners
+            qaSendBtn.addEventListener("click", handleQaSend);
+            qaStopBtn.addEventListener("click", () => {
+                if (qaAbortController) {
+                    qaAbortController.abort();
+                }
+            });
+            qaInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    handleQaSend();
+                }
+            });
+            
+            qaClearBtn.addEventListener("click", () => {
+                if (qaAbortController) {
+                    qaAbortController.abort();
+                }
+                qaHistory = [];
+                qaChatBody.innerHTML = `
+                    <div class="qa-agent-msg qa-agent-msg-system">
+                        您好！我是西门子 Opcenter 场景导航 AI。对话已清空。请输入您的查找意图，例如：
+                        <br/><br/>
+                        💬 <i>“找一个与冷链过期自动 Hold 相关的场景”</i>
+                    </div>
+                `;
+                showToast("🧹 场景问答对话历史已清空！");
+            });
+        });
+
+        // ── Helper Utilities ──
+        function resizeStudioGraph() {
+            if (!graph) return;
+
+            const container = document.getElementById("studioGraph");
+            if (!container) return;
+
+            graph.setSize(container.clientWidth, container.clientHeight);
+            graph.fitView();
+        }
+
+        function setGraphPreviewExpanded(expanded) {
+            graphPreviewExpanded = expanded;
+
+            const layout = document.getElementById("studio-layout");
+            const toggle = document.getElementById("btnToggleGraphPreview");
+            if (!layout || !toggle) return;
+
+            layout.classList.toggle("graph-expanded", expanded);
+            toggle.setAttribute("aria-pressed", expanded ? "true" : "false");
+            toggle.setAttribute("aria-label", expanded ? "还原图谱预览" : "放大图谱预览");
+            toggle.setAttribute("title", expanded ? "还原图谱预览" : "放大图谱预览");
+
+            requestAnimationFrame(resizeStudioGraph);
+            setTimeout(resizeStudioGraph, 320);
+        }
+
+        function showToast(message) {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            toast.className = "toast-msg";
+            toast.innerHTML = `
+                <img src="/static/siemens_logo.svg" style="width:14px;height:14px;border-radius:2px;" />
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // ── Display Active Industry Badge in Topbar ──
+        function displayIndustryBadge() {
+            const header = document.querySelector(".topbar-left");
+            if (!header) return;
+            
+            let badgeHtml = `<img src="/static/image/badge_general.svg" style="width: 14px; height: 14px; vertical-align: middle;" alt="Gen" /> 通用基线场景`;
+            let badgeStyle = "background: rgba(0, 153, 153, 0.1); border: 1px solid rgba(0, 153, 153, 0.35); color: #00E5E5;";
+            
+            const lowerInd = currentIndustry.toLowerCase();
+            if (lowerInd === "semiconductor") {
+                badgeHtml = `<img src="/static/image/badge_semiconductor.svg" style="width: 14px; height: 14px; vertical-align: middle;" alt="Semi" /> 半导体制造特性`;
+                badgeStyle = "background: rgba(0, 255, 185, 0.08); border: 1px solid rgba(0, 255, 185, 0.3); color: #00FFB9;";
+            } else if (lowerInd === "automotive") {
+                badgeHtml = `<img src="/static/image/badge_automotive.svg" style="width: 14px; height: 14px; vertical-align: middle;" alt="Auto" /> 汽车制造特性`;
+                badgeStyle = "background: rgba(255, 102, 0, 0.08); border: 1px solid rgba(255, 102, 0, 0.3); color: #FF8833;";
+            } else if (lowerInd === "energy_storage") {
+                badgeHtml = `⚡ 储能制造特性`;
+                badgeStyle = "background: rgba(255, 214, 0, 0.08); border: 1px solid rgba(255, 214, 0, 0.3); color: #FFD600;";
+            } else if (lowerInd === "battery_cell") {
+                badgeHtml = `🔋 锂电制造特性`;
+                badgeStyle = "background: rgba(0, 230, 118, 0.08); border: 1px solid rgba(0, 230, 118, 0.3); color: #00E676;";
+            } else if (lowerInd === "air_conditioner") {
+                badgeHtml = `❄️ 空调制造特性`;
+                badgeStyle = "background: rgba(0, 188, 212, 0.08); border: 1px solid rgba(0, 188, 212, 0.3); color: #00BCD4;";
+            } else if (lowerInd === "dishwasher") {
+                badgeHtml = `🍽️ 洗碗机制造特性`;
+                badgeStyle = "background: rgba(76, 175, 80, 0.08); border: 1px solid rgba(76, 175, 80, 0.3); color: #4CAF50;";
+            }
+            
+            const badge = document.createElement("div");
+            badge.style.cssText = "display: inline-flex; align-items: center; gap: 6px; margin-left: 14px; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; vertical-align: middle; " + badgeStyle;
+            badge.innerHTML = badgeHtml;
+            
+            header.appendChild(badge);
+        }
+
+        // ── Fuzzy Filter Scenarios ──
+        function filterScenarios() {
+            const txtSearch = document.getElementById("txtSearchScenarios");
+            if (!txtSearch) return;
+            const query = txtSearch.value.toLowerCase().trim();
+            const cards = document.querySelectorAll("#presetsScrollArea .preset-card");
+            cards.forEach(card => {
+                const title = card.querySelector(".preset-title").textContent.toLowerCase();
+                const desc = card.querySelector(".preset-desc").textContent.toLowerCase();
+                if (title.includes(query) || desc.includes(query)) {
+                    card.style.display = "";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        // ── Fetch and Render Scenarios List ──
+        async function loadScenariosList() {
+            try {
+                const chkIncludeGeneral = document.getElementById("chkIncludeGeneral");
+                const includeGeneral = chkIncludeGeneral ? chkIncludeGeneral.checked : true;
+                const res = await fetch(`/api/scenarios?industry=${currentIndustry}&include_general=${includeGeneral}`);
+                const data = await res.json();
+                activeScenarios = data.scenarios || [];
+                
+                const scrollArea = document.getElementById("presetsScrollArea");
+                
+                // Clear any existing preset cards inside the scroll area
+                scrollArea.querySelectorAll(".preset-card").forEach(c => c.remove());
+                
+                const fragment = document.createDocumentFragment();
+                
+                activeScenarios.forEach((sc, idx) => {
+                    const card = document.createElement("div");
+                    card.className = "preset-card" + (idx === 0 ? " active" : "");
+                    card.dataset.preset = sc.scenario_id;
+                    
+                    card.innerHTML = `
+                        <div class="preset-title-wrapper">
+                            <div class="preset-title">${idx + 1}. ${sc.name}</div>
+                            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                                <button class="preset-planner-btn" title="去 AI 智能规划修改此场景">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                                    </svg>
+                                </button>
+                                <button class="preset-delete-btn" title="删除此场景">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        <line x1="10" y1="11" x2="10" y2="17" />
+                                        <line x1="14" y1="11" x2="14" y2="17" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="preset-desc">${sc.description}</div>
+                    `;
+                    
+                    card.addEventListener("click", () => {
+                        scrollArea.querySelectorAll(".preset-card").forEach(c => c.classList.remove("active"));
+                        card.classList.add("active");
+                        loadPreset(sc.scenario_id);
+                    });
+
+                    // Planner redirect handler
+                    const plannerBtn = card.querySelector(".preset-planner-btn");
+                    plannerBtn.addEventListener("click", (e) => {
+                        e.stopPropagation(); // Avoid selecting the card
+                        window.loadPresetInStudio(sc.scenario_id);
+                    });
+
+                    // Deletion handler
+                    const deleteBtn = card.querySelector(".preset-delete-btn");
+                    deleteBtn.addEventListener("click", async (e) => {
+                        e.stopPropagation(); // Avoid selecting the card
+                        
+                        const confirmDelete = confirm(`⚠️ 确认要删除场景「${sc.name}」吗？\n删除后将无法恢复，且该场景将从 AI 知识检索库中移除。`);
+                        if (!confirmDelete) return;
+                        
+                        try {
+                            const delRes = await fetch(`/api/scenarios/${sc.scenario_id}?industry=${currentIndustry}`, {
+                                method: "DELETE"
+                            });
+                            if (!delRes.ok) throw new Error(`HTTP ${delRes.status}`);
+                            
+                            showToast(`🗑️ 场景「${sc.name}」已成功删除！`);
+                            await loadScenariosList();
+                        } catch (err) {
+                            console.error("Delete scenario failed:", err);
+                            showToast(`❌ 删除失败：${err.message}`);
+                        }
+                    });
+                    
+                    fragment.appendChild(card);
+                });
+                
+                scrollArea.appendChild(fragment);
+                
+                // Apply search filter if query is typed
+                filterScenarios();
+                
+                // Load the specified preset card from URL parameters or fallback to the first visible card by default
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetScenarioId = urlParams.get("selected_scenario") || urlParams.get("load_preset");
+                let targetCard = null;
+                if (targetScenarioId) {
+                    targetCard = scrollArea.querySelector(`.preset-card[data-preset="${targetScenarioId}"]`);
+                }
+
+                if (targetCard) {
+                    scrollArea.querySelectorAll(".preset-card").forEach(c => c.classList.remove("active"));
+                    targetCard.classList.add("active");
+                    // Delay slightly to ensure layout and rendering is completed
+                    setTimeout(() => {
+                        targetCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }, 100);
+                    await loadPreset(targetScenarioId);
+                } else {
+                    const firstVisibleCard = scrollArea.querySelector(".preset-card:not([style*='display: none'])");
+                    if (firstVisibleCard) {
+                        scrollArea.querySelectorAll(".preset-card").forEach(c => c.classList.remove("active"));
+                        firstVisibleCard.classList.add("active");
+                        await loadPreset(firstVisibleCard.dataset.preset);
+                    } else if (activeScenarios.length > 0 && !document.getElementById("txtSearchScenarios")?.value.trim()) {
+                        await loadPreset(activeScenarios[0].scenario_id);
+                    } else {
+                    // Reset to empty state if no scenarios remain or match
+                    const blueprintContent = document.getElementById("blueprintContent");
+                    blueprintContent.innerHTML = `
+                        <div class="empty-blueprint">
+                            <img src="/static/image/empty_blueprint.svg" style="width: 48px; height: 48px; opacity: 0.8;" alt="Blueprint Empty" />
+                            <h3>暂无任何场景</h3>
+                            <p style="font-size: 13px; max-width: 400px; line-height: 1.6;">请点击上方的“AI 智能规划”以设计并生成新场景，或者在左侧面板中新增场景。</p>
+                        </div>
+                    `;
+                    if (graph) {
+                        try {
+                            graph.destroy();
+                        } catch(e) {}
+                        graph = null;
+                    }
+                    currentGraphNodes = [];
+                    currentGraphEdges = [];
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load preset scenarios:", e);
+        }
+        }
+
+        // ── Load Preset Steps dynamically from API ──
+        async function loadPreset(id) {
+            // Preset loaded successfully
+            
+            try {
+                const res = await fetch(`/api/scenarios/${id}?industry=${currentIndustry}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                const data = await res.json();
+                renderBlueprint(data.steps, data.name, data.description, data.scenario_id);
+                await updateGraphHighlight(data.steps);
+            } catch (e) {
+                console.error(`Failed to load scenario steps for ID ${id}:`, e);
+            }
+        }
+
+        // ── G6 Graph Initialization & Event Hooking ──
+        function recreateGraph(nodes, edges) {
+            const container = document.getElementById("studioGraph");
+            
+            // 1. Destroy existing graph instance safely to prevent Canvas Layer desync
+            if (graph) {
+                try {
+                    graph.destroy();
+                } catch (e) {
+                    console.warn("Failed to destroy G6 graph instance:", e);
+                }
+                graph = null;
+            }
+            
+            // 2. Instantiate a fresh G6 graph instance
+            graph = new G6.Graph({
+                container: "studioGraph",
+                width: container.clientWidth,
+                height: container.clientHeight,
+                autoFit: "view",
+                padding: [45, 45, 45, 45],
+                layout: {
+                    type: "dagre",
+                    rankdir: "TB",
+                    nodesep: 35,
+                    ranksep: 55,
+                    controlPoints: true,
+                },
+                behaviors: [
+                    "drag-canvas",
+                    "zoom-canvas",
+                    {
+                        type: "drag-element",
+                        state: null,
+                    },
+                    "optimize-viewport-transform",
+                ],
+                node: {
+                    type: "circle",
+                    style: {
+                        size: 32,
+                        fill: "#009999",
+                        stroke: "#00B8B8",
+                        lineWidth: 1.5,
+                        labelText: (d) => d.data?.chineseName ? (d.data.label || d.id) + '\n(' + d.data.chineseName + ')' : (d.data?.label || d.id),
+                        labelFill: "#E8F0F2",
+                        labelFontSize: 8.5,
+                        labelFontWeight: 700,
+                        labelPlacement: "bottom",
+                        labelOffsetY: 2,
+                    }
+                },
+                edge: {
+                    type: "quadratic",
+                    style: {
+                        stroke: "rgba(0,255,185,0.15)",
+                        lineWidth: 1.5,
+                        endArrow: {
+                            path: 'M 0,0 L 4,2 L 4,-2 Z',
+                            fill: 'rgba(0,255,185,0.15)'
+                        }
+                    }
+                }
+            });
+
+            // 3. Register G6 Event Listeners for interactive tooltips
+            const studioTooltip = document.getElementById("studioTooltip");
+
+            graph.on("node:pointerenter", (evt) => {
+                const nodeId = evt.target.id;
+                const nodeData = graph.getNodeData(nodeId);
+                if (!nodeData || !nodeData.data) return;
+                const d = nodeData.data;
+
+                studioTooltip.innerHTML = `
+                    <div class="tt-title">${d.label || nodeId}</div>
+                    <div class="tt-sub">${d.chineseName || ""}</div>
+                    <div class="tt-desc">${d.description || "暂无类描述说明。"}</div>
+                    <div class="tt-meta">
+                        <span>模块: ${d.module || "other"}</span>
+                        <span>层级: ${d.layer || "Config"}</span>
+                    </div>
+                `;
+                studioTooltip.classList.remove("studio-tooltip-hidden");
+            });
+
+            graph.on("node:pointermove", (evt) => {
+                if (studioTooltip.classList.contains("studio-tooltip-hidden")) return;
+                const clientX = evt.client?.x ?? 0;
+                const clientY = evt.client?.y ?? 0;
+                studioTooltip.style.left = (clientX + 16) + "px";
+                studioTooltip.style.top = (clientY - 10) + "px";
+            });
+
+            graph.on("node:pointerleave", () => {
+                studioTooltip.classList.add("studio-tooltip-hidden");
+            });
+
+            graph.on("edge:pointerenter", (evt) => {
+                const edgeId = evt.target.id;
+                const edgeData = graph.getEdgeData(edgeId);
+                if (!edgeData) return;
+                const d = edgeData.data || {};
+                const source = edgeData.source;
+                const target = edgeData.target;
+
+                const sourceNode = graph.getNodeData(source);
+                const targetNode = graph.getNodeData(target);
+                const sourceChinese = sourceNode?.data?.chineseName || "";
+                const targetChinese = targetNode?.data?.chineseName || "";
+                const sourceDisplay = sourceChinese ? `${source} (${sourceChinese})` : source;
+                const targetDisplay = targetChinese ? `${target} (${targetChinese})` : target;
+
+                studioTooltip.innerHTML = `
+                    <div class="tt-title" style="color: #00FFB9; border-color: rgba(0, 255, 185, 0.2);">🔗 ${d.label || "ONTOLOGY_RELATION"}</div>
+                    <div class="tt-sub">${sourceDisplay} ➔ ${targetDisplay}</div>
+                    <div class="tt-desc">${d.description || "MES系统内置本体关联边"}</div>
+                    <div class="tt-meta">
+                        <span>关系名: ${d.label || "relation"}</span>
+                        <span>基数: ${d.cardinality || "MANY_TO_ONE"}</span>
+                    </div>
+                `;
+                studioTooltip.classList.remove("studio-tooltip-hidden");
+            });
+
+            graph.on("edge:pointermove", (evt) => {
+                if (studioTooltip.classList.contains("studio-tooltip-hidden")) return;
+                const clientX = evt.client?.x ?? 0;
+                const clientY = evt.client?.y ?? 0;
+                studioTooltip.style.left = (clientX + 16) + "px";
+                studioTooltip.style.top = (clientY - 10) + "px";
+            });
+
+            graph.on("edge:pointerleave", () => {
+                studioTooltip.classList.add("studio-tooltip-hidden");
+            });
+
+            // 4. Bind data and trigger G6 render
+            graph.setData({ nodes, edges });
+            Promise.resolve(graph.render()).then(() => {
+                resizeStudioGraph();
+            });
+        }
+
+        // ── Custom Simple Parsing Mapping Engine (RAG match fallback) ──
+        function performCustomMapping(text) {
+            if (!rawOverview) {
+                alert("图谱数据尚未加载，请稍候...");
+                return;
+            }
+
+            // Extract matching classes dynamically from text using keyword scanning
+            const matchedClasses = new Set();
+            rawOverview.nodes.forEach(node => {
+                const cn = node.id.toLowerCase();
+                const ch = (node.data?.chineseName || "").toLowerCase();
+                
+                if (text.toLowerCase().includes(cn) || 
+                    (ch && text.toLowerCase().includes(ch))) {
+                    matchedClasses.add(node.id);
+                }
+            });
+
+            // Default fallback if nothing matches
+            if (matchedClasses.size === 0) {
+                matchedClasses.add("Container");
+                matchedClasses.add("Spec");
+                matchedClasses.add("Resource");
+            }
+
+            // Group into 3 sequential steps dynamically
+            const arr = Array.from(matchedClasses);
+            const steps = [
+                {
+                    step: "Step 1: 业务准备与容器启动",
+                    desc: "在此阶段，系统启动业务场景，涉及基础容器与初始主数据核验。",
+                    twins: arr.slice(0, Math.ceil(arr.length / 3)),
+                    rels: [],
+                    code: "SELECT * FROM Container WHERE HoldStatus = 0;"
+                },
+                {
+                    step: "Step 2: 工序执行与设备绑定",
+                    desc: "物理设备开始处理在制品批次，并执行工步流程指定的数据记录。",
+                    twins: arr.slice(Math.ceil(arr.length / 3), Math.ceil(arr.length * 2 / 3)),
+                    rels: [],
+                    code: "UPDATE Resource SET ResourceStatusCodeId = 'Active' WHERE ResourceId = 'R-Station01';"
+                },
+                {
+                    step: "Step 3: 质检警报与业务处置",
+                    desc: "对生产完工后的数据进行分析计算，如判定出异常自动触发警报阻断。",
+                    twins: arr.slice(Math.ceil(arr.length * 2 / 3)),
+                    rels: [],
+                    code: "INSERT INTO Event (EventName, EventDescription) VALUES ('QA-Exception', 'Business abnormal triggered.');"
+                }
+            ];
+
+            // Filter out empty twins steps
+            const filteredSteps = steps.filter(s => s.twins.length > 0);
+
+            // Populate some relationships from rawOverview for matched classes (allowing self-loops for keyword filtering)
+            filteredSteps.forEach(step => {
+                step.twins.forEach(c1 => {
+                    rawOverview.edges.forEach(edge => {
+                        if (edge.source === c1 && step.twins.includes(edge.target)) {
+                            step.rels.push(`${c1} -[${edge.data.label}]-> ${edge.target}`);
+                        }
+                    });
+                });
+            });
+
+            renderBlueprint(filteredSteps);
+            updateGraphHighlight(filteredSteps);
+        }
+
+        // ── Render Dynamic Blueprint HTML ──
+        function renderBlueprint(steps, scenarioName, scenarioDesc, scenarioId) {
+            const SELF_LOOP_KEYWORDS = {
+                "SPLIT_FROM": ["split", "拆分", "分流", "拆单", "分批"],
+                "ORIGINAL_CONTAINER": ["split", "拆分", "分流", "原本", "原始", "母容器"],
+                "PARENT_CONTAINER": ["parent", "child", "父容器", "子容器", "母容器", "父子", "合批", "合并批", "主容器", "子批"],
+                "START_PARENT_CONTAINER": ["parent", "child", "父容器", "子容器", "母容器", "父子", "合批", "合并批", "主容器", "子批"],
+                "BELONGS_TO_BATCH": ["batch", "批次", "合批", "批控制", "容器合并"],
+                "ISSUED_TO_CONTAINER": ["issue", "发料", "投料", "投产", "消耗"],
+                "HAS_CHILD_RESOURCE": ["子设备", "下级设备", "从属设备", "子资源", "设备层级"],
+                "HAS_PARENT_RESOURCE": ["父设备", "上级设备", "母资源", "父资源", "设备层级"],
+                "HAS_SUB_GROUP": ["子组", "下级组", "分组", "层级"],
+                "HAS_SUBGROUP": ["子组", "下级组", "分组", "层级"],
+                "HAS_CHILD_ORDER": ["子工单", "拆分工单", "子订单", "层级"],
+                "SLIT_TO_PRODUCT": ["分切", "分条", "切片", "切开"],
+                "SLIT_TO": ["分切", "分条", "切片", "切开"],
+                "HAS_PREREQUISITE": ["前置", "先决条件", "依赖"]
+            };
+
+            steps.forEach(s => {
+                if (!s.rels) return;
+                const textContext = `${s.step} ${s.desc} ${s.code || ""}`.toLowerCase();
+                s.rels = s.rels.filter(rel => {
+                    const relParts = rel.split(" -[");
+                    if (relParts.length === 2) {
+                        const source = relParts[0].trim();
+                        const targetParts = relParts[1].split("]-> ");
+                        if (targetParts.length === 2) {
+                            const relName = targetParts[0].trim();
+                            const target = targetParts[1].trim();
+                            if (source === target) {
+                                const keywords = SELF_LOOP_KEYWORDS[relName];
+                                if (!keywords) return false;
+                                return keywords.some(kw => textContext.includes(kw.toLowerCase()));
+                            }
+                        }
+                    }
+                    return true;
+                });
+            });
+
+            currentMapping = steps;
+            const container = document.getElementById("blueprintContent");
+            container.innerHTML = "";
+
+            if (scenarioName) {
+                const headerCard = document.createElement("div");
+                headerCard.className = "scenario-active-header";
+                headerCard.innerHTML = `
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <span style="background: var(--si-green); color: #000D1A; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px;">ACTIVE</span>
+                            <h2 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${scenarioName}</h2>
+                        </div>
+                        <p style="margin: 0; font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${scenarioDesc}">${scenarioDesc}</p>
+                    </div>
+                    <button class="studio-btn" onclick="window.loadPresetInStudio('${scenarioId}')" style="width: auto; margin-top: 0; padding: 8px 14px; font-size: 11px; flex-shrink: 0; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 255, 185, 0.15); border-color: rgba(0, 255, 185, 0.4); color: #00FFB9;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                        </svg>
+                        <span>AI 智能修改</span>
+                    </button>
+                `;
+                container.appendChild(headerCard);
+            }
+
+            steps.forEach((s, stepIdx) => {
+                const card = document.createElement("div");
+                card.className = "roadmap-card";
+
+                // Step Header
+                const header = document.createElement("div");
+                header.className = "roadmap-header";
+                header.innerHTML = `
+                    <span class="step-badge">${s.step.split(":")[0]}</span>
+                    <h3 class="step-title">${s.step.split(":")[1] || s.step}</h3>
+                `;
+                card.appendChild(header);
+
+                // Step Description
+                const desc = document.createElement("div");
+                desc.className = "step-description";
+                desc.textContent = s.desc;
+                card.appendChild(desc);
+
+                // Mapped Twins Grid
+                const grid = document.createElement("div");
+                grid.className = "twins-grid";
+
+                s.twins.forEach(twin => {
+                    const twinNode = rawOverview?.nodes?.find(n => n.id === twin);
+                    const ch = twinNode?.data?.chineseName || "系统内置类";
+                    const descText = twinNode?.data?.description || "暂无描述说明。";
+
+                    const tCard = document.createElement("div");
+                    tCard.className = "twin-card";
+                    tCard.innerHTML = `
+                        <div class="twin-header">
+                            <span class="twin-name">${twin}</span>
+                            <span class="twin-chinese">${ch}</span>
+                        </div>
+                        <div class="twin-props">
+                            <div class="prop-item"><span class="prop-name">CdoId</span><span class="prop-type">${Math.floor(Math.random() * 2000 + 1000)}</span></div>
+                            <div class="prop-item"><span class="prop-name">layer</span><span class="prop-type">Config</span></div>
+                            <div class="prop-item" style="margin-top: 4px; border-top: 1px dashed rgba(0,153,153,0.1); padding-top: 4px; color: var(--text-secondary); max-height: 48px; overflow: hidden; text-overflow: ellipsis;" title="${descText}">${descText}</div>
+                        </div>
+                    `;
+                    grid.appendChild(tCard);
+                });
+                card.appendChild(grid);
+
+                // Relationships Badges
+                if (s.rels && s.rels.length > 0) {
+                    const relArea = document.createElement("div");
+                    relArea.style.marginTop = "12px";
+                    relArea.style.display = "flex";
+                    relArea.style.flexWrap = "wrap";
+                    relArea.style.gap = "6px";
+                    s.rels.forEach(rel => {
+                        const relBadge = document.createElement("span");
+                        relBadge.className = "twin-relation";
+                        relBadge.style.display = "inline-flex";
+                        relBadge.style.alignItems = "center";
+                        relBadge.innerHTML = `<img src="/static/image/relationship_link.svg" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;" alt="Link" />${rel}`;
+                        relArea.appendChild(relBadge);
+                    });
+                    card.appendChild(relArea);
+                }
+
+                // Code Sandbox Blueprint
+                const codeBox = document.createElement("div");
+                codeBox.className = "code-sandbox";
+                codeBox.innerHTML = `
+                    <div class="sandbox-header">
+                        <span>💻 DIGITAL SCHEMA MAPPING (PSEUDO-CODE)</span>
+                        <span style="color:var(--si-green)">READY</span>
+                    </div>
+                    <div class="sandbox-body">${escapeHTML(s.code)}</div>
+                `;
+                card.appendChild(codeBox);
+
+                container.appendChild(card);
+            });
+        }
+
+        // ── Update Right G6 Subgraph Highlights Connecting Active Twins ──
+        async function updateGraphHighlight(steps) {
+            // Collect all unique twins across steps
+            const twins = [];
+            steps.forEach(s => {
+                if (s.twins) {
+                    s.twins.forEach(t => {
+                        if (!twins.includes(t)) twins.push(t);
+                    });
+                }
+            });
+
+            if (twins.length === 0) {
+                if (graph) {
+                    try {
+                        graph.destroy();
+                    } catch(e) {}
+                    graph = null;
+                }
+                currentGraphNodes = [];
+                currentGraphEdges = [];
+                return;
+            }
+
+            try {
+                // Fetch dynamic graph connections directly from Neo4j (Single Source of Truth)
+                const res = await fetch("/api/scenarios/graph", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ twins: twins })
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                const subGraphData = await res.json();
+
+                // Format G6 nodes and edges
+                const formattedNodes = subGraphData.nodes.map(n => ({
+                    id: n.id,
+                    type: "circle",
+                    data: n.data,
+                    style: {
+                        fill: (COLORS[n.data?.module] || COLORS.other || { fill: "#2979FF" }).fill,
+                        stroke: (COLORS[n.data?.module] || COLORS.other || { stroke: "#82B1FF" }).stroke,
+                        size: 36,
+                        labelText: n.data?.chineseName ? (n.data.label || n.id) + '\n(' + n.data.chineseName + ')' : (n.data?.label || n.id),
+                        labelFill: "#E8F0F2",
+                        labelFontSize: 8.5,
+                        labelFontWeight: 700,
+                        labelPlacement: "bottom",
+                        labelOffsetY: 2,
+                    }
+                }));
+
+                const formattedEdges = subGraphData.edges
+                    .map((e, idx) => {
+                        const relStr = `${e.source} -[${e.data.label}]-> ${e.target}`;
+                        const isActive = steps.some(s => s.rels && s.rels.includes(relStr));
+
+                        if (e.source === e.target && !isActive) {
+                            return null;
+                        }
+
+                        return {
+                            id: `sub-e-${idx}`,
+                            type: "quadratic",
+                            source: e.source,
+                            target: e.target,
+                            data: e.data,
+                            style: {
+                                stroke: isActive ? "#00FFB9" : "rgba(255, 255, 255, 0.12)",
+                                lineWidth: isActive ? 1.8 : 1.0,
+                                lineDash: isActive ? [] : [4, 4],
+                                endArrow: {
+                                    path: 'M 0,0 L 4,2 L 4,-2 Z',
+                                    fill: isActive ? '#00FFB9' : 'rgba(255, 255, 255, 0.12)'
+                                }
+                            }
+                        };
+                    })
+                    .filter(Boolean);
+
+                currentGraphNodes = formattedNodes;
+                currentGraphEdges = formattedEdges;
+                // Destroy and recreate graph instance to resolve WebGL/canvas layer desyncs
+                recreateGraph(formattedNodes, formattedEdges);
+            } catch (e) {
+                console.error("Failed to fetch dynamic Neo4j scenario graph:", e);
+            }
+        }
+
+        // ── Helper utils ──
+        function escapeHTML(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+        // ── Export Blueprint HTML File ──
+        function exportBlueprintHTML() {
+            if (!currentMapping) {
+                alert("请先生成数字化映射蓝图！");
+                return;
+            }
+
+            const activePreset = document.querySelector(".preset-card.active");
+            const scenarioTitle = activePreset ? activePreset.querySelector(".preset-title").innerText : "自定义数字化映射场景规划蓝图";
+            const scenarioDesc = activePreset ? activePreset.querySelector(".preset-desc").innerText : (latestProposalText || "自定义数字化映射场景规划蓝图");
+
+            // Capture active nodes & edges directly from clean saved arrays
+            const graphNodes = currentGraphNodes || [];
+            const graphEdges = currentGraphEdges || [];
+
+            let stepsHTML = "";
+            currentMapping.forEach((s, idx) => {
+                let twinsHTML = "";
+                s.twins.forEach(twin => {
+                    const twinNode = rawOverview?.nodes?.find(n => n.id === twin);
+                    const ch = twinNode?.data?.chineseName || "系统内置类";
+                    const descText = twinNode?.data?.description || "暂无描述说明。";
+
+                    twinsHTML += `
+                        <div class="twin-card">
+                            <div class="twin-header">
+                                <span class="twin-name">${twin}</span>
+                                <span class="twin-chinese" style="font-size:10px; background:rgba(0,255,185,0.06); padding:2px 6px; border-radius:4px; color:#00FFB9">${ch}</span>
+                            </div>
+                            <div style="font-size:11px;color:#8DA4B8;margin-top:6px;border-top:1px solid rgba(0,255,185,0.1);padding-top:6px;line-height:1.4;">
+                                ${descText}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                let relsHTML = "";
+                if (s.rels && s.rels.length > 0) {
+                    s.rels.forEach(rel => {
+                        relsHTML += `<span class="twin-relation">🔗 ${rel}</span>`;
+                    });
+                }
+
+                stepsHTML += `
+                    <div class="roadmap-card">
+                        <div class="roadmap-header">
+                            <span class="step-badge">STEP ${idx + 1}</span>
+                            <h3 class="step-title">${s.step.split(":")[1] || s.step}</h3>
+                        </div>
+                        <div class="step-description">${s.desc}</div>
+                        <div class="twins-grid">${twinsHTML}</div>
+                        ${relsHTML ? `<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">${relsHTML}</div>` : ''}
+                        <div class="code-sandbox">
+                            <div class="sandbox-header">💻 DIGITAL SCHEMA MAPPING BLUEPRINT</div>
+                            <div class="sandbox-body">${escapeHTML(s.code)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Fetch local G6 script to inline it for 100% offline self-containment
+            fetch("/static/lib/g6.js")
+                .then(r => {
+                    if (!r.ok) throw new Error("Local G6 script not found");
+                    return r.text();
+                })
+                .then(g6ScriptText => {
+                    triggerDownload(g6ScriptText);
+                })
+                .catch(err => {
+                    console.warn("Failed to inline local G6, using CDN fallback:", err);
+                    triggerDownload(null, `<script src="https://unpkg.com/@antv/g6@5.0.24/dist/g6.min.js"><\/script>`);
+                });
+
+            function triggerDownload(inlinedG6Text, cdnTag = "") {
+                const g6ImportBlock = inlinedG6Text 
+                    ? '<script>' + inlinedG6Text + '<\/script>' 
+                    : cdnTag;
+
+                const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数字化管理规范蓝图 - Siemens Opcenter MES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --si-petrol: #009999;
+            --si-green: #00FFB9;
+            --bg-primary: #000D1A;
+            --bg-secondary: #001224;
+            --bg-card: rgba(0, 20, 40, 0.85);
+            --text-primary: #E8F0F2;
+            --text-secondary: #8DA4B8;
+            --text-muted: #5F748A;
+            --border-subtle: rgba(0, 153, 153, 0.2);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0; padding: 40px 20px;
+            display: flex; justify-content: center;
+        }
+        .container {
+            max-width: 1440px; width: 100%;
+        }
+        header {
+            border-bottom: 2px solid var(--si-green);
+            padding-bottom: 20px; margin-bottom: 30px;
+        }
+        h1 { font-size: 24px; color: var(--text-primary); margin: 0; }
+        h1 span { color: var(--si-green); }
+        .scenario-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-top: 10px; }
+        
+        /* ── Two Column Layout ── */
+        .layout-body {
+            display: flex;
+            gap: 30px;
+            position: relative;
+        }
+        .left-roadmap {
+            flex: 1;
+            max-width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .right-visualizer {
+            width: 38%;
+            position: sticky;
+            top: 40px;
+            height: calc(100vh - 120px);
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(0, 8, 16, 0.98) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .pane-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--si-green);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin: 0;
+            background: rgba(0, 20, 40, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #subgraphCanvas {
+            flex: 1;
+            width: 100%;
+            min-height: 450px;
+            background: #000D1A;
+            position: relative;
+        }
+        #subgraphCanvas::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(0, 153, 153, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+
+        .roadmap-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .roadmap-header { display: flex; align-items: center; margin-bottom: 12px; }
+        .step-badge {
+            background: var(--si-petrol);
+            color: var(--si-green);
+            font-size: 10px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+        }
+        .step-title { font-size: 15px; font-weight: 600; margin: 0 0 0 12px; }
+        .step-description { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+        .twins-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;
+        }
+        .twin-card {
+            background: rgba(0, 12, 24, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px; padding: 12px;
+            transition: all 0.2s;
+        }
+        .twin-card:hover {
+            border-color: var(--si-green);
+        }
+        .twin-name { font-size: 12px; font-weight: 700; font-family: 'Fira Code', monospace; color: var(--si-green); }
+        .twin-relation {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 10px; font-weight: 600;
+            background: rgba(0, 255, 185, 0.06);
+            border: 1px solid rgba(0, 255, 185, 0.2);
+            color: var(--si-green);
+            padding: 3px 8px; border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            margin-top: 8px;
+        }
+        .code-sandbox {
+            background: #00040A;
+            border: 1px solid rgba(0, 153, 153, 0.15);
+            border-radius: 8px; margin-top: 16px;
+            overflow: hidden;
+        }
+        .sandbox-header {
+            background: rgba(0, 15, 30, 0.9);
+            padding: 6px 12px; font-size: 10px;
+            font-weight: 600; color: var(--text-secondary);
+            border-bottom: 1px solid rgba(0, 153, 153, 0.15);
+        }
+        .sandbox-body {
+            padding: 10px 14px; font-family: 'Fira Code', monospace;
+            font-size: 11px; line-height: 1.6; color: #A0C0D0;
+            overflow-x: auto; white-space: pre;
+        }
+        footer {
+            margin-top: 40px; text-align: center;
+            font-size: 11px; color: var(--text-secondary);
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 20px;
+        }
+
+        /* ── Custom Interactive Tooltip styles ── */
+        .studio-tooltip {
+            position: fixed;
+            background: rgba(0, 18, 36, 0.92);
+            border: 1px solid var(--si-green);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            box-shadow: 0 4px 16px rgba(0, 255, 185, 0.3);
+            pointer-events: none;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            max-width: 280px;
+            line-height: 1.5;
+        }
+        .studio-tooltip-hidden {
+            display: none !important;
+        }
+        .tt-title {
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            color: var(--si-green);
+            font-size: 13px;
+            margin-bottom: 4px;
+            border-bottom: 1px dashed rgba(0, 255, 185, 0.2);
+            padding-bottom: 4px;
+        }
+        .tt-sub {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .tt-desc {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .tt-meta {
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-body { flex-direction: column; }
+            .left-roadmap { max-width: 100%; }
+            .right-visualizer { width: 100%; height: 500px; position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MES 数字化映射规范 <span>蓝图</span></h1>
+            <div class="scenario-desc"><strong>业务场景主题：</strong>${scenarioTitle}</div>
+            <div class="scenario-desc"><strong>需求描述：</strong>${scenarioDesc}</div>
+        </header>
+        
+        <div class="layout-body">
+            <main class="left-roadmap">
+                ${stepsHTML}
+            </main>
+            
+            <aside class="right-visualizer">
+                <h3 class="pane-title">👁️ 数字化本体子图 (交互探索版)</h3>
+                <div id="subgraphCanvas"></div>
+                <div id="subgraphTooltip" class="studio-tooltip studio-tooltip-hidden"></div>
+            </aside>
+        </div>
+        
+        <footer>
+            本项目规范由 Siemens Opcenter Digital Mapping Studio 自动导出。仅供内部技术归口、系统分析及交付对接使用。
+        </footer>
+    </div>
+
+    <!-- ── AntV G6 v5 Engine ── -->
+    ${g6ImportBlock}
+    <script>
+        const subNodes = ${JSON.stringify(graphNodes)};
+        const subEdges = ${JSON.stringify(graphEdges)};
+
+        window.addEventListener("load", () => {
+            const container = document.getElementById("subgraphCanvas");
+            const width = container.clientWidth || 500;
+            const height = container.clientHeight || 500;
+            const graph = new G6.Graph({
+                container: "subgraphCanvas",
+                width: width,
+                height: height,
+                autoFit: "view",
+                padding: [40, 40, 40, 40],
+                layout: {
+                    type: "dagre",
+                    rankdir: "TB",
+                    nodesep: 35,
+                    ranksep: 55,
+                    controlPoints: true,
+                },
+                behaviors: [
+                    "drag-canvas",
+                    "zoom-canvas",
+                    {
+                        type: "drag-element",
+                        state: null,
+                    },
+                    "optimize-viewport-transform",
+                ],
+                node: {
+                    type: "circle",
+                    style: {
+                        size: 32,
+                        fill: "#2979FF",
+                        stroke: "#82B1FF",
+                        lineWidth: 1.5,
+                        labelText: (d) => d.data?.chineseName ? (d.data.label || d.id) + '\\n(' + d.data.chineseName + ')' : (d.data?.label || d.id),
+                        labelFill: "#E8F0F2",
+                        labelFontSize: 8.5,
+                        labelFontWeight: 700,
+                        labelPlacement: "bottom",
+                        labelOffsetY: 2,
+                    }
+                },
+                edge: {
+                    type: "quadratic",
+                    style: {
+                        stroke: "#00FFB9",
+                        lineWidth: 1.5,
+                        endArrow: {
+                            path: 'M 0,0 L 4,2 L 4,-2 Z',
+                            fill: '#00FFB9'
+                        }
+                    }
+                }
+            });
+
+            graph.setData({ nodes: subNodes, edges: subEdges });
+            graph.render().then(() => {
+                graph.fitView();
+            });
+
+            // Handle Resize
+            window.addEventListener("resize", () => {
+                graph.setSize(container.clientWidth, container.clientHeight);
+                graph.fitView();
+            });
+
+            // ── Interactive Hover Tooltips ──
+            const tooltip = document.getElementById("subgraphTooltip");
+
+            graph.on("node:pointerenter", (evt) => {
+                const nodeId = evt.target.id;
+                const nodeData = graph.getNodeData(nodeId);
+                if (!nodeData || !nodeData.data) return;
+                const d = nodeData.data;
+
+                tooltip.innerHTML = \`
+                    <div class="tt-title">\${d.label || nodeId}</div>
+                    <div class="tt-sub">\${d.chineseName || ""}</div>
+                    <div class="tt-desc">\${d.description || "暂无类描述说明。"}</div>
+                    <div class="tt-meta">
+                        <span>模块: \${d.module || "other"}</span>
+                        <span>层级: \${d.layer || "Config"}</span>
+                    </div>
+                \`;
+                tooltip.classList.remove("studio-tooltip-hidden");
+            });
+
+            graph.on("node:pointermove", (evt) => {
+                if (tooltip.classList.contains("studio-tooltip-hidden")) return;
+                const clientX = evt.client?.x ?? 0;
+                const clientY = evt.client?.y ?? 0;
+                tooltip.style.left = (clientX + 16) + "px";
+                tooltip.style.top = (clientY - 10) + "px";
+            });
+
+            graph.on("node:pointerleave", () => {
+                tooltip.classList.add("studio-tooltip-hidden");
+            });
+
+            graph.on("edge:pointerenter", (evt) => {
+                const edgeId = evt.target.id;
+                const edgeData = graph.getEdgeData(edgeId);
+                if (!edgeData) return;
+                const d = edgeData.data || {};
+                const source = edgeData.source;
+                const target = edgeData.target;
+
+                const sourceNode = graph.getNodeData(source);
+                const targetNode = graph.getNodeData(target);
+                const sourceChinese = sourceNode?.data?.chineseName || "";
+                const targetChinese = targetNode?.data?.chineseName || "";
+                const sourceDisplay = sourceChinese ? \`\${source} (\${sourceChinese})\` : source;
+                const targetDisplay = targetChinese ? \`\${target} (\${targetChinese})\` : target;
+
+                tooltip.innerHTML = \`
+                    <div class="tt-title" style="color: #00FFB9; border-color: rgba(0, 255, 185, 0.2);">🔗 \${d.label || "ONTOLOGY_RELATION"}</div>
+                    <div class="tt-sub">\${sourceDisplay} ➔ \${targetDisplay}</div>
+                    <div class="tt-desc">\${d.description || "MES系统内置本体关联边"}</div>
+                    <div class="tt-meta">
+                        <span>关系名: \${d.label || "relation"}</span>
+                        <span>基数: \${d.cardinality || "MANY_TO_ONE"}</span>
+                    </div>
+                \`;
+                tooltip.classList.remove("studio-tooltip-hidden");
+            });
+
+            graph.on("edge:pointermove", (evt) => {
+                if (tooltip.classList.contains("studio-tooltip-hidden")) return;
+                const clientX = evt.client?.x ?? 0;
+                const clientY = evt.client?.y ?? 0;
+                tooltip.style.left = (clientX + 16) + "px";
+                tooltip.style.top = (clientY - 10) + "px";
+            });
+
+            graph.on("edge:pointerleave", () => {
+                tooltip.classList.add("studio-tooltip-hidden");
+            });
+        });
+    <\/script>
+</body>
+</html>`;
+
+                const blob = new Blob([htmlContent], { type: "text/html" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `Opcenter_Digital_Blueprint_${scenarioTitle.replace(/\\s+/g, "_")}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+
+
+    </script>
+</body>
+
+</html>
