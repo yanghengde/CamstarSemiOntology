@@ -855,83 +855,10 @@
     let productLineList = [];
 
     function updateHeaderLinks() {
-        const studioBtn = document.querySelector('a[href*="studio.html"]');
         const industryBtn = document.querySelector('a[href*="industry.html"]');
-        if (studioBtn) {
-            studioBtn.href = `/static/studio.html?product_line=${currentProductLine}`;
-        }
         if (industryBtn) {
             industryBtn.href = `/static/industry.html?product_line=${currentProductLine}`;
         }
-    }
-
-    function setupIframeNavigation() {
-        const studioBtn = document.querySelector('a[href*="studio.html"]');
-        if (studioBtn) {
-            studioBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                showStudioIframe();
-            });
-        }
-
-        // Define global close function for child iframe to call
-        window.closeStudioIframe = function() {
-            const iframe = document.getElementById("studioIframe");
-            if (iframe) {
-                iframe.style.display = "none";
-            }
-            
-            // Sync parent window product line selection with localStorage
-            const savedPL = localStorage.getItem("selected_product_line") || "general";
-            currentProductLine = savedPL;
-            const select = document.getElementById("productLineSelect");
-            if (select && select.value !== savedPL) {
-                select.value = savedPL;
-                const url = new URL(window.location);
-                if (savedPL === "general") {
-                    url.searchParams.delete("product_line");
-                } else {
-                    url.searchParams.set("product_line", savedPL);
-                }
-                window.history.replaceState({}, "", url);
-                updateHeaderLinks();
-            }
-
-            if (history.state && history.state.isStudio) {
-                history.back();
-            } else {
-                history.pushState(null, "", "/");
-            }
-        };
-
-        window.addEventListener("popstate", (e) => {
-            const iframe = document.getElementById("studioIframe");
-            if (iframe) {
-                if (e.state && e.state.isStudio) {
-                    iframe.style.display = "block";
-                } else {
-                    iframe.style.display = "none";
-                }
-            }
-        });
-    }
-
-    function showStudioIframe() {
-        let iframe = document.getElementById("studioIframe");
-        if (!iframe) {
-            iframe = document.createElement("iframe");
-            iframe.id = "studioIframe";
-            iframe.style.cssText = "display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; border:none; z-index:99999;";
-            document.body.appendChild(iframe);
-        }
-
-        const targetSrc = `/static/studio.html?product_line=${currentProductLine}`;
-        if (!iframe.src || !iframe.src.includes(targetSrc)) {
-            iframe.src = targetSrc;
-        }
-
-        iframe.style.display = "block";
-        history.pushState({ isStudio: true }, "", `/static/studio.html?product_line=${currentProductLine}`);
     }
 
     async function loadProductLines() {
@@ -2397,7 +2324,6 @@
             setupToolbar();
             setupLegend();
             setupResize();
-            setupIframeNavigation();
             await loadProductLines();
         } catch (err) {
             console.error("Failed to initialise graph:", err);

@@ -30,12 +30,10 @@ app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__
 from web.routers.graph import router as graph_router
 from web.routers.wiki import router as wiki_router
 from web.routers.chat import router as chat_router
-from web.routers.scenarios import router as scenarios_router
 
 app.include_router(graph_router)
 app.include_router(wiki_router)
 app.include_router(chat_router)
-app.include_router(scenarios_router)
 
 
 @app.get("/")
@@ -54,6 +52,3 @@ if __name__ == "__main__":
         reload_dirs=[PROJECT_ROOT],
         reload_excludes=["*.md", "*.json", "*.jsonl", "*.csv", "*.log", "*relationships*", "*wiki_kb*", "*logs*", "*scratch*"]
     )
-
-
-# Trigger hot-reload for updated scenario JSONs
