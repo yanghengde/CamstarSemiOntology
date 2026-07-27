@@ -7,11 +7,9 @@
 (() => {
     "use strict";
 
-    let sessionId = sessionStorage.getItem("chat_session_id");
-    if (!sessionId) {
-        sessionId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
-        sessionStorage.setItem("chat_session_id", sessionId);
-    }
+    let sessionId = sessionStorage.getItem("chat_session_id") || null;
+    let currentSession = null;
+    let sessionReadyPromise = null;
     let isStreaming = false;
     let abortController = null;
     let chatHistoryArray = [];
@@ -24,6 +22,13 @@
     const chatInput = document.getElementById("chatInput");
     const chatSend = document.getElementById("chatSend");
     const chatClear = document.getElementById("chatClearBtn");
+    const chatNew = document.getElementById("chatNewBtn");
+    const chatHistory = document.getElementById("chatHistoryBtn");
+    const chatSessionMenu = document.getElementById("chatSessionMenu");
+    const chatSessionList = document.getElementById("chatSessionList");
+    const chatSessionCount = document.getElementById("chatSessionCount");
+    const chatContextTitle = document.getElementById("chatContextTitle");
+    const chatContextClasses = document.getElementById("chatContextClasses");
 
     // ── Welcome HTML template ──
     const WELCOME_HTML = `<div class="chat-welcome">
@@ -32,8 +37,7 @@
         <p class="chat-welcome-sub">选择图中对象或输入 @表名，我会依据真实物理字段生成只读 T-SQL</p>
     </div>`;
 
-    /** Reset session: clear backend history, new session ID, restore welcome */
-    async function resetChatSession() {
+    function stopStreaming() {
         // Abort any in-flight stream
         if (abortController) {
             abortController.abort();
@@ -42,32 +46,135 @@
         isStreaming = false;
         chatSend.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
         chatSend.classList.remove("chat-stop-btn");
+    }
 
-        // Clear backend session
-        try {
-            await fetch("/api/chat/clear", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ session_id: sessionId }),
-            });
-        } catch (_) {}
-        // Fresh session
-        sessionId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
+    function setCurrentSession(session) {
+        currentSession = session;
+        sessionId = session.id;
         sessionStorage.setItem("chat_session_id", sessionId);
-        chatHistoryArray = [];
-        sessionStorage.removeItem("chat_history_messages");
-        chatMessages.innerHTML = WELCOME_HTML;
+        chatHistoryArray = (session.messages || []).map((message) => ({
+            role: message.role,
+            content: message.content || "",
+        }));
+        chatContextTitle.textContent = session.title || "新建 SQL 会话";
+        chatContextTitle.title = session.title || "";
+        updateContextBar(session.context);
+        chatMessages.innerHTML = chatHistoryArray.length ? "" : WELCOME_HTML;
+        for (const message of chatHistoryArray) {
+            const bubble = appendMessage(message.role, message.content);
+            if (message.role === "assistant") {
+                addSqlCopyButtons(bubble.querySelector(".chat-msg-content"));
+            }
+        }
         chatInput.value = "";
         chatInput.style.height = "auto";
     }
 
+    function updateContextBar(context) {
+        const classes = context?.selected_classes || [];
+        chatContextClasses.textContent = classes.length
+            ? classes.join(" · ")
+            : "尚未引用表";
+        chatContextClasses.title = classes.join(", ");
+    }
+
+    async function createNewSession() {
+        stopStreaming();
+        const product_line = (typeof window._getCurrentProductLine === "function")
+            ? window._getCurrentProductLine()
+            : "general";
+        const response = await fetch("/api/chat/sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                title: "新建 SQL 会话",
+                assistant_mode: "sql",
+                product_line,
+            }),
+        });
+        if (!response.ok) throw new Error(`创建会话失败: HTTP ${response.status}`);
+        const session = await response.json();
+        setCurrentSession(session);
+        chatSessionMenu.classList.add("chat-session-menu-hidden");
+        await refreshSessionList();
+        return session;
+    }
+
+    async function loadSession(targetSessionId) {
+        stopStreaming();
+        const response = await fetch(
+            `/api/chat/sessions/${encodeURIComponent(targetSessionId)}`,
+            { cache: "no-store" },
+        );
+        if (!response.ok) throw new Error(`加载会话失败: HTTP ${response.status}`);
+        const session = await response.json();
+        setCurrentSession(session);
+        chatSessionMenu.classList.add("chat-session-menu-hidden");
+        return session;
+    }
+
+    async function ensureSession() {
+        if (currentSession) return currentSession;
+        if (sessionReadyPromise) return sessionReadyPromise;
+        sessionReadyPromise = (async () => {
+            if (sessionId) {
+                try {
+                    return await loadSession(sessionId);
+                } catch (_) {
+                    sessionStorage.removeItem("chat_session_id");
+                    sessionId = null;
+                }
+            }
+            return createNewSession();
+        })().finally(() => {
+            sessionReadyPromise = null;
+        });
+        return sessionReadyPromise;
+    }
+
+    function formatSessionTime(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? ""
+            : date.toLocaleString("zh-CN", { hour12: false });
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    async function refreshSessionList() {
+        const response = await fetch("/api/chat/sessions?limit=100", {
+            cache: "no-store",
+        });
+        if (!response.ok) return;
+        const payload = await response.json();
+        const items = payload.items || [];
+        chatSessionCount.textContent = items.length;
+        chatSessionList.innerHTML = items.length
+            ? items.map((item) => `
+                <div class="chat-session-item ${item.id === sessionId ? "active" : ""}" data-session-id="${item.id}">
+                    <div class="chat-session-item-title">${escapeHtml(item.title || "未命名会话")}</div>
+                    <div class="chat-session-item-meta">${escapeHtml(formatSessionTime(item.updated_at))} · ${item.message_count || 0} 条消息${item.selected_classes?.length ? ` · ${escapeHtml(item.selected_classes.join(", "))}` : ""}</div>
+                    <div class="chat-session-item-preview">${escapeHtml(item.preview || "暂无消息")}</div>
+                </div>
+            `).join("")
+            : `<div class="chat-session-item-preview" style="padding:16px;text-align:center">暂无历史会话</div>`;
+    }
+
     // ── Toggle panel (topbar button) ──
-    chatBtn.addEventListener("click", () => {
+    chatBtn.addEventListener("click", async () => {
         const wasHidden = chatPanel.classList.contains("chat-hidden");
         chatPanel.classList.toggle("chat-hidden");
         chatBtn.classList.toggle("active", wasHidden);
         if (wasHidden) {
-            resetChatSession();
+            await ensureSession();
             chatInput.focus();
         }
     });
@@ -76,6 +183,7 @@
     chatCloseBtn.addEventListener("click", () => {
         chatPanel.classList.add("chat-hidden");
         chatBtn.classList.remove("active");
+        chatSessionMenu.classList.add("chat-session-menu-hidden");
     });
 
     // ── Send message ──
@@ -214,8 +322,48 @@
         }
     });
 
-    // ── Clear history (trash icon button) ──
-    chatClear.addEventListener("click", () => resetChatSession());
+    // ── Persistent session controls ──
+    chatNew.addEventListener("click", async () => {
+        try {
+            await createNewSession();
+            chatInput.focus();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    chatHistory.addEventListener("click", async () => {
+        const opening = chatSessionMenu.classList.contains("chat-session-menu-hidden");
+        chatSessionMenu.classList.toggle("chat-session-menu-hidden");
+        if (opening) await refreshSessionList();
+    });
+
+    chatSessionList.addEventListener("click", async (event) => {
+        const item = event.target.closest(".chat-session-item[data-session-id]");
+        if (!item) return;
+        try {
+            await loadSession(item.dataset.sessionId);
+            chatInput.focus();
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    chatClear.addEventListener("click", async () => {
+        stopStreaming();
+        if (sessionId) {
+            try {
+                await fetch(`/api/chat/sessions/${encodeURIComponent(sessionId)}`, {
+                    method: "DELETE",
+                });
+            } catch (_) {}
+        }
+        sessionId = null;
+        currentSession = null;
+        sessionStorage.removeItem("chat_session_id");
+        await createNewSession();
+        chatInput.focus();
+    });
 
     // ══════════════════════════════════════════════════════
     //  Resize Logic
@@ -267,11 +415,9 @@
     //  Streaming Chat
     // ══════════════════════════════════════════════════════
     async function sendMessage() {
+        await ensureSession();
         const question = chatInput.value.trim();
         if (!question || isStreaming) return;
-
-        // Capture history BEFORE appending the new question
-        const historyToSend = [...chatHistoryArray];
 
         // Add user message bubble
         appendMessage("user", question);
@@ -302,7 +448,6 @@
                     question,
                     session_id: sessionId,
                     product_line,
-                    history: historyToSend,
                     assistant_mode: "sql",
                     selected_classes: selectedNode ? [selectedNode] : []
                 }),
@@ -341,6 +486,16 @@
                             chatMessages.scrollTop = chatMessages.scrollHeight;
                         } else if (payload.type === "done") {
                             sessionId = payload.session_id || sessionId;
+                            sessionStorage.setItem("chat_session_id", sessionId);
+                            if (payload.session_title) {
+                                chatContextTitle.textContent = payload.session_title;
+                                chatContextTitle.title = payload.session_title;
+                                if (currentSession) currentSession.title = payload.session_title;
+                            }
+                            if (payload.session_context) {
+                                if (currentSession) currentSession.context = payload.session_context;
+                                updateContextBar(payload.session_context);
+                            }
                             if (payload.highlight) {
                                 highlightData = payload.highlight;
                                 if (typeof window._highlightGraph === "function") {
@@ -365,6 +520,7 @@
             
             // Save to history
             chatHistoryArray.push({ role: "assistant", content: fullText, highlightData });
+            await refreshSessionList();
             
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -399,7 +555,7 @@
 
     function renderMarkdown(text) {
         if (!text) return "";
-        let html = text
+        let html = escapeHtml(text)
             .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="chat-code"><code>$2</code></pre>')
             .replace(/`([^`]+)`/g, '<code class="chat-inline-code">$1</code>')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

@@ -71,9 +71,20 @@ def build_prompt(
 
     messages = [{"role": "system", "content": system_prompt}]
 
-    # Keep last 10 messages (5 turns) — enough context for multi-turn memory
+    # Persisted sessions may be long. Keep as many recent complete turns as fit
+    # in a conservative character budget instead of truncating to five turns.
     if history:
-        for turn in history[-10:]:
+        retained = []
+        retained_chars = 0
+        for turn in reversed(history[-40:]):
+            content = turn.get("content") or ""
+            if not content:
+                continue
+            if retained and retained_chars + len(content) > 24000:
+                break
+            retained.append(turn)
+            retained_chars += len(content)
+        for turn in reversed(retained):
             clean_turn = {
                 "role": turn.get("role"),
                 "content": turn.get("content")

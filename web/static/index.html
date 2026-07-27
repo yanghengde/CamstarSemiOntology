@@ -241,9 +241,22 @@
                     style="width:20px;height:20px;border-radius:4px;" />
                 <span class="chat-header-title">Camstar SQL 助手</span>
                 <span class="chat-header-badge">READ ONLY</span>
+                <span class="chat-context-title" id="chatContextTitle">新建 SQL 会话</span>
             </div>
             <div class="chat-header-right">
-                <button class="icon-btn" id="chatClearBtn" title="清空对话">
+                <button class="icon-btn" id="chatNewBtn" title="新建会话">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </button>
+                <button class="icon-btn" id="chatHistoryBtn" title="历史会话">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9" />
+                        <polyline points="12 7 12 12 16 14" />
+                    </svg>
+                </button>
+                <button class="icon-btn" id="chatClearBtn" title="删除当前会话">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6" />
                         <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -256,6 +269,17 @@
                     </svg>
                 </button>
             </div>
+        </div>
+        <div class="chat-context-bar">
+            <span class="chat-context-label">当前上下文</span>
+            <span id="chatContextClasses" class="chat-context-classes">尚未引用表</span>
+        </div>
+        <div id="chatSessionMenu" class="chat-session-menu chat-session-menu-hidden">
+            <div class="chat-session-menu-header">
+                <span>历史会话</span>
+                <span id="chatSessionCount">0</span>
+            </div>
+            <div id="chatSessionList" class="chat-session-list"></div>
         </div>
         <div class="chat-messages" id="chatMessages">
             <div class="chat-welcome">

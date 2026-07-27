@@ -1,10 +1,18 @@
 import os
 import json
-import uuid
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
-from web.shared import _chat_sessions, _get_vector_collection, PROJECT_ROOT
+from web.shared import _get_vector_collection, PROJECT_ROOT
+from src.qa.session_store import (
+    append_exchange,
+    create_session,
+    delete_session,
+    get_or_create_session,
+    list_sessions,
+    load_session,
+    update_context,
+)
 
 router = APIRouter()
 
@@ -21,21 +29,63 @@ class ClearRequest(BaseModel):
     session_id: str
 
 
+class SessionCreateRequest(BaseModel):
+    title: str = "新建 SQL 会话"
+    assistant_mode: str = "sql"
+    product_line: str = "general"
+
+
+@router.post("/api/chat/sessions")
+async def chat_session_create(req: SessionCreateRequest):
+    return create_session(
+        title=req.title,
+        assistant_mode=req.assistant_mode,
+        product_line=req.product_line,
+    )
+
+
+@router.get("/api/chat/sessions")
+async def chat_session_list(limit: int = 100):
+    return {"items": list_sessions(limit=limit)}
+
+
+@router.get("/api/chat/sessions/{session_id}")
+async def chat_session_get(session_id: str):
+    try:
+        session = load_session(session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if session is None:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+    return session
+
+
+@router.delete("/api/chat/sessions/{session_id}")
+async def chat_session_delete(session_id: str):
+    try:
+        deleted = delete_session(session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"status": "deleted" if deleted else "not_found"}
+
+
 @router.post("/api/chat")
 async def chat(req: ChatRequest):
     question = req.question.strip()
-    session_id = req.session_id or str(uuid.uuid4())
 
     if not question:
         return JSONResponse(status_code=400, content={"error": "question is required"})
 
-    if req.history is not None:
-        history = req.history
-        _chat_sessions[session_id] = history
-    else:
-        if session_id not in _chat_sessions:
-            _chat_sessions[session_id] = []
-        history = _chat_sessions[session_id]
+    try:
+        session = get_or_create_session(
+            req.session_id,
+            assistant_mode=req.assistant_mode,
+            product_line=req.product_line,
+        )
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"error": str(exc)})
+    session_id = session["id"]
+    history = session.get("messages", [])
 
     # SQL generation relies on the authoritative physical CSV schema and
     # ontology joins. Skip ChromaDB to reduce latency and avoid irrelevant
@@ -50,19 +100,25 @@ async def chat(req: ChatRequest):
         from src.qa.graph_retriever import search_graph, find_path_highlight
         import re
 
-        # 1. Extract keywords from current question
+        # 1. Extract keywords from the current question and the persisted
+        # conversation context. Referenced tables accumulate across turns.
         selected_classes = req.selected_classes or []
+        persisted_classes = list(
+            session.get("context", {}).get("selected_classes", [])
+        )
         keywords = list(
             dict.fromkeys(
                 selected_classes
-                + extract_keywords(question, fallback=not bool(selected_classes))
+                + extract_keywords(
+                    question,
+                    fallback=not bool(selected_classes or persisted_classes),
+                )
             )
         )
 
-        # 2. Extract classes from recent history (last 4 turns) to enable follow-ups and pronoun resolution
-        history_classes = []
+        history_classes = persisted_classes
         if history:
-            for turn in history[-4:]:
+            for turn in history[-30:]:
                 content = turn.get("content", "") or ""
                 # Match [[ClassName]] format
                 found = re.findall(r'\[\[(\w+)\]\]', content)
@@ -79,6 +135,11 @@ async def chat(req: ChatRequest):
 
         # Combine, keeping current keywords first
         all_classes = list(dict.fromkeys(keywords + history_classes))
+        update_context(
+            session_id,
+            selected_classes=all_classes,
+            product_line=req.product_line,
+        )
 
         # 3. Detect if the user is asking about relations (supports Chinese & English)
         is_rel_query = any(k in question.lower() for k in [
@@ -103,7 +164,7 @@ async def chat(req: ChatRequest):
                 trace=trace,
                 product_line=req.product_line,
                 assistant_mode=req.assistant_mode,
-                selected_classes=req.selected_classes,
+                selected_classes=all_classes,
             ):
                 if isinstance(chunk, dict) and chunk.get("type") == "status":
                     yield f"data: {json.dumps({'type': 'status', 'content': chunk['content']}, ensure_ascii=False)}\n\n"
@@ -117,15 +178,17 @@ async def chat(req: ChatRequest):
         if trace:
             trace.finalize(answer=full_answer, error=error_msg)
 
-        history.append({"role": "user", "content": question})
-        history.append({"role": "assistant", "content": full_answer})
-
-        if len(history) > 20:
-            _chat_sessions[session_id] = history[-20:]
+        saved_session = append_exchange(
+            session_id,
+            question=question,
+            answer=full_answer,
+            selected_classes=all_classes,
+            error=error_msg,
+        )
 
         class_links = extract_class_links(full_answer)
 
-        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'keywords': keywords, 'class_links': class_links, 'highlight': highlight_data, 'trace_id': trace.trace_id if trace else None}, ensure_ascii=False)}\n\n"
+        yield f"data: {json.dumps({'type': 'done', 'session_id': session_id, 'session_title': saved_session.get('title'), 'session_context': saved_session.get('context', {}), 'keywords': keywords, 'class_links': class_links, 'highlight': highlight_data, 'trace_id': trace.trace_id if trace else None}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
         generate(),
@@ -139,9 +202,11 @@ async def chat(req: ChatRequest):
 
 @router.post("/api/chat/clear")
 async def chat_clear(req: ClearRequest):
-    if req.session_id in _chat_sessions:
-        del _chat_sessions[req.session_id]
-    return {"status": "cleared"}
+    try:
+        deleted = delete_session(req.session_id)
+    except ValueError:
+        deleted = False
+    return {"status": "cleared", "deleted": deleted}
 
 
 @router.get("/logs")
