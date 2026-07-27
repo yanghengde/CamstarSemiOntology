@@ -39,10 +39,10 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <input type="text" id="searchInput" placeholder="搜索类名、属性..." autocomplete="off" />
-                <button type="button" id="btnPrioritySearch" class="search-priority-btn" title="只搜索重点大节点">
-                    <span>★</span>
+                <button type="button" id="btnPrioritySearch" class="search-priority-toggle" aria-pressed="false" title="高亮大节点（不显示关系线）">
+                    <span class="search-priority-label">大节点</span>
+                    <span class="mini-switch-track"><span class="mini-switch-thumb"></span></span>
                 </button>
-                <div id="searchResults" class="search-results search-results-hidden"></div>
             </div>
         </div>
         <div class="topbar-right">
@@ -127,10 +127,9 @@
             <div class="panel-header">
                 <h2 id="panelTitle">节点详情</h2>
                 <div class="panel-header-actions">
-                    <button class="icon-btn node-size-trigger" id="btnNodeSize" title="设置节点大小">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="8" cy="12" r="3" /><circle cx="17" cy="12" r="5" />
-                        </svg>
+                    <button type="button" class="node-priority-switch" id="btnNodePriority" aria-pressed="false" title="设为重点大节点">
+                        <span>重点</span>
+                        <span class="mini-switch-track"><span class="mini-switch-thumb"></span></span>
                     </button>
                     <button class="icon-btn panel-close" id="btnClosePanel">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -138,19 +137,6 @@
                             <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                     </button>
-                </div>
-                <div id="nodeSizePopover" class="node-size-popover node-size-popover-hidden">
-                    <div class="node-size-popover-title">节点显示设置</div>
-                    <label class="node-priority-toggle">
-                        <input type="checkbox" id="nodePriorityToggle" />
-                        <span>设为重点节点</span>
-                    </label>
-                    <div class="node-size-slider-row">
-                        <span>大小</span>
-                        <input id="nodeSizeSlider" type="range" min="44" max="120" step="4" value="76" />
-                        <output id="nodeSizeValue">76</output>
-                    </div>
-                    <button type="button" id="nodeSizeReset" class="node-size-reset">恢复默认</button>
                 </div>
             </div>
             <div class="panel-body">
@@ -265,7 +251,6 @@
                     style="width:20px;height:20px;border-radius:4px;" />
                 <span class="chat-header-title">Camstar SQL 助手</span>
                 <span class="chat-header-badge">READ ONLY</span>
-                <span class="chat-context-title" id="chatContextTitle">新建 SQL 会话</span>
             </div>
             <div class="chat-header-right">
                 <button class="icon-btn" id="chatNewBtn" title="新建会话">

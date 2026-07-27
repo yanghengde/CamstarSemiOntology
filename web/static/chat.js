@@ -27,7 +27,6 @@
     const chatSessionMenu = document.getElementById("chatSessionMenu");
     const chatSessionList = document.getElementById("chatSessionList");
     const chatSessionCount = document.getElementById("chatSessionCount");
-    const chatContextTitle = document.getElementById("chatContextTitle");
     const chatContextClasses = document.getElementById("chatContextClasses");
     const chatQuickActions = document.getElementById("chatQuickActions");
 
@@ -57,8 +56,6 @@
             role: message.role,
             content: message.content || "",
         }));
-        chatContextTitle.textContent = session.title || "新建 SQL 会话";
-        chatContextTitle.title = session.title || "";
         updateContextBar(session.context);
         chatMessages.innerHTML = chatHistoryArray.length ? "" : WELCOME_HTML;
         for (const message of chatHistoryArray) {
@@ -506,10 +503,8 @@
                         } else if (payload.type === "done") {
                             sessionId = payload.session_id || sessionId;
                             sessionStorage.setItem("chat_session_id", sessionId);
-                            if (payload.session_title) {
-                                chatContextTitle.textContent = payload.session_title;
-                                chatContextTitle.title = payload.session_title;
-                                if (currentSession) currentSession.title = payload.session_title;
+                            if (payload.session_title && currentSession) {
+                                currentSession.title = payload.session_title;
                             }
                             if (payload.session_context) {
                                 if (currentSession) currentSession.context = payload.session_context;

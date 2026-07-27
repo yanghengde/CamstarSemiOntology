@@ -175,18 +175,21 @@
     let graphMutationBusy = false;
     let pendingHighlightClear = false;
     let detailRenderToken = 0;
-    const PRIORITY_NODE_STORAGE_KEY = "camstar_priority_node_sizes_v1";
+    const PRIORITY_NODE_STORAGE_KEY = "camstar_priority_nodes_v2";
     const LARGE_MODULES = new Set(["workflow", "mfgorder", "material", "product"]);
-    let priorityNodeSizes = new Map();
+    let priorityNodes = new Set();
+    let largeNodeFocusMode = false;
     try {
-        const savedSizes = JSON.parse(localStorage.getItem(PRIORITY_NODE_STORAGE_KEY) || "{}");
-        priorityNodeSizes = new Map(
-            Object.entries(savedSizes)
-                .filter(([, size]) => Number.isFinite(Number(size)))
-                .map(([id, size]) => [id, Math.max(44, Math.min(120, Number(size)))]),
-        );
+        const saved = JSON.parse(localStorage.getItem(PRIORITY_NODE_STORAGE_KEY) || "[]");
+        priorityNodes = new Set(Array.isArray(saved) ? saved : []);
+        if (!priorityNodes.size) {
+            const legacy = JSON.parse(
+                localStorage.getItem("camstar_priority_node_sizes_v1") || "{}",
+            );
+            priorityNodes = new Set(Object.keys(legacy));
+        }
     } catch (_) {
-        priorityNodeSizes = new Map();
+        priorityNodes = new Set();
     }
 
     // Keep high-degree nodes responsive. The detail panel still exposes the
@@ -201,18 +204,18 @@
     }
 
     function getNodeSize(nodeId, nodeOrData) {
-        return priorityNodeSizes.get(nodeId) || defaultNodeSize(nodeOrData);
+        return priorityNodes.has(nodeId) ? 76 : defaultNodeSize(nodeOrData);
     }
 
-    function persistPriorityNodeSizes() {
+    function persistPriorityNodes() {
         localStorage.setItem(
             PRIORITY_NODE_STORAGE_KEY,
-            JSON.stringify(Object.fromEntries(priorityNodeSizes)),
+            JSON.stringify([...priorityNodes]),
         );
     }
 
     function isLargeNode(node) {
-        return priorityNodeSizes.has(node.id) || defaultNodeSize(node) >= 76;
+        return priorityNodes.has(node.id) || defaultNodeSize(node) >= 76;
     }
 
     // ── Layout presets ──
@@ -696,6 +699,14 @@
             }
 
             selectNode(nodeId);
+            if (largeNodeFocusMode) {
+                await hideAllCanvasEdges();
+                applyLargeNodeFocusHighlight(
+                    document.getElementById("searchInput")?.value || "",
+                );
+                await showClassDetail(nodeId);
+                return;
+            }
             // Open the panel immediately. Edge drawing is intentionally
             // serialized so rapid clicks cannot mutate G6 concurrently.
             queueIncidentEdgeRender(nodeId);
@@ -848,12 +859,12 @@
 
         // ── Hover preview (only when nothing is selected) ──
         graph.on("node:mouseenter", (evt) => {
-            if (selectedNodeId || graphMutationBusy) return;
+            if (largeNodeFocusMode || selectedNodeId || graphMutationBusy) return;
             highlightNeighbors(evt.target.id, false);
         });
 
         graph.on("node:mouseleave", () => {
-            if (selectedNodeId || graphMutationBusy) return;
+            if (largeNodeFocusMode || selectedNodeId || graphMutationBusy) return;
             clearHighlight();
         });
 
@@ -893,7 +904,13 @@
         selectNode(nodeId);
         await hideAllCanvasEdges();
         clearHighlight();
-        _applyStates({ [nodeId]: ["selected"] });
+        if (largeNodeFocusMode) {
+            applyLargeNodeFocusHighlight(
+                document.getElementById("searchInput")?.value || "",
+            );
+        } else {
+            _applyStates({ [nodeId]: ["selected"] });
+        }
         await graph.focusElement(nodeId, true);
         if (openDetail) await showClassDetail(nodeId);
     }
@@ -991,6 +1008,11 @@
         if (pendingHighlightClear || !selectedNodeId) {
             pendingHighlightClear = false;
             clearHighlight();
+            if (largeNodeFocusMode) {
+                applyLargeNodeFocusHighlight(
+                    document.getElementById("searchInput")?.value || "",
+                );
+            }
         } else if (
             token === edgeRenderToken
             && selectedNodeId === nodeId
@@ -1008,6 +1030,11 @@
             pendingHighlightClear = true;
         } else {
             clearHighlight();
+            if (largeNodeFocusMode) {
+                applyLargeNodeFocusHighlight(
+                    document.getElementById("searchInput")?.value || "",
+                );
+            }
         }
         // Clear legend active states
         document.querySelectorAll(".legend-item.active").forEach(el => el.classList.remove("active"));
@@ -1181,31 +1208,37 @@
         }
     }
 
-    // ══════════════════════════════════════════════════════
-    //  Per-node size and priority controls
-    // ══════════════════════════════════════════════════════
-    function syncNodeSizeControls(nodeId) {
-        const toggle = document.getElementById("nodePriorityToggle");
-        const slider = document.getElementById("nodeSizeSlider");
-        const output = document.getElementById("nodeSizeValue");
-        const button = document.getElementById("btnNodeSize");
-        const node = nodeInfoCache.get(nodeId);
-        const size = getNodeSize(nodeId, node);
-        toggle.checked = priorityNodeSizes.has(nodeId);
-        slider.value = String(size);
-        output.textContent = String(size);
-        button.classList.toggle("active", priorityNodeSizes.has(nodeId));
+    function applyLargeNodeFocusHighlight(queryText = "") {
+        if (!graph || !rawData || !largeNodeFocusMode) return;
+        const query = queryText.trim().toLowerCase();
+        const states = {};
+        for (const node of rawData.nodes) {
+            if (!isLargeNode(node)) continue;
+            const label = (node.data?.label || node.id).toLowerCase();
+            const chineseName = (node.data?.chineseName || "").toLowerCase();
+            if (!query || label.includes(query) || chineseName.includes(query)) {
+                states[node.id] = ["highlighted"];
+            }
+        }
+        _applyStates(states);
     }
 
-    async function applySelectedNodeSize(size, isPriority = true) {
+    // ══════════════════════════════════════════════════════
+    //  Per-node priority switch
+    // ══════════════════════════════════════════════════════
+    function syncNodePrioritySwitch(nodeId) {
+        const button = document.getElementById("btnNodePriority");
+        const enabled = priorityNodes.has(nodeId);
+        button.classList.toggle("active", enabled);
+        button.setAttribute("aria-pressed", String(enabled));
+        button.title = enabled ? "取消重点节点并恢复原始大小" : "设为重点大节点";
+    }
+
+    async function setSelectedNodePriority(enabled) {
         if (!selectedNodeId || !graph) return;
-        const safeSize = Math.max(44, Math.min(120, Number(size) || 76));
-        if (isPriority) {
-            priorityNodeSizes.set(selectedNodeId, safeSize);
-        } else {
-            priorityNodeSizes.delete(selectedNodeId);
-        }
-        persistPriorityNodeSizes();
+        if (enabled) priorityNodes.add(selectedNodeId);
+        else priorityNodes.delete(selectedNodeId);
+        persistPriorityNodes();
         const node = graph.getNodeData(selectedNodeId);
         if (node) {
             graph.updateNodeData([{
@@ -1217,45 +1250,15 @@
             }]);
             await graph.draw();
         }
-        syncNodeSizeControls(selectedNodeId);
+        syncNodePrioritySwitch(selectedNodeId);
+        if (largeNodeFocusMode) applyLargeNodeFocusHighlight();
     }
 
-    function setupNodeSizeControls() {
-        const button = document.getElementById("btnNodeSize");
-        const popover = document.getElementById("nodeSizePopover");
-        const toggle = document.getElementById("nodePriorityToggle");
-        const slider = document.getElementById("nodeSizeSlider");
-        const output = document.getElementById("nodeSizeValue");
-        const reset = document.getElementById("nodeSizeReset");
-
-        button.addEventListener("click", (event) => {
-            event.stopPropagation();
+    function setupNodePriorityControl() {
+        const button = document.getElementById("btnNodePriority");
+        button.addEventListener("click", () => {
             if (!selectedNodeId) return;
-            syncNodeSizeControls(selectedNodeId);
-            popover.classList.toggle("node-size-popover-hidden");
-        });
-        popover.addEventListener("click", (event) => event.stopPropagation());
-        toggle.addEventListener("change", () => {
-            const desired = toggle.checked
-                ? Math.max(76, Number(slider.value) || 76)
-                : defaultNodeSize(nodeInfoCache.get(selectedNodeId));
-            applySelectedNodeSize(desired, toggle.checked);
-        });
-        slider.addEventListener("input", () => {
-            output.textContent = slider.value;
-        });
-        slider.addEventListener("change", () => {
-            toggle.checked = true;
-            applySelectedNodeSize(Number(slider.value), true);
-        });
-        reset.addEventListener("click", () => {
-            applySelectedNodeSize(
-                defaultNodeSize(nodeInfoCache.get(selectedNodeId)),
-                false,
-            );
-        });
-        document.addEventListener("click", () => {
-            popover.classList.add("node-size-popover-hidden");
+            setSelectedNodePriority(!priorityNodes.has(selectedNodeId));
         });
     }
 
@@ -1674,8 +1677,7 @@
         const sectionProperties = document.getElementById("sectionProperties");
 
         panelTitle.textContent = className;
-        syncNodeSizeControls(className);
-        document.getElementById("nodeSizePopover").classList.add("node-size-popover-hidden");
+        syncNodePrioritySwitch(className);
 
         let detail;
         if (classDetailCache.has(className)) {
@@ -1791,7 +1793,6 @@
     function closePanel() {
         detailRenderToken++;
         document.getElementById("detailPanel").classList.add("panel-hidden");
-        document.getElementById("nodeSizePopover").classList.add("node-size-popover-hidden");
     }
 
     // ══════════════════════════════════════════════════════
@@ -1801,57 +1802,24 @@
     function setupSearch() {
         const input = document.getElementById("searchInput");
         const priorityButton = document.getElementById("btnPrioritySearch");
-        const results = document.getElementById("searchResults");
         let debounceTimer;
         let isComposing = false;
-        let priorityOnly = false;
-        let currentMatches = [];
-
-        const escapeSearchText = (value) => String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
-
-        function renderResults(matches) {
-            currentMatches = matches.slice(0, 30);
-            if (!currentMatches.length) {
-                results.innerHTML = `<div class="search-result-cn" style="padding:10px">未找到匹配节点</div>`;
-            } else {
-                results.innerHTML = currentMatches.map((node, index) => {
-                    const custom = priorityNodeSizes.has(node.id);
-                    const size = getNodeSize(node.id, node);
-                    return `<div class="search-result-item ${index === 0 ? "active" : ""}" data-node-id="${escapeSearchText(node.id)}">
-                        <div class="search-result-title">${escapeSearchText(node.id)}</div>
-                        <div class="search-result-cn">${escapeSearchText(node.data?.chineseName || node.data?.module || "")}</div>
-                        <div class="search-result-size">${custom ? "★ 重点" : "大节点"} · ${size}</div>
-                    </div>`;
-                }).join("");
-            }
-            results.classList.remove("search-results-hidden");
-        }
-
-        async function chooseResult(nodeId) {
-            input.value = nodeId;
-            results.classList.add("search-results-hidden");
-            await locateNodeWithoutEdges(nodeId, true);
-        }
-
-        results.addEventListener("mousedown", (event) => {
-            const item = event.target.closest(".search-result-item[data-node-id]");
-            if (!item) return;
-            event.preventDefault();
-            chooseResult(item.dataset.nodeId);
-        });
 
         priorityButton.addEventListener("click", (event) => {
             event.preventDefault();
-            event.stopPropagation();
-            priorityOnly = !priorityOnly;
-            priorityButton.classList.toggle("active", priorityOnly);
-            priorityButton.title = priorityOnly ? "正在只搜索重点大节点" : "只搜索重点大节点";
-            input.placeholder = priorityOnly ? "快速定位重点大节点..." : "搜索类名、属性...";
-            triggerSearch(input.value.trim(), true);
+            largeNodeFocusMode = !largeNodeFocusMode;
+            priorityButton.classList.toggle("active", largeNodeFocusMode);
+            priorityButton.setAttribute("aria-pressed", String(largeNodeFocusMode));
+            priorityButton.title = largeNodeFocusMode
+                ? "关闭大节点高亮"
+                : "高亮大节点（不显示关系线）";
+            if (largeNodeFocusMode) {
+                hideAllCanvasEdges()
+                    .then(() => applyLargeNodeFocusHighlight(input.value))
+                    .catch((error) => console.debug("Large-node edge cleanup skipped:", error));
+            } else {
+                triggerSearch(input.value.trim());
+            }
             input.focus();
         });
 
@@ -1875,54 +1843,34 @@
             }, 350); // 适度增加防抖时间至 350ms 减缓冲击
         });
 
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" && currentMatches.length) {
-                event.preventDefault();
-                chooseResult(currentMatches[0].id);
-            } else if (event.key === "Escape") {
-                results.classList.add("search-results-hidden");
-            }
-        });
-        input.addEventListener("focus", () => {
-            if (input.value.trim() || priorityOnly) triggerSearch(input.value.trim(), true);
-        });
-        document.addEventListener("mousedown", (event) => {
-            if (!event.target.closest("#searchBox")) {
-                results.classList.add("search-results-hidden");
-            }
-        });
-
-        function triggerSearch(text, forceResults = false) {
+        function triggerSearch(text) {
             const query = text.toLowerCase();
             if (!graph || !rawData) return;
 
-            if (!query && !priorityOnly) {
-                // 清空全部高亮状态
-                clearHighlight();
-                results.classList.add("search-results-hidden");
+            if (largeNodeFocusMode) {
+                hideAllCanvasEdges()
+                    .then(() => applyLargeNodeFocusHighlight(query))
+                    .catch((error) => console.debug("Large-node edge cleanup skipped:", error));
                 return;
             }
 
+            if (!query) {
+                clearHighlight();
+                return;
+            }
+
+            // Preserve the original text-search behavior.
+            const states = {};
             const nodes = rawData.nodes;
             const len = nodes.length;
-            const matches = [];
-
             for (let i = 0; i < len; i++) {
                 const n = nodes[i];
                 const label = (n.data?.label || n.id).toLowerCase();
                 const cn = (n.data?.chineseName || "").toLowerCase();
-                const textMatches = !query || label.indexOf(query) !== -1 || cn.indexOf(query) !== -1;
-                const match = textMatches && (!priorityOnly || isLargeNode(n));
-                if (match) matches.push(n);
+                const match = label.indexOf(query) !== -1 || cn.indexOf(query) !== -1;
+                states[n.id] = match ? ["active"] : ["inactive"];
             }
-
-            matches.sort((a, b) => {
-                const priorityDifference =
-                    Number(priorityNodeSizes.has(b.id)) - Number(priorityNodeSizes.has(a.id));
-                return priorityDifference || a.id.localeCompare(b.id);
-            });
-            hideAllCanvasEdges().catch((error) => console.debug("Search edge cleanup skipped:", error));
-            if (query || priorityOnly || forceResults) renderResults(matches);
+            _applyStates(states);
         }
     }
 
@@ -2166,7 +2114,7 @@
         #app { height: 100vh !important; margin-top: 0 !important; display: flex; overflow: hidden; }
         #graphContainer { flex: 1; height: 100%; position: relative; background: radial-gradient(circle at center, #001A33 0%, #000D1A 100%); }
         .dropdown, #chatToggleBtn, .icon-btn-chat, .topbar-divider { display: none !important; }
-        #detailPanel { position: absolute; right: 0; top: 0; bottom: 0; width: 320px; transition: transform 0.3s ease; }
+        #detailPanel { position: absolute; left: 0; right: auto; top: 0; bottom: 0; width: 320px; transition: transform 0.3s ease; border-left: 0; border-right: 1px solid rgba(0,153,153,.2); }
     </style>
     ${g6ImportBlock}
 </head>
@@ -2783,11 +2731,22 @@
     // ══════════════════════════════════════════════════════
     function setupResize() {
         let resizeTimer;
+        const container = document.getElementById("graphContainer");
+        if ("ResizeObserver" in window) {
+            const graphContainerObserver = new ResizeObserver(() => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (graph) {
+                        graph.resize(container.clientWidth, container.clientHeight);
+                    }
+                }, 60);
+            });
+            graphContainerObserver.observe(container);
+        }
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 if (graph) {
-                    const container = document.getElementById("graphContainer");
                     graph.resize(container.clientWidth, container.clientHeight);
                 }
             }, 200);
@@ -2829,7 +2788,7 @@
 
             // Setup UI
             setupSearch();
-            setupNodeSizeControls();
+            setupNodePriorityControl();
             setupToolbar();
             setupLegend();
             setupResize();
