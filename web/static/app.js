@@ -170,6 +170,11 @@
     let edgeInfoById = new Map();
     let detailPrefetchPromise = null;
     let edgeRenderToken = 0;
+    let pendingEdgeNodeId = null;
+    let edgeRenderWorker = null;
+    let graphMutationBusy = false;
+    let pendingHighlightClear = false;
+    let detailRenderToken = 0;
 
     // Keep high-degree nodes responsive. The detail panel still exposes the
     // complete schema and relationship list; the canvas only draws a useful
@@ -658,8 +663,8 @@
 
             selectNode(nodeId);
             // Open the panel immediately. Edge drawing is intentionally
-            // asynchronous so a dense node cannot block click feedback.
-            void renderIncidentEdges(nodeId);
+            // serialized so rapid clicks cannot mutate G6 concurrently.
+            queueIncidentEdgeRender(nodeId);
             if (relMode) {
                 await showRelOnly(nodeId);
             } else {
@@ -809,12 +814,12 @@
 
         // ── Hover preview (only when nothing is selected) ──
         graph.on("node:mouseenter", (evt) => {
-            if (selectedNodeId) return;
+            if (selectedNodeId || graphMutationBusy) return;
             highlightNeighbors(evt.target.id, false);
         });
 
         graph.on("node:mouseleave", () => {
-            if (selectedNodeId) return;
+            if (selectedNodeId || graphMutationBusy) return;
             clearHighlight();
         });
 
@@ -826,80 +831,121 @@
     // ══════════════════════════════════════════════════════
     function selectNode(nodeId) {
         selectedNodeId = nodeId;
-        highlightNeighbors(nodeId, true);
         // Clear legend active states when focusing on a specific node
         document.querySelectorAll(".legend-item.active").forEach(el => el.classList.remove("active"));
     }
     // Expose for chat.js
     window._selectNode = selectNode;
 
+    function queueIncidentEdgeRender(nodeId) {
+        pendingEdgeNodeId = nodeId;
+        edgeRenderToken++;
+        if (edgeRenderWorker) return;
+        edgeRenderWorker = drainIncidentEdgeRenders()
+            .catch((error) => {
+                console.error("Incident edge render failed:", error);
+            })
+            .finally(() => {
+                edgeRenderWorker = null;
+                // A click could arrive after the worker's last loop condition.
+                if (pendingEdgeNodeId) queueIncidentEdgeRender(pendingEdgeNodeId);
+            });
+    }
+
+    async function drainIncidentEdgeRenders() {
+        while (pendingEdgeNodeId) {
+            // Coalesce rapid clicks: only the newest pending node is rendered.
+            const nodeId = pendingEdgeNodeId;
+            pendingEdgeNodeId = null;
+            await renderIncidentEdges(nodeId);
+        }
+    }
+
     async function renderIncidentEdges(nodeId) {
         if (!graph || !rawData) return;
-        const token = ++edgeRenderToken;
-        const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
-        if (currentEdgeIds.length) {
-            // Removed elements must not remain in the differential state cache.
-            if (_prevStates) {
-                for (const edgeId of currentEdgeIds) delete _prevStates[edgeId];
+        const token = edgeRenderToken;
+        graphMutationBusy = true;
+        try {
+            const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
+            if (currentEdgeIds.length) {
+                // Removed elements must not remain in the differential state cache.
+                if (_prevStates) {
+                    for (const edgeId of currentEdgeIds) delete _prevStates[edgeId];
+                }
+                graph.removeEdgeData(currentEdgeIds);
             }
-            graph.removeEdgeData(currentEdgeIds);
+
+            const adjacency = adjacencyIndex?.get(nodeId);
+            const incidentEdgeIds = [
+                ...(adjacency?.outgoing || []),
+                ...(adjacency?.incoming || []),
+            ];
+            const incidentApiEdges = incidentEdgeIds
+                .map((edgeId) => edgeInfoById.get(edgeId))
+                .filter(Boolean);
+
+            // Collapse parallel relations to one representative edge per neighbor.
+            // Prefer neighbors with more relations, then use a stable name order.
+            const byNeighbor = new Map();
+            for (const edge of incidentApiEdges) {
+                const neighbor = edge.source === nodeId ? edge.target : edge.source;
+                if (!byNeighbor.has(neighbor)) byNeighbor.set(neighbor, []);
+                byNeighbor.get(neighbor).push(edge);
+            }
+            const visibleGroups = [...byNeighbor.entries()]
+                .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+                .slice(0, MAX_CANVAS_NEIGHBORS);
+            const visibleApiEdges = visibleGroups.map(([neighbor, edges]) => {
+                const representative = edges[0];
+                if (edges.length === 1) return representative;
+                const firstLabel = representative.data?.label || "关系";
+                return {
+                    ...representative,
+                    data: {
+                        ...representative.data,
+                        label: `${firstLabel} (+${edges.length - 1})`,
+                        description: `${nodeId} 与 ${neighbor} 之间共 ${edges.length} 条关系；详情面板中可查看全部。`,
+                        relationCount: edges.length,
+                    },
+                };
+            });
+
+            // Yield once so the selected state and detail panel paint first.
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
+            if (visibleApiEdges.length) {
+                const incidentEdges = buildGraphData(
+                    { nodes: [], edges: visibleApiEdges },
+                    false,
+                ).edges;
+                graph.addEdgeData(incidentEdges);
+            }
+            await graph.draw();
+        } finally {
+            graphMutationBusy = false;
         }
 
-        const adjacency = adjacencyIndex?.get(nodeId);
-        const incidentEdgeIds = [
-            ...(adjacency?.outgoing || []),
-            ...(adjacency?.incoming || []),
-        ];
-        const incidentApiEdges = incidentEdgeIds
-            .map((edgeId) => edgeInfoById.get(edgeId))
-            .filter(Boolean);
-
-        // Collapse parallel relations to one representative edge per neighbor.
-        // Prefer neighbors with more relations, then use a stable name order.
-        const byNeighbor = new Map();
-        for (const edge of incidentApiEdges) {
-            const neighbor = edge.source === nodeId ? edge.target : edge.source;
-            if (!byNeighbor.has(neighbor)) byNeighbor.set(neighbor, []);
-            byNeighbor.get(neighbor).push(edge);
-        }
-        const visibleGroups = [...byNeighbor.entries()]
-            .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
-            .slice(0, MAX_CANVAS_NEIGHBORS);
-        const visibleApiEdges = visibleGroups.map(([neighbor, edges]) => {
-            const representative = edges[0];
-            if (edges.length === 1) return representative;
-            const firstLabel = representative.data?.label || "关系";
-            return {
-                ...representative,
-                data: {
-                    ...representative.data,
-                    label: `${firstLabel} (+${edges.length - 1})`,
-                    description: `${nodeId} 与 ${neighbor} 之间共 ${edges.length} 条关系；详情面板中可查看全部。`,
-                    relationCount: edges.length,
-                },
-            };
-        });
-
-        // Yield once so the selected state and detail panel paint first.
-        await new Promise((resolve) => requestAnimationFrame(resolve));
-        if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
-        if (visibleApiEdges.length) {
-            const incidentEdges = buildGraphData(
-                { nodes: [], edges: visibleApiEdges },
-                false,
-            ).edges;
-            graph.addEdgeData(incidentEdges);
-        }
-        await graph.draw();
-        if (token === edgeRenderToken && selectedNodeId === nodeId) {
+        if (pendingHighlightClear || !selectedNodeId) {
+            pendingHighlightClear = false;
+            clearHighlight();
+        } else if (
+            token === edgeRenderToken
+            && selectedNodeId === nodeId
+            && !pendingEdgeNodeId
+        ) {
             highlightNeighbors(nodeId, true);
         }
     }
 
     function clearSelection() {
         edgeRenderToken++;
+        pendingEdgeNodeId = null;
         selectedNodeId = null;
-        clearHighlight();
+        if (graphMutationBusy) {
+            pendingHighlightClear = true;
+        } else {
+            clearHighlight();
+        }
         // Clear legend active states
         document.querySelectorAll(".legend-item.active").forEach(el => el.classList.remove("active"));
     }
@@ -1473,6 +1519,7 @@
     //  Detail Panel (Layered Loading – Level 1)
     // ══════════════════════════════════════════════════════
     async function showClassDetail(className) {
+        const renderToken = ++detailRenderToken;
         // Expose for chat.js
         window._showClassDetail = showClassDetail;
         const panel = document.getElementById("detailPanel");
@@ -1501,11 +1548,13 @@
                 detail = await fetchJSON(`/api/graph/class/${encodeURIComponent(className)}`);
                 classDetailCache.set(className, detail);
             } catch (err) {
+                if (renderToken !== detailRenderToken) return;
                 sectionMeta.innerHTML = `<div class="meta-row"><span class="meta-value" style="color:#FF6666">加载失败: ${err.message}</span></div>`;
                 return;
             }
         }
 
+        if (renderToken !== detailRenderToken) return;
         try {
 
             // ── Meta ──
@@ -1594,6 +1643,7 @@
     }
 
     function closePanel() {
+        detailRenderToken++;
         document.getElementById("detailPanel").classList.add("panel-hidden");
     }
 
@@ -1689,6 +1739,7 @@
 
     // ── Rel-only panel (no properties, just relationships) ──
     async function showRelOnly(className) {
+        const renderToken = ++detailRenderToken;
         const panel = document.getElementById("detailPanel");
         const panelTitle = document.getElementById("panelTitle");
         const sectionMeta = document.getElementById("sectionMeta");
@@ -1715,11 +1766,13 @@
                 detail = await fetchJSON(`/api/graph/class/${encodeURIComponent(className)}`);
                 classDetailCache.set(className, detail);
             } catch (err) {
+                if (renderToken !== detailRenderToken) return;
                 sectionMeta.innerHTML = `<div class="meta-row"><span class="meta-value" style="color:#FF6666">加载失败: ${err.message}</span></div>`;
                 return;
             }
         }
 
+        if (renderToken !== detailRenderToken) return;
         try {
             const nodeInfo = nodeInfoCache.get(className);
             const module = nodeInfo?.data?.module || "other";
