@@ -224,6 +224,7 @@
     const queryBuilderState = {
         active: false,
         selectedNodes: [],
+        activeNodeId: null,
         plan: null,
         loading: false,
         error: "",
@@ -720,10 +721,29 @@
                         opacity: 1,
                         zIndex: 24,
                     },
+                    queryPreviousSelected: {
+                        stroke: "rgba(0,255,185,0.55)",
+                        lineWidth: 2,
+                        shadowBlur: 0,
+                        opacity: 0.34,
+                        labelOpacity: 0.28,
+                        iconOpacity: 0.34,
+                        zIndex: 4,
+                    },
+                    queryRelatedSelected: {
+                        stroke: "#00FFB9",
+                        lineWidth: 3,
+                        shadowColor: "#00FFB9",
+                        shadowBlur: 7,
+                        opacity: 1,
+                        labelOpacity: 1,
+                        iconOpacity: 1,
+                        zIndex: 21,
+                    },
                     queryInactive: {
-                        opacity: 0.16,
-                        labelOpacity: 0.1,
-                        iconOpacity: 0.16,
+                        opacity: 0.08,
+                        labelOpacity: 0,
+                        iconOpacity: 0.08,
                         zIndex: 1,
                     },
                     inactive: {
@@ -1179,22 +1199,44 @@
         if (!graph || !rawData || !queryBuilderState.active) return;
         const query = searchQuery.trim().toLowerCase();
         const { selected, bridge, unconnected } = queryPlanNodeSets();
-        const relatedCandidates = new Set(bridge);
-        for (const nodeId of selected) {
-            for (const neighborId of adjacencyIndex?.get(nodeId)?.neighbors || []) {
-                relatedCandidates.add(neighborId);
-            }
+        const activeNodeId = (
+            queryBuilderState.activeNodeId
+            && selected.has(queryBuilderState.activeNodeId)
+        )
+            ? queryBuilderState.activeNodeId
+            : queryBuilderState.selectedNodes.at(-1);
+        const relatedCandidates = new Set();
+        // Only retain neighbors that have a relationship currently rendered
+        // on the canvas. Using the full ontology adjacency here leaves bright
+        // nodes whose corresponding edges are absent, which looks like
+        // disconnected "floating" points.
+        for (const edge of graph.getEdgeData()) {
+            const sourceId = String(edge.source?.id || edge.source);
+            const targetId = String(edge.target?.id || edge.target);
+            if (sourceId === activeNodeId) relatedCandidates.add(targetId);
+            if (targetId === activeNodeId) relatedCandidates.add(sourceId);
         }
         const states = {};
         for (const node of graph.getNodeData()) {
             if (selected.has(node.id)) {
-                states[node.id] = [
-                    unconnected.has(node.id) ? "queryUnconnected" : "querySelected",
-                ];
+                if (node.id === activeNodeId) {
+                    states[node.id] = [
+                        unconnected.has(node.id) ? "queryUnconnected" : "querySelected",
+                    ];
+                } else if (relatedCandidates.has(node.id)) {
+                    // A previously selected object is still a direct neighbor
+                    // of the current focus. Relationship visibility takes
+                    // priority over its historical-selection state.
+                    states[node.id] = ["queryRelatedSelected"];
+                } else {
+                    states[node.id] = ["queryPreviousSelected"];
+                }
                 continue;
             }
             if (bridge.has(node.id)) {
-                states[node.id] = ["queryBridge"];
+                states[node.id] = relatedCandidates.has(node.id)
+                    ? ["queryBridge"]
+                    : ["queryInactive"];
                 continue;
             }
             if (query) {
@@ -1206,18 +1248,24 @@
                 ) ? ["active"] : ["queryInactive"];
             } else if (selected.size && !relatedCandidates.has(node.id)) {
                 states[node.id] = ["queryInactive"];
+            } else if (selected.size && relatedCandidates.has(node.id)) {
+                // Match the normal browsing behavior: every endpoint of a
+                // visible relationship is promoted together with its edge.
+                states[node.id] = ["active"];
             } else {
                 states[node.id] = [];
             }
         }
         const visibleQueryNodes = new Set([
-            ...selected,
+            ...(activeNodeId ? [activeNodeId] : []),
             ...relatedCandidates,
         ]);
         for (const edge of graph.getEdgeData()) {
             const sourceId = String(edge.source?.id || edge.source);
             const targetId = String(edge.target?.id || edge.target);
-            const touchesSelection = selected.has(sourceId) || selected.has(targetId);
+            const touchesSelection = (
+                sourceId === activeNodeId || targetId === activeNodeId
+            );
             const staysInQueryFocus = (
                 visibleQueryNodes.has(sourceId)
                 && visibleQueryNodes.has(targetId)
@@ -1394,6 +1442,7 @@
             ? plan.sql
             : "-- 请选择至少一个查询对象";
         document.getElementById("btnClearQuery").disabled = !hasSelection;
+        document.getElementById("btnClearQueryTop").disabled = !hasSelection;
         document.getElementById("btnCopyQuerySql").disabled = !hasSql;
         document.getElementById("btnFitQueryPreview").disabled = (
             queryBuilderState.loading || !plan?.nodes?.length
@@ -1460,15 +1509,26 @@
         const index = queryBuilderState.selectedNodes.indexOf(nodeId);
         if (index >= 0) {
             queryBuilderState.selectedNodes.splice(index, 1);
+            if (queryBuilderState.activeNodeId === nodeId) {
+                queryBuilderState.activeNodeId = (
+                    queryBuilderState.selectedNodes.at(-1) || null
+                );
+            }
         } else {
             if (queryBuilderState.selectedNodes.length >= 8) {
                 setQueryBuilderStatus("最多可选择 8 个查询对象", true);
                 return;
             }
             queryBuilderState.selectedNodes.push(nodeId);
+            queryBuilderState.activeNodeId = nodeId;
         }
         renderQuerySelectedNodes();
         applyQueryMainStates();
+        if (queryBuilderState.activeNodeId) {
+            queueIncidentEdgeRender(queryBuilderState.activeNodeId);
+        } else {
+            await restoreOverviewEdges();
+        }
         await requestQueryBuilderPlan();
     }
 
@@ -1477,6 +1537,7 @@
         queryBuilderState.active = true;
         queryBuilderState.previousSelectedNodeId = selectedNodeId;
         queryBuilderState.selectedNodes = [];
+        queryBuilderState.activeNodeId = null;
         queryBuilderState.plan = null;
         queryBuilderState.error = "";
         selectedNodeId = null;
@@ -1501,6 +1562,7 @@
         queryBuilderState.active = false;
         queryBuilderState.loading = false;
         queryBuilderState.selectedNodes = [];
+        queryBuilderState.activeNodeId = null;
         queryBuilderState.plan = null;
         queryBuilderState.error = "";
         queryBuilderState.previousSelectedNodeId = null;
@@ -1584,6 +1646,14 @@
         }
     }
 
+    async function clearQueryBuilderSelection() {
+        queryBuilderState.selectedNodes = [];
+        queryBuilderState.activeNodeId = null;
+        await restoreOverviewEdges();
+        await requestQueryBuilderPlan();
+        setQueryBuilderStatus("查询已清空");
+    }
+
     function setupQueryBuilder() {
         document.getElementById("btnQueryMode").addEventListener(
             "click",
@@ -1593,11 +1663,14 @@
             "click",
             exitQueryBuilderMode,
         );
-        document.getElementById("btnClearQuery").addEventListener("click", async () => {
-            queryBuilderState.selectedNodes = [];
-            await requestQueryBuilderPlan();
-            setQueryBuilderStatus("查询已清空");
-        });
+        document.getElementById("btnClearQuery").addEventListener(
+            "click",
+            clearQueryBuilderSelection,
+        );
+        document.getElementById("btnClearQueryTop").addEventListener(
+            "click",
+            clearQueryBuilderSelection,
+        );
         document.getElementById("btnCopyQuerySql").addEventListener(
             "click",
             copyQuerySql,
@@ -1692,6 +1765,12 @@
             });
     }
 
+    function isCurrentGraphFocus(nodeId) {
+        return queryBuilderState.active
+            ? queryBuilderState.activeNodeId === nodeId
+            : selectedNodeId === nodeId;
+    }
+
     async function drainIncidentEdgeRenders() {
         while (pendingEdgeNodeId) {
             // Coalesce rapid clicks: only the newest pending node is rendered.
@@ -1710,7 +1789,7 @@
             // edges. Otherwise an older async G6 state update can repaint
             // stale neighbors after the new edge layer has been installed.
             await clearHighlight();
-            if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
+            if (token !== edgeRenderToken || !isCurrentGraphFocus(nodeId)) return;
 
             const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
             if (currentEdgeIds.length) {
@@ -1720,7 +1799,7 @@
                 // in one G6 draw cycle can leave its data present while its
                 // canvas shape remains disposed.
                 await graph.draw();
-                if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
+                if (token !== edgeRenderToken || !isCurrentGraphFocus(nodeId)) return;
             }
 
             const adjacency = adjacencyIndex?.get(nodeId);
@@ -1759,7 +1838,7 @@
 
             // Yield once so the selected state and detail panel paint first.
             await new Promise((resolve) => requestAnimationFrame(resolve));
-            if (token !== edgeRenderToken || selectedNodeId !== nodeId) return;
+            if (token !== edgeRenderToken || !isCurrentGraphFocus(nodeId)) return;
             if (visibleApiEdges.length) {
                 const incidentEdges = buildGraphData(
                     { nodes: [], edges: visibleApiEdges },
@@ -1772,7 +1851,15 @@
             graphMutationBusy = false;
         }
 
-        if (pendingHighlightClear || !selectedNodeId) {
+        if (
+            queryBuilderState.active
+            && token === edgeRenderToken
+            && isCurrentGraphFocus(nodeId)
+            && !pendingEdgeNodeId
+        ) {
+            pendingHighlightClear = false;
+            applyQueryMainStates(document.getElementById("searchInput").value);
+        } else if (pendingHighlightClear || !selectedNodeId) {
             pendingHighlightClear = false;
             await clearHighlight();
         } else if (

@@ -1226,6 +1226,30 @@ html, body {
     letter-spacing: .3px;
 }
 
+.query-header-clear-btn {
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid rgba(141, 164, 184, .3);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .04);
+    color: var(--text-secondary);
+    font-size: 9px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+}
+
+.query-header-clear-btn:hover:not(:disabled) {
+    border-color: rgba(255, 107, 107, .55);
+    background: rgba(255, 107, 107, .1);
+    color: #ffb5b5;
+}
+
+.query-header-clear-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}
+
 .query-builder-header p {
     margin-top: 5px;
     color: var(--text-secondary);
@@ -1385,6 +1409,10 @@ html, body {
     line-height: 1.7;
     text-align: center;
     pointer-events: none;
+}
+
+.query-preview-empty[hidden] {
+    display: none;
 }
 
 .query-preview-section.loading .query-preview-canvas {

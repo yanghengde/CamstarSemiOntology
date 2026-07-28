@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-query-builder-v3" />
+    <link rel="stylesheet" href="/static/style.css?v=20260728-query-builder-v8" />
 </head>
 
 <body>
@@ -147,6 +147,10 @@
                     <div class="query-builder-title-row">
                         <h2>查询构建器</h2>
                         <span class="query-builder-mode-badge">临时模式</span>
+                        <button type="button" class="query-header-clear-btn"
+                            id="btnClearQueryTop" disabled title="清空当前查询对象">
+                            清空
+                        </button>
                     </div>
                     <p>在主图中点击对象，确认物理关联后生成 SQL</p>
                 </div>
@@ -448,7 +452,7 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/app.js?v=20260728-query-builder-v4"></script>
+    <script src="/static/app.js?v=20260728-query-builder-v8"></script>
     <script src="/static/chat.js?v=20260728-query-builder"></script>
 </body>
 
