@@ -96,16 +96,42 @@ def build_prompt(
 
     messages = [{"role": "system", "content": system_prompt}]
 
-    # Persisted sessions may be long. Keep as many recent complete turns as fit
-    # in a conservative character budget instead of truncating to five turns.
+    # SQL follow-ups need the last accepted query, not a large pile of prior
+    # model prose. Historical invalid SQL is excluded from future prompts.
     if history:
         retained = []
         retained_chars = 0
+        retained_user_turns = 0
+        retained_sql_answers = 0
+        inspected_latest_assistant = False
         for turn in reversed(history[-40:]):
             content = turn.get("content") or ""
             if not content:
                 continue
-            if retained and retained_chars + len(content) > 24000:
+            role = turn.get("role")
+            if assistant_mode == "sql":
+                if role == "user":
+                    if retained_user_turns >= 3:
+                        continue
+                    retained_user_turns += 1
+                elif role == "assistant":
+                    if inspected_latest_assistant:
+                        continue
+                    inspected_latest_assistant = True
+                    from src.qa.sql_validator import validate_sql_answer
+                    validation = validate_sql_answer(
+                        content,
+                        dialect=sql_dialect,
+                    )
+                    if not validation.valid or not validation.sql:
+                        continue
+                    retained_sql_answers += 1
+                else:
+                    continue
+                budget = 10000
+            else:
+                budget = 24000
+            if retained and retained_chars + len(content) > budget:
                 break
             retained.append(turn)
             retained_chars += len(content)

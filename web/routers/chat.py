@@ -132,9 +132,9 @@ async def chat(req: ChatRequest):
     trace = ChatTrace(session_id, question) if CHAT_LOG_ENABLED else None
 
     async def generate():
-        from src.qa.engine import query_stream, extract_keywords, extract_class_links, CN_MAP, _get_class_names
+        from src.qa.engine import query_stream, extract_keywords, extract_class_links
         from src.qa.graph_retriever import search_graph, find_path_highlight
-        import re
+        from src.qa.sql_entity_resolver import recent_selected_classes
 
         # 1. Extract keywords from the current question and the persisted
         # conversation context. Referenced tables accumulate across turns.
@@ -145,9 +145,9 @@ async def chat(req: ChatRequest):
         question_classes = extract_keywords(question, fallback=False)
         keywords = list(
             dict.fromkeys(
-                known_classes
+                question_classes
+                + known_classes
                 + selected_classes
-                + question_classes
             )
         )
 
@@ -155,24 +155,7 @@ async def chat(req: ChatRequest):
         # user-managed context provide no objects. This keeps a removed known
         # object from silently becoming active again on the next unrelated
         # question, while still supporting pronoun-style follow-ups.
-        history_classes = []
-        if not keywords and history:
-            for turn in history[-8:]:
-                content = turn.get("content", "") or ""
-                # Match [[ClassName]] format
-                found = re.findall(r'\[\[(\w+)\]\]', content)
-                for f in found:
-                    if f not in history_classes:
-                        history_classes.append(f)
-                # Match Chinese alias and direct name
-                for cn, en in CN_MAP.items():
-                    if cn in content and en not in history_classes:
-                        history_classes.append(en)
-                for name in _get_class_names():
-                    if name in content and name not in history_classes:
-                        history_classes.append(name)
-        if not keywords and not history_classes:
-            keywords = extract_keywords(question, fallback=True)
+        history_classes = recent_selected_classes(history) if not keywords else []
 
         # Combine, keeping current keywords first
         all_classes = list(dict.fromkeys(keywords + history_classes))

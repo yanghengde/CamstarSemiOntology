@@ -13,6 +13,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from src.qa.graph_retriever import search_graph, format_graph_context, get_all_class_names
 from src.qa.prompt_builder import build_prompt, format_vector_results
+from src.qa.sql_entity_resolver import resolve_sql_entities
 from src.qa.logger import ChatTrace, CHAT_LOG_ENABLED
 import glob
 
@@ -111,23 +112,14 @@ def extract_keywords(question: str, fallback: bool = True) -> list[str]:
       1. Direct matching against known class names
       2. Chinese keyword heuristics
     """
-    keywords = []
-    class_names = _get_class_names()
-
-    # Direct match: check if any known class name appears in the question
-    q_lower = question.lower()
-    for name in class_names:
-        if name.lower() in q_lower:
-            keywords.append(name)
-
-    # Use globally loaded CN_MAP (populated dynamically from ontology JSONs + aliases)
-    for cn, en in CN_MAP.items():
-        if cn in question:
-            keywords.append(en)
-
-    # Deduplicate and return
-    result = list(dict.fromkeys(keywords))
-    return result or (["Workflow"] if fallback else [])
+    # ``fallback`` is retained for API compatibility, but intentionally no
+    # longer injects Workflow for unrelated questions.
+    from src.qa.sql_schema_retriever import _schema
+    physical_tables, _ = _schema()
+    sql_objects = list(dict.fromkeys(
+        _get_class_names() + list(physical_tables)
+    ))
+    return resolve_sql_entities(question, sql_objects, CN_MAP)
 
 
 async def query(
@@ -190,20 +182,33 @@ async def query_stream(
     known_classes = known_classes or []
     keywords = list(
         dict.fromkeys(
-            known_classes
-            + selected_classes
-            + extract_keywords(
+            extract_keywords(
                 question,
-                fallback=not bool(known_classes or selected_classes),
+                fallback=False,
             )
+            + known_classes
+            + selected_classes
         )
     )
     if step_kw:
         step_kw.done(output={"keywords": keywords})
 
+    if assistant_mode == "sql" and not keywords:
+        yield (
+            "### 需要确认查询对象\n"
+            "我还无法从当前问题中确定要查询的物理业务对象。"
+            "请从左侧加入一个对象，或在问题中使用 `@表名`，"
+            "例如 `@Container`、`@MfgOrder` 或 `@HistoryMainline`。"
+        )
+        return
+
     # 2. Graph retrieval
     step_graph = trace.add_step("图谱检索") if trace else None
-    graph_data = search_graph(keywords)
+    ontology_names = set(_get_class_names())
+    graph_keywords = [
+        keyword for keyword in keywords if keyword in ontology_names
+    ]
+    graph_data = search_graph(graph_keywords)
     graph_context = format_graph_context(graph_data)
     if step_graph:
         step_graph.done(output={
@@ -271,27 +276,100 @@ async def query_stream(
     model = os.getenv("LLM_MODEL", "deepseek-v4-flash")
 
     try:
-        response = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            stream=True,
-            temperature=0.1 if assistant_mode == "sql" else 0.3,
-            max_tokens=4096,
-        )
+        if assistant_mode == "sql":
+            from src.qa.sql_validator import (
+                format_validation_feedback,
+                validate_sql_answer,
+            )
 
-        full_answer = ""
-        async for chunk in response:
-            if chunk.choices and chunk.choices[0].delta.content:
-                token = chunk.choices[0].delta.content
-                full_answer += token
-                yield token
+            yield {"type": "status", "content": "正在生成并校验 SQL…"}
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=False,
+                temperature=0.1,
+                max_tokens=4096,
+            )
+            full_answer = response.choices[0].message.content or ""
+            validation = validate_sql_answer(
+                full_answer,
+                dialect=sql_dialect,
+            )
+            attempts = 1
 
-        if step_llm:
-            step_llm.done(output={
-                "model": model,
-                "answer_length": len(full_answer),
-                "answer_tokens_estimate": len(full_answer) // 2,
-            })
+            if not validation.valid:
+                yield {
+                    "type": "status",
+                    "content": "检测到字段、JOIN 或方言问题，正在自动修复…",
+                }
+                repair_messages = messages + [
+                    {"role": "assistant", "content": full_answer},
+                    {
+                        "role": "user",
+                        "content": (
+                            "上一个回答没有通过物理 SQL 校验。请根据以下错误"
+                            "重新输出完整回答；只能使用前文物理架构和已验证 JOIN，"
+                            "不得解释或保留错误 SQL：\n"
+                            + format_validation_feedback(validation)
+                        ),
+                    },
+                ]
+                repaired = await client.chat.completions.create(
+                    model=model,
+                    messages=repair_messages,
+                    stream=False,
+                    temperature=0.0,
+                    max_tokens=4096,
+                )
+                full_answer = repaired.choices[0].message.content or ""
+                validation = validate_sql_answer(
+                    full_answer,
+                    dialect=sql_dialect,
+                )
+                attempts = 2
+
+            if validation.valid:
+                yield full_answer
+            else:
+                full_answer = (
+                    "### SQL 校验未通过\n"
+                    "候选 SQL 包含无法由当前物理 Schema 验证的内容，"
+                    "因此本次不展示 SQL。请补充或重新选择业务对象。\n\n"
+                    + format_validation_feedback(validation)
+                )
+                yield full_answer
+
+            if step_llm:
+                step_llm.done(output={
+                    "model": model,
+                    "answer_length": len(full_answer),
+                    "answer_tokens_estimate": len(full_answer) // 2,
+                    "validation_attempts": attempts,
+                    "sql_valid": validation.valid,
+                    "validation_errors": validation.errors,
+                })
+        else:
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=True,
+                temperature=0.3,
+                max_tokens=4096,
+            )
+
+            full_answer = ""
+            async for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    token = chunk.choices[0].delta.content
+                    full_answer += token
+                    yield token
+
+            if step_llm:
+                step_llm.done(output={
+                    "model": model,
+                    "answer_length": len(full_answer),
+                    "answer_tokens_estimate": len(full_answer) // 2,
+                })
     except Exception as e:
         if step_llm:
             step_llm.fail(str(e))

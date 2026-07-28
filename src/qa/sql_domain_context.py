@@ -21,7 +21,8 @@ HISTORY_MAINLINE_TABLES = {
 }
 
 _MOVE_INTENT = re.compile(
-    r"\bmove\b|过站|工艺流转|流程轨迹|路径|站点|工序流转|历史轨迹",
+    r"\bmove\b|move\s*记录|移动记录|移动历史|过站|工艺流转|"
+    r"流程轨迹|路径|站点|工序流转|历史轨迹",
     re.IGNORECASE,
 )
 _TRACK_INTENT = re.compile(
