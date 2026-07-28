@@ -113,6 +113,140 @@
             height: 20px;
         }
 
+        .icon-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .icon-select-trigger {
+            width: 100%;
+            min-height: 34px;
+            padding: 7px 10px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            background: rgba(0, 5, 15, 0.6);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.2;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .icon-select-trigger:hover,
+        .icon-select.open .icon-select-trigger,
+        .icon-select-trigger:focus-visible {
+            border-color: var(--si-green);
+            background: rgba(0, 255, 185, 0.04);
+            box-shadow: 0 0 0 3px rgba(0, 255, 185, 0.08);
+        }
+
+        .icon-select-preview {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--si-green);
+        }
+
+        .icon-select-preview .app-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .icon-select-label {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .icon-select-chevron {
+            color: var(--text-muted);
+            transition: transform 0.18s ease, color 0.18s ease;
+        }
+
+        .icon-select.open .icon-select-chevron {
+            transform: rotate(180deg);
+            color: var(--si-green);
+        }
+
+        .icon-select-menu {
+            position: absolute;
+            z-index: 30;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            max-height: 286px;
+            overflow-y: auto;
+            padding: 6px;
+            border: 1px solid rgba(0, 255, 185, 0.28);
+            border-radius: 8px;
+            background: #001426;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+        }
+
+        .icon-select-option {
+            width: 100%;
+            min-height: 34px;
+            padding: 7px 9px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.2;
+            cursor: pointer;
+            transition: color 0.15s, border-color 0.15s, background 0.15s;
+        }
+
+        .icon-select-option:hover,
+        .icon-select-option:focus-visible {
+            outline: none;
+            color: var(--text-primary);
+            border-color: rgba(0, 255, 185, 0.2);
+            background: rgba(0, 255, 185, 0.06);
+        }
+
+        .icon-select-option[aria-selected="true"] {
+            color: var(--si-green);
+            border-color: rgba(0, 255, 185, 0.28);
+            background: rgba(0, 255, 185, 0.1);
+        }
+
+        .icon-select-option-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: currentColor;
+        }
+
+        .icon-select-option-icon .app-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .icon-select-option-check {
+            margin-left: auto;
+            opacity: 0;
+        }
+
+        .icon-select-option[aria-selected="true"] .icon-select-option-check {
+            opacity: 1;
+        }
+
         .industry-info {
             flex: 1;
             min-width: 0;
@@ -480,8 +614,21 @@
 
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
-                        <label for="industryIcon">行业图标 (Icon)</label>
-                        <select id="industryIcon" class="form-control" aria-label="行业图标"></select>
+                        <label for="industryIconTrigger">行业图标 (Icon)</label>
+                        <div class="icon-select" id="industryIconSelect">
+                            <button type="button" class="icon-select-trigger" id="industryIconTrigger"
+                                aria-haspopup="listbox" aria-expanded="false">
+                                <span class="icon-select-preview" id="industryIconPreview"></span>
+                                <span class="icon-select-label" id="industryIconLabel">通用 / 包装</span>
+                                <svg class="icon-select-chevron" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                            <div class="icon-select-menu" id="industryIconMenu" role="listbox"
+                                aria-label="选择行业图标" hidden></div>
+                            <input type="hidden" id="industryIcon" value="package" />
+                        </div>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="industryColor">代表色彩 (Color)</label>
@@ -556,11 +703,86 @@
         }
 
         function populateIconChoices() {
-            const select = document.getElementById("industryIcon");
-            select.innerHTML = AppIcons.catalog.map(([value, label]) =>
-                `<option value="${value}">${label}</option>`
+            const menu = document.getElementById("industryIconMenu");
+            menu.innerHTML = AppIcons.catalog.map(([value, label]) =>
+                `<button type="button" class="icon-select-option" role="option" data-icon-value="${value}" aria-selected="false">
+                    <span class="icon-select-option-icon">${AppIcons.svg(value, { size: 18 })}</span>
+                    <span>${label}</span>
+                    <span class="icon-select-option-check">${AppIcons.svg("check", { size: 14 })}</span>
+                </button>`
             ).join("");
+
+            menu.querySelectorAll(".icon-select-option").forEach(option => {
+                option.addEventListener("click", () => {
+                    setIconChoice(option.dataset.iconValue);
+                    closeIconChoices();
+                    document.getElementById("industryIconTrigger").focus();
+                });
+            });
+            setIconChoice(document.getElementById("industryIcon").value);
         }
+
+        function setIconChoice(value) {
+            const normalized = AppIcons.normalize(value || "package");
+            const entry = AppIcons.catalog.find(([key]) => key === normalized) || AppIcons.catalog[0];
+            document.getElementById("industryIcon").value = entry[0];
+            document.getElementById("industryIconPreview").innerHTML = AppIcons.svg(entry[0], { size: 18 });
+            document.getElementById("industryIconLabel").textContent = entry[1];
+            document.querySelectorAll(".icon-select-option").forEach(option => {
+                option.setAttribute("aria-selected", String(option.dataset.iconValue === entry[0]));
+            });
+        }
+
+        function openIconChoices() {
+            const wrapper = document.getElementById("industryIconSelect");
+            const trigger = document.getElementById("industryIconTrigger");
+            const menu = document.getElementById("industryIconMenu");
+            wrapper.classList.add("open");
+            trigger.setAttribute("aria-expanded", "true");
+            menu.hidden = false;
+        }
+
+        function closeIconChoices() {
+            const wrapper = document.getElementById("industryIconSelect");
+            const trigger = document.getElementById("industryIconTrigger");
+            const menu = document.getElementById("industryIconMenu");
+            wrapper.classList.remove("open");
+            trigger.setAttribute("aria-expanded", "false");
+            menu.hidden = true;
+        }
+
+        document.getElementById("industryIconTrigger").addEventListener("click", () => {
+            const expanded = document.getElementById("industryIconTrigger").getAttribute("aria-expanded") === "true";
+            expanded ? closeIconChoices() : openIconChoices();
+        });
+
+        document.getElementById("industryIconTrigger").addEventListener("keydown", event => {
+            if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openIconChoices();
+                const selected = document.querySelector('.icon-select-option[aria-selected="true"]');
+                selected?.focus();
+            } else if (event.key === "Escape") {
+                closeIconChoices();
+            }
+        });
+
+        document.getElementById("industryIconMenu").addEventListener("keydown", event => {
+            const options = Array.from(document.querySelectorAll(".icon-select-option"));
+            const currentIndex = options.indexOf(document.activeElement);
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                const direction = event.key === "ArrowDown" ? 1 : -1;
+                options[(currentIndex + direction + options.length) % options.length]?.focus();
+            } else if (event.key === "Escape") {
+                closeIconChoices();
+                document.getElementById("industryIconTrigger").focus();
+            }
+        });
+
+        document.addEventListener("click", event => {
+            if (!event.target.closest("#industryIconSelect")) closeIconChoices();
+        });
 
         // Load lines from API
         async function loadProductLines() {
@@ -671,7 +893,7 @@
             idInput.disabled = true; // Lock ID for editing
 
             document.getElementById("industryName").value = pl.name;
-            document.getElementById("industryIcon").value = AppIcons.normalize(pl.icon || "package");
+            setIconChoice(pl.icon || "package");
             document.getElementById("industryColor").value = pl.color || "#999999";
             document.getElementById("industryColorPicker").value = pl.color || "#999999";
             document.getElementById("industryDesc").value = pl.description || "";
@@ -704,7 +926,7 @@
             idInput.placeholder = "例如: semiconductor (小写字母/下划线)";
 
             document.getElementById("industryName").value = "";
-            document.getElementById("industryIcon").value = "factory";
+            setIconChoice("factory");
             document.getElementById("industryColor").value = "#00FFB9";
             document.getElementById("industryColorPicker").value = "#00FFB9";
             document.getElementById("industryDesc").value = "";
