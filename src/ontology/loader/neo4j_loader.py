@@ -274,6 +274,7 @@ if __name__ == "__main__":
         "pause_reason_group_ontology.json",
         "phase_template_ontology.json",
         "phase_template_disposition_ontology.json",
+        "physical_bridge_ontology.json",
         "physical_position_ontology.json",
         "physical_location_ontology.json",
         "plan_template_ontology.json",
