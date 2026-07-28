@@ -9,10 +9,13 @@ Supports:
   • Collect all relationships from ontology JSONs
 """
 import os
+import csv
 import json
 import glob
+import re
 import time
 from datetime import datetime
+from functools import lru_cache
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -21,6 +24,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 WIKI_KB_PATH = os.path.join(PROJECT_ROOT, "src", "ontology", "wiki_kb")
 RELATIONSHIPS_DIR = os.path.join(WIKI_KB_PATH, "relationships")
 PRODUCT_LINES_FILE = os.path.join(WIKI_KB_PATH, "product_lines.json")
+DATABASE_FIELDS_FILE = os.path.join(PROJECT_ROOT, "docs", "Database_Fields.csv")
 
 # LLM config
 API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -376,6 +380,211 @@ def search_wiki(question: str, keywords: list[str], product_line: str = "general
 #  LLM Wiki Generation
 # ══════════════════════════════════════════════════════
 
+
+@lru_cache(maxsize=1)
+def _load_physical_fields() -> dict[str, list[dict[str, str]]]:
+    """Load the immutable physical field registry, grouped by CDO name."""
+    fields_by_class: dict[str, list[dict[str, str]]] = {}
+    with open(DATABASE_FIELDS_FILE, "r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            fields_by_class.setdefault(row["CDOName"], []).append(row)
+    return fields_by_class
+
+
+def _sql_identifier(value: str) -> str:
+    """Quote a SQL Server identifier without treating schema data as SQL."""
+    return f"[{value.replace(']', ']]')}]"
+
+
+def _primary_key(class_name: str) -> str:
+    rows = _load_physical_fields().get(class_name, [])
+    keys = [row["FieldName"] for row in rows if row["IsPrimaryKey"].lower() == "true"]
+    return keys[0] if len(keys) == 1 else ""
+
+
+def resolve_relationship_join(
+    from_class: str,
+    to_class: str,
+    description: str = "",
+) -> dict:
+    """Resolve one relationship to an exact physical FK join.
+
+    Relationship descriptions produced by the ontology validator use
+    ``CDOName.FieldName``.  The physical CSV then supplies the referenced table
+    and field.  A unique FK fallback is supported for older descriptions, but
+    ambiguous candidates are never guessed.
+    """
+    fields_by_class = _load_physical_fields()
+    direct = [
+        row
+        for row in fields_by_class.get(from_class, [])
+        if row["IsForeignKey"].lower() == "true"
+        and row.get("FKTableName") == to_class
+        and row.get("FKFieldName")
+    ]
+    reverse = [
+        row
+        for row in fields_by_class.get(to_class, [])
+        if row["IsForeignKey"].lower() == "true"
+        and row.get("FKTableName") == from_class
+        and row.get("FKFieldName")
+    ]
+
+    match = re.fullmatch(
+        r"([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)",
+        description.strip(),
+    )
+    selected: dict[str, str] | None = None
+    direction = ""
+    resolution = ""
+    if match and match.group(1) == from_class:
+        exact = [row for row in direct if row["FieldName"] == match.group(2)]
+        if len(exact) == 1:
+            selected = exact[0]
+            direction = "direct"
+            resolution = "relationship_description"
+    elif match and match.group(1) == to_class:
+        exact = [row for row in reverse if row["FieldName"] == match.group(2)]
+        if len(exact) == 1:
+            selected = exact[0]
+            direction = "reverse"
+            resolution = "relationship_description"
+
+    if selected is None and len(direct) == 1:
+        selected = direct[0]
+        direction = "direct"
+        resolution = "unique_physical_fk"
+    elif selected is None and len(reverse) == 1:
+        selected = reverse[0]
+        direction = "reverse"
+        resolution = "unique_physical_fk"
+
+    if selected is None:
+        return {
+            "resolved": False,
+            "reason": "ambiguous_or_missing_physical_fk",
+            "directCandidates": len(direct),
+            "reverseCandidates": len(reverse),
+        }
+
+    if direction == "direct":
+        source_table = from_class
+        source_field = selected["FieldName"]
+        target_table = to_class
+        target_field = selected["FKFieldName"]
+    else:
+        source_table = from_class
+        source_field = selected["FKFieldName"]
+        target_table = to_class
+        target_field = selected["FieldName"]
+
+    return {
+        "resolved": True,
+        "resolution": resolution,
+        "direction": direction,
+        "sourceTable": source_table,
+        "sourceField": source_field,
+        "sourcePrimaryKey": _primary_key(source_table),
+        "targetTable": target_table,
+        "targetField": target_field,
+        "targetPrimaryKey": _primary_key(target_table),
+        "physicalForeignKeyTable": selected["CDOName"],
+        "physicalForeignKeyField": selected["FieldName"],
+    }
+
+
+def build_relationship_sql_section(
+    from_class: str,
+    rel_name: str,
+    to_class: str,
+    description: str = "",
+) -> str:
+    """Build a deterministic, read-only SQL section for the wiki header."""
+    join = resolve_relationship_join(from_class, to_class, description)
+    if not join["resolved"]:
+        return "\n".join(
+            [
+                "## SQL 关联示例",
+                "",
+                "> ⚠️ 当前物理 Schema 无法唯一确定该关系的 JOIN 字段，"
+                "因此未生成猜测性 SQL。请先核对 `Database_Fields.csv`。",
+            ]
+        )
+
+    source_table = _sql_identifier(join["sourceTable"])
+    source_field = _sql_identifier(join["sourceField"])
+    target_table = _sql_identifier(join["targetTable"])
+    target_field = _sql_identifier(join["targetField"])
+    lines = [
+        "## SQL 关联示例",
+        "",
+        "### 物理关联",
+        "",
+        f"- 源表：`{source_table}`（别名 `src`）",
+        f"- 目标表：`{target_table}`（别名 `tgt`）",
+        (
+            f"- JOIN 条件：`src.{source_field} = tgt.{target_field}`"
+        ),
+        (
+            f"- 物理外键：`{_sql_identifier(join['physicalForeignKeyTable'])}"
+            f".{_sql_identifier(join['physicalForeignKeyField'])}`"
+        ),
+        "",
+        "### 查询示例",
+        "",
+        "```sql",
+        "SELECT",
+        "    src.*,",
+        "    tgt.*",
+        f"FROM {source_table} AS src",
+        f"LEFT JOIN {target_table} AS tgt",
+        f"    ON src.{source_field} = tgt.{target_field}",
+    ]
+    if join["sourcePrimaryKey"]:
+        lines.append(
+            f"WHERE src.{_sql_identifier(join['sourcePrimaryKey'])} = @SourceId;"
+        )
+    else:
+        lines[-1] += ";"
+    lines += [
+        "```",
+        "",
+        "> `LEFT JOIN` 会保留没有关联记录的源对象；"
+        "如果只需要已建立该关系的数据，可改为 `INNER JOIN`。"
+        "`@SourceId` 是查询参数，请使用参数化查询传值。",
+    ]
+    return "\n".join(lines)
+
+
+def build_wiki_prefix(
+    product_line_name: str,
+    from_class: str,
+    rel_name: str,
+    to_class: str,
+    cardinality: str,
+    description: str,
+    date: str,
+) -> str:
+    """Build the guaranteed top section shared by sync and streaming output."""
+    return "\n".join(
+        [
+            f"# {from_class} → {rel_name} → {to_class}",
+            "",
+            f"> **产品线**: {product_line_name}",
+            f"> **基数**: {cardinality}",
+            f"> **生成时间**: {date}",
+            "> **来源**: 物理 Schema + LLM",
+            "",
+            build_relationship_sql_section(
+                from_class,
+                rel_name,
+                to_class,
+                description,
+            ),
+        ]
+    )
+
+
 WIKI_GENERATE_PROMPT = """你是一个 Siemens Opcenter (Camstar) MES 领域专家。
 当前产品线: {product_line_name} ({product_line_desc})
 
@@ -385,14 +594,9 @@ WIKI_GENERATE_PROMPT = """你是一个 Siemens Opcenter (Camstar) MES 领域专�
 基数: {cardinality}
 现有描述: {description}
 
-请按以下 Markdown 格式生成内容（直接输出 Markdown，不要包裹在代码块中）：
-
-# {from_class} → {rel_name} → {to_class}
-
-> **产品线**: {product_line_name}
-> **基数**: {cardinality}
-> **生成时间**: {date}
-> **来源**: LLM 自动生成
+系统已经依据 Database_Fields.csv 生成标题、元数据和 SQL 关联示例。
+你只生成 SQL 之后的正文，不要重复标题、元数据或 SQL。
+直接输出 Markdown，不要包裹在代码块中，并且必须从“## 关系说明”开始：
 
 ## 关系说明
 
@@ -426,6 +630,7 @@ A: 回答3
 - 如果是"通用 (无产品线)"，则给出通用 Opcenter 建模指导
 - 示例要具体可操作
 - 全部用中文撰写，技术术语保留英文
+- 不要生成、改写或猜测 SQL；SQL 已由物理 Schema 确定
 """
 
 
@@ -460,6 +665,15 @@ def generate_wiki_for_relationship(
         description=description,
         date=today,
     )
+    wiki_prefix = build_wiki_prefix(
+        pl_info["name"],
+        from_class,
+        rel_name,
+        to_class,
+        cardinality,
+        description,
+        today,
+    )
 
     try:
         client = _get_llm()
@@ -472,17 +686,18 @@ def generate_wiki_for_relationship(
             temperature=0.3,
             max_tokens=4096,
         )
-        content = response.choices[0].message.content.strip()
+        body = response.choices[0].message.content.strip()
 
         # Strip wrapping code blocks if LLM adds them
-        if content.startswith("```markdown"):
-            content = content[len("```markdown"):].strip()
-        elif content.startswith("```md"):
-            content = content[len("```md"):].strip()
-        elif content.startswith("```"):
-            content = content[3:].strip()
-        if content.endswith("```"):
-            content = content[:-3].strip()
+        if body.startswith("```markdown"):
+            body = body[len("```markdown"):].strip()
+        elif body.startswith("```md"):
+            body = body[len("```md"):].strip()
+        elif body.startswith("```"):
+            body = body[3:].strip()
+        if body.endswith("```"):
+            body = body[:-3].strip()
+        content = f"{wiki_prefix}\n\n{body}"
 
         # Save the generated wiki
         save_result = save_wiki(product_line, from_class, rel_name, to_class, content, editor="llm")
@@ -567,6 +782,15 @@ async def generate_wiki_for_relationship_stream(
         description=description,
         date=today,
     )
+    wiki_prefix = build_wiki_prefix(
+        pl_info["name"],
+        from_class,
+        rel_name,
+        to_class,
+        cardinality,
+        description,
+        today,
+    )
 
     from openai import AsyncOpenAI
     client = AsyncOpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=LLM_TIMEOUT)
@@ -589,7 +813,8 @@ async def generate_wiki_for_relationship_stream(
 
     clean_generator = strip_markdown_code_blocks_stream(token_generator())
 
-    full_content = ""
+    full_content = f"{wiki_prefix}\n\n"
+    yield full_content
     async for token in clean_generator:
         full_content += token
         yield token
