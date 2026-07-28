@@ -9,6 +9,53 @@
 (() => {
     "use strict";
 
+    // ── Global SQL dialect ──
+    // One selector controls every SQL surface: relationship examples and chat.
+    const SQL_DIALECT_COOKIE = "camstar_sql_dialect";
+    const SQL_DIALECTS = {
+        oracle: { label: "Oracle" },
+        sqlserver: { label: "SQL Server" },
+    };
+
+    function readCookie(name) {
+        const prefix = `${encodeURIComponent(name)}=`;
+        const item = document.cookie
+            .split("; ")
+            .find((part) => part.startsWith(prefix));
+        return item ? decodeURIComponent(item.slice(prefix.length)) : "";
+    }
+
+    function normalizeSqlDialect(value) {
+        return Object.hasOwn(SQL_DIALECTS, value) ? value : "oracle";
+    }
+
+    let currentSqlDialect = normalizeSqlDialect(readCookie(SQL_DIALECT_COOKIE));
+    const globalSqlDialect = document.getElementById("globalSqlDialect");
+
+    function applyGlobalSqlDialect(value, { persist = true, notify = true } = {}) {
+        const next = normalizeSqlDialect(value);
+        const changed = next !== currentSqlDialect;
+        currentSqlDialect = next;
+        globalSqlDialect.value = next;
+        document.documentElement.dataset.sqlDialect = next;
+        if (persist) {
+            document.cookie = `${encodeURIComponent(SQL_DIALECT_COOKIE)}=${encodeURIComponent(next)}; Max-Age=31536000; Path=/; SameSite=Lax`;
+        }
+        if (notify && changed) {
+            window.dispatchEvent(new CustomEvent("camstar:sql-dialect-change", {
+                detail: { dialect: next, label: SQL_DIALECTS[next].label },
+            }));
+        }
+    }
+
+    window._getSqlDialect = () => currentSqlDialect;
+    window._setSqlDialect = (value) => applyGlobalSqlDialect(value);
+    window._getSqlDialectLabel = () => SQL_DIALECTS[currentSqlDialect].label;
+    applyGlobalSqlDialect(currentSqlDialect, { persist: !readCookie(SQL_DIALECT_COOKIE), notify: false });
+    globalSqlDialect.addEventListener("change", () => {
+        applyGlobalSqlDialect(globalSqlDialect.value);
+    });
+
     // ── Siemens Palette ──
     const COLORS = {
         workflow: { fill: "#009999", stroke: "#00B8B8", text: "#E8F0F2", comboFill: "rgba(0,153,153,0.08)", comboBorder: "rgba(0,153,153,0.3)" },
@@ -1482,6 +1529,7 @@
     let currentEdgeInfo = null;
     let currentWikiContent = null;  // raw markdown content for editing
     let edgeWikiLoadToken = 0;
+    let edgeSqlLoadToken = 0;
 
     function renderRelationshipWiki(container, markdown) {
         container.style.whiteSpace = "";
@@ -1497,8 +1545,50 @@
         }
     }
 
+    function relationshipWikiUrl({ source, relName, target }, productLine, sqlDialect = currentSqlDialect) {
+        return `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(productLine)}&sql_dialect=${encodeURIComponent(sqlDialect)}`;
+    }
+
+    function setEdgeSqlDialectBadge(dialect = currentSqlDialect) {
+        const badge = document.getElementById("edgeSqlDialectBadge");
+        if (badge) badge.textContent = SQL_DIALECTS[normalizeSqlDialect(dialect)].label;
+    }
+
+    async function refreshCurrentEdgeSql() {
+        if (!currentEdgeInfo) return;
+        const sqlToken = ++edgeSqlLoadToken;
+        const edgeInfoAtRequest = currentEdgeInfo;
+        const dialectAtRequest = currentSqlDialect;
+        const sqlContent = document.getElementById("edgeSqlContent");
+        setEdgeSqlDialectBadge(dialectAtRequest);
+        sqlContent.textContent = `正在读取 ${SQL_DIALECTS[dialectAtRequest].label} 物理关联…`;
+        sqlContent.style.whiteSpace = "";
+        try {
+            const wikiData = await fetchJSON(
+                relationshipWikiUrl(edgeInfoAtRequest, currentProductLine, dialectAtRequest),
+            );
+            if (
+                sqlToken !== edgeSqlLoadToken
+                || currentEdgeInfo !== edgeInfoAtRequest
+                || currentSqlDialect !== dialectAtRequest
+            ) return;
+            renderRelationshipWiki(
+                sqlContent,
+                wikiData.sql_content || `当前物理 Schema 无法生成 ${SQL_DIALECTS[dialectAtRequest].label} SQL 关联示例。`,
+            );
+        } catch (error) {
+            if (sqlToken !== edgeSqlLoadToken || currentEdgeInfo !== edgeInfoAtRequest) return;
+            sqlContent.textContent = `SQL 读取失败：${String(error.message || error)}`;
+        }
+    }
+
+    window.addEventListener("camstar:sql-dialect-change", () => {
+        if (currentEdgeInfo) refreshCurrentEdgeSql();
+    });
+
     async function showEdgePopup(relName, source, target, desc, cardinality, x, y) {
         const loadToken = ++edgeWikiLoadToken;
+        const sqlToken = ++edgeSqlLoadToken;
         const popup = document.getElementById("edgePopup");
         const titleEl = document.getElementById("edgePopupTitle");
         const metaEl = document.getElementById("edgePopupMeta");
@@ -1533,7 +1623,9 @@
         currentWikiContent = null;
 
         // SQL and relationship usage are two independent fields.
-        sqlContent.textContent = "正在读取物理关联…";
+        const dialectAtOpen = currentSqlDialect;
+        setEdgeSqlDialectBadge(dialectAtOpen);
+        sqlContent.textContent = `正在读取 ${SQL_DIALECTS[dialectAtOpen].label} 物理关联…`;
         sqlContent.style.whiteSpace = "";
         wikiLoading.style.display = "flex";
         wikiContent.style.display = "none";
@@ -1564,14 +1656,16 @@
         // ── Auto-load wiki if exists (fast filesystem read, matches product line) ──
         try {
             const productLineAtOpen = currentProductLine;
-            const wikiUrl = `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(productLineAtOpen)}`;
+            const wikiUrl = relationshipWikiUrl(currentEdgeInfo, productLineAtOpen, dialectAtOpen);
             const wikiData = await fetchJSON(wikiUrl);
 
             if (loadToken !== edgeWikiLoadToken) return;
-            renderRelationshipWiki(
-                sqlContent,
-                wikiData.sql_content || "当前物理 Schema 无法生成 SQL 关联示例。",
-            );
+            if (sqlToken === edgeSqlLoadToken && dialectAtOpen === currentSqlDialect) {
+                renderRelationshipWiki(
+                    sqlContent,
+                    wikiData.sql_content || `当前物理 Schema 无法生成 ${SQL_DIALECTS[dialectAtOpen].label} SQL 关联示例。`,
+                );
+            }
             wikiLoading.style.display = "none";
             if (wikiData.found && wikiData.content) {
                 currentWikiContent = wikiData.content;
@@ -1601,6 +1695,7 @@
 
     function hideEdgePopup() {
         edgeWikiLoadToken += 1;
+        edgeSqlLoadToken += 1;
         document.getElementById("edgePopup").classList.add("edge-popup-hidden");
         currentEdgeInfo = null;
         currentWikiContent = null;
@@ -1623,13 +1718,9 @@
 
         try {
             // Step 1: Try reading existing wiki first
-            const wikiUrl = `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(currentProductLine)}`;
+            const wikiUrl = relationshipWikiUrl(currentEdgeInfo, currentProductLine);
             const wikiData = await fetchJSON(wikiUrl);
 
-            renderRelationshipWiki(
-                document.getElementById("edgeSqlContent"),
-                wikiData.sql_content || "当前物理 Schema 无法生成 SQL 关联示例。",
-            );
             if (wikiData.found && wikiData.content) {
                 // Wiki exists — display it
                 currentWikiContent = wikiData.content;

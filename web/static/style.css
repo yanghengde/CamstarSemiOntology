@@ -79,6 +79,7 @@ html, body {
     font-weight: 600;
     letter-spacing: 0.5px;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .topbar-left h1 .accent {
@@ -92,10 +93,105 @@ html, body {
 
 /* ── Search Box ── */
 .topbar-center {
-    flex: 0 1 430px;
+    flex: 1 1 620px;
+    max-width: 760px;
+    min-width: 360px;
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.global-dialect-control {
+    flex: 0 0 auto;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 4px 10px 4px 7px;
+    border: 1px solid rgba(0, 255, 185, 0.36);
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(0, 73, 91, 0.76), rgba(0, 30, 50, 0.9));
+    box-shadow: inset 0 0 0 1px rgba(0, 255, 185, 0.04);
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.global-dialect-control:hover,
+.global-dialect-control:focus-within {
+    border-color: var(--si-green);
+    box-shadow: 0 0 0 3px rgba(0, 255, 185, 0.09);
+}
+
+.global-dialect-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    border-radius: 7px;
+    color: #001b2c;
+    background: linear-gradient(145deg, #5fffd2, #00b8b8);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+}
+
+.global-dialect-copy {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    column-gap: 7px;
+}
+
+.global-dialect-caption {
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: .5px;
+}
+
+.global-dialect-select {
+    min-width: 82px;
+    padding: 0 18px 0 0;
+    border: 0;
+    outline: 0;
+    color: var(--text-primary);
+    background:
+        linear-gradient(45deg, transparent 50%, var(--si-green) 50%) calc(100% - 6px) 7px / 4px 4px no-repeat,
+        linear-gradient(135deg, var(--si-green) 50%, transparent 50%) calc(100% - 2px) 7px / 4px 4px no-repeat;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    appearance: none;
+    cursor: pointer;
+}
+
+.global-dialect-select option {
+    color: var(--text-primary);
+    background: #00263a;
+}
+
+@media (max-width: 1500px) {
+    .topbar-left h1 {
+        display: none;
+    }
+
+    .topbar-center {
+        min-width: 320px;
+    }
+}
+
+@media (max-width: 1120px) {
+    .global-dialect-caption {
+        display: none;
+    }
+
+    .global-dialect-copy {
+        display: block;
+    }
+
+    .global-dialect-select {
+        min-width: 76px;
+    }
 }
 
 .search-box {
@@ -509,12 +605,36 @@ html, body {
 }
 
 /* ── Separate physical SQL field and authored relationship Wiki ── */
-.edge-section-label {
+.edge-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin: 0 2px 6px;
+}
+
+.edge-section-label {
     color: var(--text-primary);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.2px;
+}
+
+.edge-popup > .edge-section-label {
+    margin: 0 2px 6px;
+}
+
+.edge-sql-dialect-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 2px 8px;
+    border: 1px solid rgba(0, 255, 185, 0.28);
+    border-radius: 999px;
+    color: var(--si-green);
+    background: rgba(0, 255, 185, 0.08);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .25px;
 }
 
 .edge-sql-area {
@@ -1508,41 +1628,18 @@ html, body {
     color: var(--text-primary);
 }
 
-.chat-dialect-control {
-    position: relative;
+.chat-dialect-summary {
     display: inline-flex;
     align-items: center;
-}
-
-.chat-dialect-select {
-    min-width: 104px;
-    height: 28px;
-    padding: 0 28px 0 10px;
-    border: 1px solid rgba(0, 255, 185, 0.34);
+    min-height: 26px;
+    padding: 3px 8px;
+    border: 1px solid rgba(0, 188, 212, 0.24);
     border-radius: 7px;
-    outline: none;
-    background:
-        linear-gradient(45deg, transparent 50%, var(--si-green) 50%) calc(100% - 13px) 11px / 5px 5px no-repeat,
-        linear-gradient(135deg, var(--si-green) 50%, transparent 50%) calc(100% - 8px) 11px / 5px 5px no-repeat,
-        rgba(0, 39, 59, 0.92);
-    color: var(--text-primary);
-    font: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    appearance: none;
-    cursor: pointer;
-    transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
-}
-
-.chat-dialect-select:hover,
-.chat-dialect-select:focus {
-    border-color: var(--si-green);
-    box-shadow: 0 0 0 2px rgba(0, 255, 185, 0.1);
-}
-
-.chat-dialect-select option {
-    background: #00263a;
-    color: var(--text-primary);
+    color: #7ddde0;
+    background: rgba(0, 188, 212, 0.08);
+    font-size: 10px;
+    font-weight: 650;
+    white-space: nowrap;
 }
 
 .chat-header-badge {

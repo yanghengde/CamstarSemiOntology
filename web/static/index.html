@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-relationship-sql-v5" />
+    <link rel="stylesheet" href="/static/style.css?v=20260728-global-sql-dialect" />
 </head>
 
 <body>
@@ -33,6 +33,16 @@
             </div>
         </div>
         <div class="topbar-center">
+            <label class="global-dialect-control" for="globalSqlDialect" title="全局数据库方言：同时控制 Relationship 示例与 SQL 助手">
+                <span class="global-dialect-icon">SQL</span>
+                <span class="global-dialect-copy">
+                    <span class="global-dialect-caption">数据库</span>
+                    <select id="globalSqlDialect" class="global-dialect-select">
+                        <option value="oracle">Oracle</option>
+                        <option value="sqlserver">SQL Server</option>
+                    </select>
+                </span>
+            </label>
             <div class="search-box" id="searchBox">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8" />
@@ -174,7 +184,10 @@
         <div class="edge-popup-meta" id="edgePopupMeta">Source → Target</div>
         <div class="edge-popup-product-line" id="edgePopupPL"></div>
         <!-- Physical SQL is separate from the authored relationship Wiki. -->
-        <div class="edge-section-label">SQL 关联示例</div>
+        <div class="edge-section-heading">
+            <span class="edge-section-label">SQL 关联示例</span>
+            <span class="edge-sql-dialect-badge" id="edgeSqlDialectBadge">Oracle</span>
+        </div>
         <div class="edge-sql-area" id="edgeSqlArea">
             <div class="edge-sql-content" id="edgeSqlContent"></div>
         </div>
@@ -262,13 +275,7 @@
             <div class="chat-header-left">
                 <img src="/static/siemens_logo.svg" alt="Bot" class="chat-header-icon"
                     style="width:20px;height:20px;border-radius:4px;" />
-                <label class="chat-dialect-control" for="chatSqlDialect">
-                    <span class="sr-only"> </span>
-                    <select id="chatSqlDialect" class="chat-dialect-select" title="选择生成 SQL 使用的数据库语法">
-                        <option value="oracle">Oracle</option>
-                        <option value="sqlserver">SQL Server</option>
-                    </select>
-                </label>
+                <span class="chat-dialect-summary" id="chatDialectSummary">Oracle SQL</span>
                 <span class="chat-header-badge">READ ONLY</span>
             </div>
             <div class="chat-header-right">
@@ -348,8 +355,8 @@
     <!-- ── AntV G6 v5 Engine Local Offline Assets ── -->
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
-    <script src="/static/app.js?v=20260728-relationship-sql-v4"></script>
-    <script src="/static/chat.js?v=20260728-sql-dialect"></script>
+    <script src="/static/app.js?v=20260728-global-sql-dialect"></script>
+    <script src="/static/chat.js?v=20260728-global-sql-dialect"></script>
 </body>
 
 </html>

@@ -142,7 +142,13 @@ def _ensure_product_dir(product_line: str):
 #  Wiki CRUD Operations
 # ══════════════════════════════════════════════════════
 
-def read_wiki(product_line: str, from_class: str, rel_name: str, to_class: str) -> dict:
+def read_wiki(
+    product_line: str,
+    from_class: str,
+    rel_name: str,
+    to_class: str,
+    sql_dialect: str = "oracle",
+) -> dict:
     """
     Read a wiki file. Returns:
       { found: bool, content: str, sql_content: str, path: str, metadata: dict }
@@ -159,6 +165,7 @@ def read_wiki(product_line: str, from_class: str, rel_name: str, to_class: str) 
             rel_name,
             to_class,
             relationship.get("description", ""),
+            sql_dialect=sql_dialect,
         )
         if relationship
         else ""
@@ -447,9 +454,25 @@ def _load_physical_fields() -> dict[str, list[dict[str, str]]]:
     return fields_by_class
 
 
-def _sql_identifier(value: str) -> str:
-    """Quote a SQL Server identifier without treating schema data as SQL."""
-    return f"[{value.replace(']', ']]')}]"
+SQL_DIALECTS = {"oracle", "sqlserver"}
+
+
+def normalize_sql_dialect(value: str) -> str:
+    """Return one of the supported deterministic SQL dialect identifiers."""
+    normalized = (value or "").strip().lower()
+    if normalized not in SQL_DIALECTS:
+        raise ValueError(f"Unsupported SQL dialect: {value}")
+    return normalized
+
+
+def _sql_identifier(value: str, sql_dialect: str) -> str:
+    """Render a physical identifier safely for the selected database dialect."""
+    dialect = normalize_sql_dialect(sql_dialect)
+    if dialect == "sqlserver":
+        return f"[{value.replace(']', ']]')}]"
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
+        return value
+    return f'"{value.replace(chr(34), chr(34) * 2)}"'
 
 
 def _primary_key(class_name: str) -> str:
@@ -554,8 +577,11 @@ def build_relationship_sql_section(
     rel_name: str,
     to_class: str,
     description: str = "",
+    sql_dialect: str = "oracle",
 ) -> str:
     """Build only the deterministic, read-only query example."""
+    dialect = normalize_sql_dialect(sql_dialect)
+    dialect_label = "Oracle" if dialect == "oracle" else "SQL Server"
     join = resolve_relationship_join(from_class, to_class, description)
     if not join["resolved"]:
         return "\n".join(
@@ -565,24 +591,26 @@ def build_relationship_sql_section(
             ]
         )
 
-    source_table = _sql_identifier(join["sourceTable"])
-    source_field = _sql_identifier(join["sourceField"])
-    target_table = _sql_identifier(join["targetTable"])
-    target_field = _sql_identifier(join["targetField"])
+    source_table = _sql_identifier(join["sourceTable"], dialect)
+    source_field = _sql_identifier(join["sourceField"], dialect)
+    target_table = _sql_identifier(join["targetTable"], dialect)
+    target_field = _sql_identifier(join["targetField"], dialect)
+    table_alias = "" if dialect == "oracle" else " AS"
+    parameter = ":SourceId" if dialect == "oracle" else "@SourceId"
     lines = [
-        "### 查询示例",
+        f"### 查询示例（{dialect_label}）",
         "",
         "```sql",
         "SELECT",
         "    src.*,",
         "    tgt.*",
-        f"FROM {source_table} AS src",
-        f"LEFT JOIN {target_table} AS tgt",
+        f"FROM {source_table}{table_alias} src",
+        f"LEFT JOIN {target_table}{table_alias} tgt",
         f"    ON src.{source_field} = tgt.{target_field}",
     ]
     if join["sourcePrimaryKey"]:
         lines.append(
-            f"WHERE src.{_sql_identifier(join['sourcePrimaryKey'])} = @SourceId;"
+            f"WHERE src.{_sql_identifier(join['sourcePrimaryKey'], dialect)} = {parameter};"
         )
     else:
         lines[-1] += ";"
@@ -667,6 +695,7 @@ def inject_relationship_sql_section(
     rel_name: str,
     to_class: str,
     description: str,
+    sql_dialect: str = "oracle",
 ) -> str:
     """Insert deterministic SQL before the first existing Wiki section."""
     if "## SQL 关联示例" in content:
@@ -676,6 +705,7 @@ def inject_relationship_sql_section(
         rel_name,
         to_class,
         description,
+        sql_dialect=sql_dialect,
     )
     lines = content.splitlines()
     insertion_index = next(

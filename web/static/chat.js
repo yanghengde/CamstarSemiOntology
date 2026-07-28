@@ -29,9 +29,8 @@
     const chatSessionCount = document.getElementById("chatSessionCount");
     const chatContextClasses = document.getElementById("chatContextClasses");
     const chatQuickActions = document.getElementById("chatQuickActions");
-    const chatSqlDialect = document.getElementById("chatSqlDialect");
+    const chatDialectSummary = document.getElementById("chatDialectSummary");
 
-    const SQL_DIALECT_COOKIE = "camstar_sql_dialect";
     const SQL_DIALECTS = {
         oracle: {
             label: "Oracle",
@@ -43,23 +42,13 @@
         },
     };
 
-    function readCookie(name) {
-        const prefix = `${encodeURIComponent(name)}=`;
-        const part = document.cookie
-            .split("; ")
-            .find((item) => item.startsWith(prefix));
-        return part ? decodeURIComponent(part.slice(prefix.length)) : "";
-    }
-
     function normalizeSqlDialect(value) {
         return Object.hasOwn(SQL_DIALECTS, value) ? value : "oracle";
     }
 
-    let selectedSqlDialect = normalizeSqlDialect(readCookie(SQL_DIALECT_COOKIE));
-
-    function persistSqlDialect(value) {
-        document.cookie = `${encodeURIComponent(SQL_DIALECT_COOKIE)}=${encodeURIComponent(value)}; Max-Age=31536000; Path=/; SameSite=Lax`;
-    }
+    let selectedSqlDialect = normalizeSqlDialect(
+        typeof window._getSqlDialect === "function" ? window._getSqlDialect() : "oracle",
+    );
 
     function getWelcomeHtml() {
         const label = SQL_DIALECTS[selectedSqlDialect].label;
@@ -70,18 +59,17 @@
         </div>`;
     }
 
-    function applySqlDialect(value, persist = true) {
+    function applySqlDialect(value) {
         selectedSqlDialect = normalizeSqlDialect(value);
-        chatSqlDialect.value = selectedSqlDialect;
-        if (persist) persistSqlDialect(selectedSqlDialect);
+        chatDialectSummary.textContent = `${SQL_DIALECTS[selectedSqlDialect].label} SQL`;
         if (!chatHistoryArray.length) {
             chatMessages.innerHTML = getWelcomeHtml();
         }
     }
 
-    applySqlDialect(selectedSqlDialect, !readCookie(SQL_DIALECT_COOKIE));
-    chatSqlDialect.addEventListener("change", () => {
-        applySqlDialect(chatSqlDialect.value);
+    applySqlDialect(selectedSqlDialect);
+    window.addEventListener("camstar:sql-dialect-change", (event) => {
+        applySqlDialect(event.detail?.dialect);
     });
 
     function stopStreaming() {

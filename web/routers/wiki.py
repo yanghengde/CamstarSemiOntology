@@ -1,4 +1,5 @@
 import json
+from typing import Literal
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -35,9 +36,16 @@ def get_wiki_relationship(
     rel: str,
     target: str,
     product_line: str = "general",
+    sql_dialect: Literal["oracle", "sqlserver"] = "oracle",
 ):
     from src.ontology.wiki_manager import read_wiki
-    result = read_wiki(product_line, source, rel, target)
+    result = read_wiki(
+        product_line,
+        source,
+        rel,
+        target,
+        sql_dialect=sql_dialect,
+    )
     return JSONResponse(
         content={
             "found": result["found"],
@@ -46,6 +54,7 @@ def get_wiki_relationship(
             "sql_content": result.get("sql_content", ""),
             "metadata": result.get("metadata", {}),
             "reason": result.get("reason", ""),
+            "sql_dialect": sql_dialect,
         },
         headers={"Cache-Control": "no-store"},
     )
