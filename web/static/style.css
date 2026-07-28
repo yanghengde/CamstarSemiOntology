@@ -506,6 +506,75 @@ html, body {
     cursor: grab;
 }
 
+/* ── Separate physical SQL field and authored relationship Wiki ── */
+.edge-section-label {
+    margin: 2px 2px 5px;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.edge-sql-area {
+    margin-bottom: 9px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: rgba(0, 153, 153, 0.06);
+    border: 1px solid rgba(0, 255, 185, 0.18);
+    max-height: 210px;
+    overflow: auto;
+}
+
+.edge-sql-content {
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.55;
+    user-select: text;
+}
+
+.edge-sql-content h2 {
+    display: none;
+}
+
+.edge-sql-content h3 {
+    margin: 6px 0 4px;
+    color: var(--si-petrol-light);
+    font-size: 11px;
+}
+
+.edge-sql-content p,
+.edge-sql-content ul {
+    margin: 4px 0;
+}
+
+.edge-sql-content ul {
+    padding-left: 18px;
+}
+
+.edge-sql-content pre {
+    margin: 6px 0;
+    padding: 8px;
+    overflow-x: auto;
+    border-radius: 6px;
+    background: rgba(0, 0, 20, 0.65);
+    border: 1px solid rgba(0, 188, 212, 0.15);
+}
+
+.edge-sql-content code {
+    color: var(--si-petrol-light);
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 10px;
+    white-space: pre;
+}
+
+.edge-sql-content blockquote {
+    margin: 5px 0 0;
+    padding: 4px 8px;
+    border-left: 2px solid var(--si-petrol);
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
 /* ── Wiki Content Area inside Edge Popup ── */
 .edge-wiki-area {
     margin-bottom: 10px;
@@ -515,7 +584,7 @@ html, body {
     border: 1px solid rgba(0, 153, 153, 0.15);
     flex: 1 1 auto;
     min-height: 60px;
-    max-height: 55vh;
+    max-height: 42vh;
     overflow-y: auto;
     resize: none;
 }

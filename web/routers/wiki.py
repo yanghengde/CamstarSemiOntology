@@ -1,6 +1,6 @@
 import json
 from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -38,13 +38,17 @@ def get_wiki_relationship(
 ):
     from src.ontology.wiki_manager import read_wiki
     result = read_wiki(product_line, source, rel, target)
-    return {
-        "found": result["found"],
-        "product_line": product_line,
-        "content": result.get("content", ""),
-        "metadata": result.get("metadata", {}),
-        "reason": result.get("reason", ""),
-    }
+    return JSONResponse(
+        content={
+            "found": result["found"],
+            "product_line": result.get("product_line", product_line),
+            "content": result.get("content", ""),
+            "sql_content": result.get("sql_content", ""),
+            "metadata": result.get("metadata", {}),
+            "reason": result.get("reason", ""),
+        },
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @router.post("/api/wiki/save")

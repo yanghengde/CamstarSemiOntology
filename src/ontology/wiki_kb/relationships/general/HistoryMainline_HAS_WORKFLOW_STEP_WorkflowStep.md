@@ -5,6 +5,30 @@
 > **生成时间**: 2026-07-28  
 > **来源**: LLM 自动生成
 
+
+## SQL 关联示例
+
+### 物理关联
+
+- 源表：`[HistoryMainline]`（别名 `src`）
+- 目标表：`[WorkflowStep]`（别名 `tgt`）
+- JOIN 条件：`src.[WorkflowStepId] = tgt.[WorkflowStepId]`
+- 物理外键：`[HistoryMainline].[WorkflowStepId]`
+
+### 查询示例
+
+```sql
+SELECT
+    src.*,
+    tgt.*
+FROM [HistoryMainline] AS src
+LEFT JOIN [WorkflowStep] AS tgt
+    ON src.[WorkflowStepId] = tgt.[WorkflowStepId]
+WHERE src.[HistoryMainlineId] = @SourceId;
+```
+
+> `LEFT JOIN` 会保留没有关联记录的源对象；如果只需要已建立该关系的数据，可改为 `INNER JOIN`。`@SourceId` 是查询参数，请使用参数化查询传值。
+
 ## 关系说明
 
 在 Siemens Opcenter (Camstar) MES 中，`HistoryMainline` 是生产执行过程中产生的核心历史记录对象，通常代表一个生产订单、批次、容器或工单在其生命周期内的完整执行轨迹。每一个 `HistoryMainline` 记录都对应着一次具体的生产活动实例。`WorkflowStep` 则是定义生产工作流中的一个步骤模板，它描述了在某个阶段应执行的操作、采集的参数、质量检查点等业务逻辑。关系 `HAS_WORKFLOW_STEP` 将 `HistoryMainline` 与它实际执行过的 `WorkflowStep` 模板关联起来，从历史视角记录该生产活动**按照哪个步骤定义**来执行的。

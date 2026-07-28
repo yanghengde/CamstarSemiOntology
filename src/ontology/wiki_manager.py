@@ -145,13 +145,30 @@ def _ensure_product_dir(product_line: str):
 def read_wiki(product_line: str, from_class: str, rel_name: str, to_class: str) -> dict:
     """
     Read a wiki file. Returns:
-      { found: bool, content: str, path: str, metadata: dict }
+      { found: bool, content: str, sql_content: str, path: str, metadata: dict }
+
+    ``content`` is reserved for authored relationship usage. Deterministic SQL
+    is returned separately through ``sql_content`` so a physical-schema-only
+    document does not masquerade as an authored Wiki.
     """
     filepath = _wiki_filepath(product_line, from_class, rel_name, to_class)
+    relationship = get_relationship_definition(from_class, rel_name, to_class)
+    sql_content = (
+        build_relationship_sql_section(
+            from_class,
+            rel_name,
+            to_class,
+            relationship.get("description", ""),
+        )
+        if relationship
+        else ""
+    )
 
     if os.path.exists(filepath):
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
+        authored = _wiki_has_authored_content(filepath, content)
+        content = strip_relationship_sql_section(content) if authored else ""
 
         # Extract metadata from YAML-like header if present
         metadata = _extract_metadata(content)
@@ -161,23 +178,52 @@ def read_wiki(product_line: str, from_class: str, rel_name: str, to_class: str) 
             return {
                 "found": False,
                 "content": "",
+                "sql_content": sql_content,
                 "path": filepath,
                 "metadata": metadata,
                 "reason": "pending_review",
             }
 
         return {
-            "found": True,
+            "found": bool(content.strip()),
             "content": content,
+            "sql_content": sql_content,
             "path": filepath,
             "metadata": metadata,
+            "product_line": product_line,
+            "reason": "" if content.strip() else "relationship_wiki_missing",
         }
+
+    # A product-line-specific Wiki may be absent while an authored general Wiki
+    # already exists. Reuse only its relationship-usage body; SQL stays separate.
+    if product_line != "general":
+        general_path = _wiki_filepath("general", from_class, rel_name, to_class)
+        if os.path.exists(general_path):
+            with open(general_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if _wiki_has_authored_content(general_path, content):
+                content = strip_relationship_sql_section(content)
+                return {
+                    "found": bool(content.strip()),
+                    "content": content,
+                    "sql_content": sql_content,
+                    "path": general_path,
+                    "metadata": {
+                        **_extract_metadata(content),
+                        "fallback": "general",
+                    },
+                    "product_line": "general",
+                    "reason": "general_fallback",
+                }
 
     return {
         "found": False,
         "content": "",
+        "sql_content": sql_content,
         "path": filepath,
         "metadata": {},
+        "product_line": product_line,
+        "reason": "relationship_wiki_missing",
     }
 
 
@@ -187,6 +233,7 @@ def save_wiki(product_line: str, from_class: str, rel_name: str, to_class: str,
     Save/update a wiki file. Used by both LLM generation and manual editing.
     Adds/updates metadata header with edit history.
     """
+    content = strip_relationship_sql_section(content)
     _ensure_product_dir(product_line)
     filepath = _wiki_filepath(product_line, from_class, rel_name, to_class)
 
@@ -269,15 +316,24 @@ def get_wiki_stats(product_line: str = None) -> dict:
     stats = {}
     for pl in product_lines:
         pl_id = pl["id"]
-        pl_dir = os.path.join(RELATIONSHIPS_DIR, pl_id)
-        existing = 0
-        if os.path.isdir(pl_dir):
-            existing = len([f for f in os.listdir(pl_dir) if f.endswith(".md")])
+        existing = sum(
+            os.path.exists(
+                _wiki_filepath(
+                    pl_id,
+                    relationship["fromClass"],
+                    relationship["relationName"],
+                    relationship["toClass"],
+                )
+            )
+            for relationship in all_rels
+        )
         stats[pl_id] = {
             "name": pl["name"],
             "total_relationships": total,
             "wiki_count": existing,
-            "coverage": round(existing / total * 100, 1) if total > 0 else 0,
+            "factual_fallback_count": max(total - existing, 0),
+            "available_count": total,
+            "coverage": 100.0 if total > 0 else 0,
         }
 
     return {"product_lines": stats, "total_relationships": total}
@@ -564,8 +620,9 @@ def build_wiki_prefix(
     cardinality: str,
     description: str,
     date: str,
+    source: str = "物理 Schema + LLM",
 ) -> str:
-    """Build the guaranteed top section shared by sync and streaming output."""
+    """Build authored Wiki metadata; physical SQL is returned separately."""
     return "\n".join(
         [
             f"# {from_class} → {rel_name} → {to_class}",
@@ -573,16 +630,197 @@ def build_wiki_prefix(
             f"> **产品线**: {product_line_name}",
             f"> **基数**: {cardinality}",
             f"> **生成时间**: {date}",
-            "> **来源**: 物理 Schema + LLM",
-            "",
-            build_relationship_sql_section(
+            f"> **来源**: {source}",
+        ]
+    )
+
+
+@lru_cache(maxsize=1)
+def _relationship_index() -> dict[tuple[str, str, str], dict]:
+    return {
+        (
+            relationship["fromClass"],
+            relationship["relationName"],
+            relationship["toClass"],
+        ): relationship
+        for relationship in collect_all_relationships()
+    }
+
+
+def get_relationship_definition(
+    from_class: str,
+    rel_name: str,
+    to_class: str,
+) -> dict | None:
+    """Return the canonical ontology relationship used by Wiki fallbacks."""
+    return _relationship_index().get((from_class, rel_name, to_class))
+
+
+def strip_relationship_sql_section(content: str) -> str:
+    """Remove the legacy embedded SQL section from an authored Wiki body."""
+    if not content or "## SQL 关联示例" not in content:
+        return content
+    cleaned = re.sub(
+        r"(?ms)^## SQL 关联示例[ \t]*\r?\n.*?(?=^## [^\r\n]+|\Z)",
+        "",
+        content,
+        count=1,
+    )
+    return re.sub(r"\n{3,}", "\n\n", cleaned).strip() + "\n"
+
+
+def _wiki_has_authored_content(filepath: str, content: str) -> bool:
+    """Whether a Wiki contains LLM/user-authored relationship guidance."""
+    history = _load_history(filepath.replace(".md", ".meta.json"))
+    edits = history.get("edits", [])
+    if edits:
+        return any(
+            edit.get("editor") not in {"physical_schema", ""}
+            for edit in edits
+        )
+    # Legacy authored files may predate companion metadata. The marker below is
+    # unique to the physical-only materializer introduced in 2026-07.
+    return "物理 Schema 自动生成" not in content
+
+
+def inject_relationship_sql_section(
+    content: str,
+    from_class: str,
+    rel_name: str,
+    to_class: str,
+    description: str,
+) -> str:
+    """Insert deterministic SQL before the first existing Wiki section."""
+    if "## SQL 关联示例" in content:
+        return content
+    sql_section = build_relationship_sql_section(
+        from_class,
+        rel_name,
+        to_class,
+        description,
+    )
+    lines = content.splitlines()
+    insertion_index = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if line.startswith("## ")
+        ),
+        len(lines),
+    )
+    merged = (
+        lines[:insertion_index]
+        + ["", sql_section, ""]
+        + lines[insertion_index:]
+    )
+    return "\n".join(merged).strip() + "\n"
+
+
+def build_factual_relationship_wiki(
+    product_line: str,
+    relationship: dict,
+) -> str:
+    """Build a physical-fact note without embedding the separately stored SQL."""
+    pl_info = get_product_line_info(product_line)
+    from_class = relationship["fromClass"]
+    rel_name = relationship["relationName"]
+    to_class = relationship["toClass"]
+    cardinality = relationship.get("cardinality", "")
+    description = relationship.get("description", "")
+    today = datetime.now().strftime("%Y-%m-%d")
+    prefix = build_wiki_prefix(
+        pl_info["name"],
+        from_class,
+        rel_name,
+        to_class,
+        cardinality,
+        description,
+        today,
+        source="物理 Schema 自动生成",
+    )
+    facts = [
+        "## 关系事实",
+        "",
+        "本页由本体关系和 `Database_Fields.csv` 自动生成，"
+        "不包含未经物理 Schema 验证的业务推断。",
+        "",
+        f"- 本体关系：`{from_class} --[{rel_name}]--> {to_class}`",
+        f"- 基数：`{cardinality or 'UNKNOWN'}`",
+        f"- 物理定义：`{description or '—'}`",
+    ]
+    return f"{prefix}\n\n" + "\n".join(facts) + "\n"
+
+
+def materialize_factual_relationship_wikis(
+    product_line: str = "general",
+    upgrade_existing: bool = True,
+) -> dict[str, int]:
+    """Persist one immediately readable Markdown Wiki per relationship.
+
+    Existing authored Wikis are preserved and legacy embedded SQL is removed.
+    Missing Wikis receive a physical-fact marker, but ``read_wiki`` intentionally
+    treats it as an empty authored Wiki so the UI can still generate the usage.
+    """
+    stats = {
+        "total": 0,
+        "created": 0,
+        "upgraded": 0,
+        "unchanged": 0,
+        "failed": 0,
+    }
+    for relationship in collect_all_relationships():
+        stats["total"] += 1
+        from_class = relationship["fromClass"]
+        rel_name = relationship["relationName"]
+        to_class = relationship["toClass"]
+        filepath = _wiki_filepath(
+            product_line,
+            from_class,
+            rel_name,
+            to_class,
+        )
+        try:
+            if os.path.exists(filepath):
+                with open(filepath, "r", encoding="utf-8") as handle:
+                    existing = handle.read()
+                if not upgrade_existing:
+                    stats["unchanged"] += 1
+                    continue
+                upgraded = strip_relationship_sql_section(existing)
+                if upgraded == existing:
+                    stats["unchanged"] += 1
+                    continue
+                save_wiki(
+                    product_line,
+                    from_class,
+                    rel_name,
+                    to_class,
+                    upgraded,
+                    editor="physical_schema",
+                )
+                stats["upgraded"] += 1
+                continue
+
+            content = build_factual_relationship_wiki(
+                product_line,
+                relationship,
+            )
+            save_wiki(
+                product_line,
                 from_class,
                 rel_name,
                 to_class,
-                description,
-            ),
-        ]
-    )
+                content,
+                editor="physical_schema",
+            )
+            stats["created"] += 1
+        except Exception as exc:
+            print(
+                "[WikiManager] Physical Wiki materialization failed for "
+                f"{from_class}_{rel_name}_{to_class}: {exc}"
+            )
+            stats["failed"] += 1
+    return stats
 
 
 WIKI_GENERATE_PROMPT = """你是一个 Siemens Opcenter (Camstar) MES 领域专家。
@@ -594,8 +832,8 @@ WIKI_GENERATE_PROMPT = """你是一个 Siemens Opcenter (Camstar) MES 领域专�
 基数: {cardinality}
 现有描述: {description}
 
-系统已经依据 Database_Fields.csv 生成标题、元数据和 SQL 关联示例。
-你只生成 SQL 之后的正文，不要重复标题、元数据或 SQL。
+系统会在独立字段中依据 Database_Fields.csv 展示 SQL 关联示例。
+你只生成两个对象之间 relationship 的业务用法，不要重复标题、元数据或 SQL。
 直接输出 Markdown，不要包裹在代码块中，并且必须从“## 关系说明”开始：
 
 ## 关系说明
@@ -630,7 +868,7 @@ A: 回答3
 - 如果是"通用 (无产品线)"，则给出通用 Opcenter 建模指导
 - 示例要具体可操作
 - 全部用中文撰写，技术术语保留英文
-- 不要生成、改写或猜测 SQL；SQL 已由物理 Schema 确定
+- 不要生成、改写或猜测 SQL；SQL 由独立的物理 Schema 字段展示
 """
 
 
@@ -650,7 +888,10 @@ def generate_wiki_for_relationship(
     # Check if already exists
     filepath = _wiki_filepath(product_line, from_class, rel_name, to_class)
     if os.path.exists(filepath) and not overwrite:
-        return {"generated": False, "path": filepath, "reason": "already_exists"}
+        with open(filepath, "r", encoding="utf-8") as handle:
+            existing = handle.read()
+        if _wiki_has_authored_content(filepath, existing):
+            return {"generated": False, "path": filepath, "reason": "already_exists"}
 
     pl_info = get_product_line_info(product_line)
     today = datetime.now().strftime("%Y-%m-%d")

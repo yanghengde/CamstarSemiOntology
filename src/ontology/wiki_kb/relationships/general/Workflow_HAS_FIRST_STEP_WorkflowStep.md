@@ -5,6 +5,30 @@
 > **生成时间**: 2026-05-06  
 > **来源**: LLM 自动生成
 
+
+## SQL 关联示例
+
+### 物理关联
+
+- 源表：`[Workflow]`（别名 `src`）
+- 目标表：`[WorkflowStep]`（别名 `tgt`）
+- JOIN 条件：`src.[FirstStepId] = tgt.[WorkflowStepId]`
+- 物理外键：`[Workflow].[FirstStepId]`
+
+### 查询示例
+
+```sql
+SELECT
+    src.*,
+    tgt.*
+FROM [Workflow] AS src
+LEFT JOIN [WorkflowStep] AS tgt
+    ON src.[FirstStepId] = tgt.[WorkflowStepId]
+WHERE src.[WorkflowId] = @SourceId;
+```
+
+> `LEFT JOIN` 会保留没有关联记录的源对象；如果只需要已建立该关系的数据，可改为 `INNER JOIN`。`@SourceId` 是查询参数，请使用参数化查询传值。
+
 ## 关系说明
 
 在 Siemens Opcenter (Camstar) MES 中，一个 Workflow（工作流）由多个有序或并行的 WorkflowStep（工作流步骤）组成。`HAS_FIRST_STEP` 关系用于明确指定该 Workflow 的起始步骤——即流程执行时第一个被激活的节点。由于基数为 `ONE_TO_ONE`，每个 Workflow 只能拥有一个 “第一步”，且该步骤必须唯一指向一个 WorkflowStep 实例。

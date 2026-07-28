@@ -1481,12 +1481,29 @@
     // ══════════════════════════════════════════════════════
     let currentEdgeInfo = null;
     let currentWikiContent = null;  // raw markdown content for editing
+    let edgeWikiLoadToken = 0;
+
+    function renderRelationshipWiki(container, markdown) {
+        container.style.whiteSpace = "";
+        try {
+            if (typeof marked === "undefined" || typeof marked.parse !== "function") {
+                throw new Error("Markdown renderer unavailable");
+            }
+            container.innerHTML = marked.parse(markdown);
+        } catch (error) {
+            console.warn("Markdown render error, showing plain text:", error);
+            container.textContent = markdown;
+            container.style.whiteSpace = "pre-wrap";
+        }
+    }
 
     async function showEdgePopup(relName, source, target, desc, cardinality, x, y) {
+        const loadToken = ++edgeWikiLoadToken;
         const popup = document.getElementById("edgePopup");
         const titleEl = document.getElementById("edgePopupTitle");
         const metaEl = document.getElementById("edgePopupMeta");
         const plEl = document.getElementById("edgePopupPL");
+        const sqlContent = document.getElementById("edgeSqlContent");
         const wikiArea = document.getElementById("edgeWikiArea");
         const wikiLoading = document.getElementById("edgeWikiLoading");
         const wikiContent = document.getElementById("edgeWikiContent");
@@ -1515,19 +1532,27 @@
         currentEdgeInfo = { relName, source, target, desc, cardinality };
         currentWikiContent = null;
 
-        // Reset wiki area
-        wikiLoading.style.display = "none";
+        // SQL and relationship usage are two independent fields.
+        sqlContent.textContent = "正在读取物理关联…";
+        sqlContent.style.whiteSpace = "";
+        wikiLoading.style.display = "flex";
         wikiContent.style.display = "none";
         wikiContent.innerHTML = "";
-        wikiEmpty.style.display = "flex";
-        generateBtn.style.display = "inline-flex";
+        wikiContent.style.whiteSpace = "";
+        wikiEmpty.style.display = "none";
+        wikiEmpty.innerHTML = `
+            <span class="wiki-empty-icon">📭</span>
+            <span>暂无 Relationship 用法 Wiki</span>
+            <span style="font-size:10px;color:var(--text-muted);margin-top:4px">点击下方「生成 Wiki」按钮，AI 将自动生成</span>
+        `;
+        generateBtn.style.display = "none";
         generateBtn.disabled = false;
         generateBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> 生成 Wiki`;
         editBtn.style.display = "none";
 
         // Position popup near click, but keep within viewport
         const popupW = 380;
-        const popupH = 400;
+        const popupH = 620;
         let left = Math.min(x + 12, window.innerWidth - popupW - 16);
         let top = Math.min(y - 60, window.innerHeight - popupH - 16);
         top = Math.max(60, top);
@@ -1538,46 +1563,48 @@
 
         // ── Auto-load wiki if exists (fast filesystem read, matches product line) ──
         try {
-            const wikiUrl = `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(currentProductLine)}`;
+            const productLineAtOpen = currentProductLine;
+            const wikiUrl = `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(productLineAtOpen)}`;
             const wikiData = await fetchJSON(wikiUrl);
 
+            if (loadToken !== edgeWikiLoadToken) return;
+            renderRelationshipWiki(
+                sqlContent,
+                wikiData.sql_content || "当前物理 Schema 无法生成 SQL 关联示例。",
+            );
+            wikiLoading.style.display = "none";
             if (wikiData.found && wikiData.content) {
                 currentWikiContent = wikiData.content;
                 wikiEmpty.style.display = "none";
-                wikiContent.innerHTML = marked.parse(wikiData.content);
+                renderRelationshipWiki(wikiContent, wikiData.content);
                 wikiContent.style.display = "block";
                 generateBtn.style.display = "none";
                 editBtn.style.display = "inline-flex";
+            } else {
+                wikiEmpty.style.display = "flex";
+                generateBtn.style.display = "inline-flex";
             }
         } catch (e) {
-            // Wiki read failed — keep showing empty state, user can still click generate
+            if (loadToken !== edgeWikiLoadToken) return;
+            sqlContent.textContent = `SQL 读取失败：${String(e.message || e)}`;
+            wikiLoading.style.display = "none";
+            wikiEmpty.innerHTML = `
+                <span class="wiki-empty-icon">⚠️</span>
+                <span>Wiki 读取失败</span>
+                <span style="font-size:10px;color:var(--text-muted);margin-top:4px">${String(e.message || e)}</span>
+            `;
+            wikiEmpty.style.display = "flex";
+            generateBtn.style.display = "inline-flex";
             console.warn("Wiki read error:", e);
         }
     }
 
     function hideEdgePopup() {
+        edgeWikiLoadToken += 1;
         document.getElementById("edgePopup").classList.add("edge-popup-hidden");
         currentEdgeInfo = null;
         currentWikiContent = null;
     }
-
-    // Wire the "Ask AI" button
-    document.getElementById("edgePopupAsk").addEventListener("click", () => {
-        if (!currentEdgeInfo) return;
-        const { relName, source, target, desc, cardinality } = currentEdgeInfo;
-
-        // Build a natural-language question about this relationship
-        let question = `请详细解释 [[${source}]] 与 [[${target}]] 之间的 ${relName} 关系。\n`;
-        question += `> 当前关系定义：${source} → ${target} · ${cardinality || 'UNKNOWN'}${desc ? ' ' + desc : ''}\n\n`;
-        question += `在实际 Opcenter 建模中，什么时候需要配置这个关系？请举例说明其业务场景。`;
-
-        hideEdgePopup();
-
-        // Send to chat via exposed function
-        if (typeof window._askQuestion === "function") {
-            window._askQuestion(question);
-        }
-    });
 
     // Wire the "Generate Wiki" button — first try read, then generate
     document.getElementById("edgePopupGenerate").addEventListener("click", async () => {
@@ -1599,11 +1626,15 @@
             const wikiUrl = `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(currentProductLine)}`;
             const wikiData = await fetchJSON(wikiUrl);
 
+            renderRelationshipWiki(
+                document.getElementById("edgeSqlContent"),
+                wikiData.sql_content || "当前物理 Schema 无法生成 SQL 关联示例。",
+            );
             if (wikiData.found && wikiData.content) {
                 // Wiki exists — display it
                 currentWikiContent = wikiData.content;
                 wikiLoading.style.display = "none";
-                wikiContent.innerHTML = marked.parse(wikiData.content);
+                renderRelationshipWiki(wikiContent, wikiData.content);
                 wikiContent.style.display = "block";
                 generateBtn.style.display = "none";
                 editBtn.style.display = "inline-flex";
@@ -1651,7 +1682,7 @@
                             fullText += payload.content;
                             const now = Date.now();
                             if (now - lastRenderTime > RENDER_THROTTLE_MS) {
-                                wikiContent.innerHTML = marked.parse(fullText);
+                                renderRelationshipWiki(wikiContent, fullText);
                                 lastRenderTime = now;
                             }
                         } else if (payload.type === "done") {
@@ -1664,7 +1695,7 @@
             }
 
             if (fullText) {
-                wikiContent.innerHTML = marked.parse(currentWikiContent || fullText);
+                renderRelationshipWiki(wikiContent, currentWikiContent || fullText);
                 generateBtn.style.display = "none";
                 editBtn.style.display = "inline-flex";
             } else {
@@ -1702,7 +1733,7 @@
         function onStart(e) {
             // Only start drag from title/meta area, not from buttons or wiki area
             const target = e.target;
-            if (target.closest("button") || target.closest("textarea") || target.closest(".edge-popup-actions") || target.closest(".edge-wiki-area")) return;
+            if (target.closest("button") || target.closest("textarea") || target.closest(".edge-popup-actions") || target.closest(".edge-wiki-area") || target.closest(".edge-sql-area")) return;
 
             dragging = true;
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1796,7 +1827,7 @@
                 // Update the popup content
                 currentWikiContent = content;
                 const wikiContentEl = document.getElementById("edgeWikiContent");
-                wikiContentEl.innerHTML = marked.parse(content);
+                renderRelationshipWiki(wikiContentEl, content);
                 wikiContentEl.style.display = "block";
                 document.getElementById("edgeWikiEmpty").style.display = "none";
                 document.getElementById("edgePopupGenerate").style.display = "none";

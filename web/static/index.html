@@ -173,7 +173,13 @@
         <div class="edge-popup-title" id="edgePopupTitle">RELATIONSHIP</div>
         <div class="edge-popup-meta" id="edgePopupMeta">Source → Target</div>
         <div class="edge-popup-product-line" id="edgePopupPL"></div>
-        <!-- Wiki content area -->
+        <!-- Physical SQL is separate from the authored relationship Wiki. -->
+        <div class="edge-section-label">SQL 关联示例</div>
+        <div class="edge-sql-area" id="edgeSqlArea">
+            <div class="edge-sql-content" id="edgeSqlContent"></div>
+        </div>
+        <div class="edge-section-label">Relationship 用法</div>
+        <!-- Relationship usage Wiki content area -->
         <div class="edge-wiki-area" id="edgeWikiArea">
             <div class="edge-wiki-loading" id="edgeWikiLoading">
                 <div class="wiki-spinner"></div> 加载 Wiki...
@@ -181,7 +187,7 @@
             <div class="edge-wiki-content" id="edgeWikiContent"></div>
             <div class="edge-wiki-empty" id="edgeWikiEmpty">
                 <span class="wiki-empty-icon">📭</span>
-                <span>暂无 Wiki 文档</span>
+                <span>暂无 Relationship 用法 Wiki</span>
                 <span style="font-size:10px;color:var(--text-muted);margin-top:4px">点击下方「生成 Wiki」按钮，AI 将自动生成</span>
             </div>
         </div>
@@ -200,12 +206,6 @@
                     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
                 编辑
-            </button>
-            <button class="edge-popup-btn" id="edgePopupAsk">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                </svg>
-                问 AI
             </button>
         </div>
     </div>
@@ -348,7 +348,7 @@
     <!-- ── AntV G6 v5 Engine Local Offline Assets ── -->
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
-    <script src="/static/app.js?v=20260728-sql-context"></script>
+    <script src="/static/app.js?v=20260728-relationship-wiki-v3"></script>
     <script src="/static/chat.js?v=20260728-sql-dialect"></script>
 </body>
 
