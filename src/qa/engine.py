@@ -28,7 +28,7 @@ def _load_cn_map():
         "工艺路线": "Workflow", "流程": "Workflow",
         "步骤": "WorkflowStep", "工段": "Operation",
         "规范": "Spec", "指令": "Spec", "rework": "Rework",
-        "物料": "Product", "设备": "Resource",
+        "物料": "Product", "设备": "ResourceDef", "资源": "ResourceDef",
         "任务列表": "TaskList", "批次": "Container",
         "工单": "MfgOrder", "在制品": "Container",
         "警报": "AlarmDef", "挂起": "HoldReason",

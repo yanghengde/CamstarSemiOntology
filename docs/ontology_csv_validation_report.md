@@ -10,15 +10,15 @@
 |---|---|
 | Physical Tables | 1555 |
 | Physical Fields | 21963 |
-| Ontology Files | 186 |
-| Ontology Classes | 510 |
-| Ontology Relationships | 1196 |
+| Ontology Files | 187 |
+| Ontology Classes | 528 |
+| Ontology Relationships | 1328 |
 | Duplicate Relationships | 0 |
 | Duplicate Properties | 0 |
-| Exact Class Matches | 510 |
+| Exact Class Matches | 528 |
 | Duplicate Classes | 0 |
 | Ontology Only Classes | 0 |
-| Physical Only Classes | 1045 |
+| Physical Only Classes | 1027 |
 | Missing Properties | 0 |
 | Ontology Only Properties | 0 |
 | Type Mismatches | 0 |

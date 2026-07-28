@@ -24,6 +24,22 @@ _INTENT_RULES: tuple[tuple[re.Pattern[str], tuple[str, ...]], ...] = (
     ),
     (
         re.compile(
+            r"(?:工单|设备|资源).{0,12}(?:产出|产量|throughput|thruput)|"
+            r"(?:产出|产量|throughput|thruput).{0,12}(?:工单|设备|资源)",
+            re.IGNORECASE,
+        ),
+        ("ResourceThruputHistory",),
+    ),
+    (
+        re.compile(
+            r"(?:产出|产量|throughput|thruput).{0,8}(?:明细|detail)|"
+            r"(?:明细|detail).{0,8}(?:产出|产量|throughput|thruput)",
+            re.IGNORECASE,
+        ),
+        ("ThruputHistoryDetail",),
+    ),
+    (
+        re.compile(
             r"track\s*in|track\s*out|trackin|trackout|进站|出站|上机|下机",
             re.IGNORECASE,
         ),
@@ -32,6 +48,45 @@ _INTENT_RULES: tuple[tuple[re.Pattern[str], tuple[str, ...]], ...] = (
             "A_TrackInLotHistory",
             "A_TrackOutLotHistory",
         ),
+    ),
+    (
+        re.compile(r"\bstart\s+history\b|开工历史|开工记录|启动批次", re.IGNORECASE),
+        ("HistoryMainline", "StartHistoryDetail"),
+    ),
+    (
+        re.compile(
+            r"\bqty\s*history\b|数量变更|数量调整|调整数量",
+            re.IGNORECASE,
+        ),
+        ("HistoryMainline", "QtyHistory", "QtyHistoryDetails"),
+    ),
+    (
+        re.compile(r"\bsplit\s+history\b|拆分历史|拆分记录|批次拆分", re.IGNORECASE),
+        ("HistoryMainline", "SplitHistory", "SplitHistoryDetails"),
+    ),
+    (
+        re.compile(
+            r"\bcombine\s+history\b|合并历史|合并记录|批次合并",
+            re.IGNORECASE,
+        ),
+        ("HistoryMainline", "CombineHistory", "CombineHistoryDetail"),
+    ),
+    (
+        re.compile(
+            r"\bhold\s*(?:release\s*)?history\b|\brelease\s+history\b|"
+            r"(?:暂停|Hold|释放|Release).{0,6}(?:历史|记录)|"
+            r"(?:历史|记录).{0,6}(?:暂停|Hold|释放|Release)",
+            re.IGNORECASE,
+        ),
+        ("HistoryMainline", "HoldReleaseHistory", "HoldReleaseHistoryDetail"),
+    ),
+    (
+        re.compile(
+            r"(?:设备|资源).{0,6}状态.{0,6}(?:历史|记录)|"
+            r"\bresource\s+status\s+history\b",
+            re.IGNORECASE,
+        ),
+        ("HistoryMainline", "ResourceStatusHistory"),
     ),
 )
 

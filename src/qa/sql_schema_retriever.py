@@ -227,6 +227,41 @@ def build_physical_join_plan(
                 joins.append(edge)
                 seen_joins.add(key)
 
+    # Preserve every direct FK between user-requested tables, even when the
+    # minimum connecting tree already linked those anchors through a bridge.
+    # These direct facts are often the correct SQL path (for example
+    # ResourceThruputHistory -> MfgOrder) and should not be hidden merely
+    # because another requested table was connected first.
+    anchor_set = set(anchors)
+    selected_set = set(selected)
+    seen_table_pairs = {
+        frozenset((edge["from_table"], edge["to_table"]))
+        for edge in joins
+        if edge["from_table"] != edge["to_table"]
+    }
+    for table in anchors:
+        if table not in selected_set:
+            continue
+        for neighbor, edge in _physical_fk_graph().get(table, []):
+            table_pair = frozenset((table, neighbor))
+            if (
+                neighbor == table
+                or neighbor not in anchor_set
+                or neighbor not in selected_set
+                or table_pair in seen_table_pairs
+            ):
+                continue
+            key = (
+                edge["from_table"],
+                edge["from_field"],
+                edge["to_table"],
+                edge["to_field"],
+            )
+            if key not in seen_joins:
+                joins.append(edge)
+                seen_joins.add(key)
+                seen_table_pairs.add(table_pair)
+
     return {
         "tables": selected,
         "joins": joins,

@@ -361,6 +361,7 @@ if __name__ == "__main__":
         "shipment_destination_group_ontology.json",
         "shipping_reason_ontology.json",
         "shipping_reason_group_ontology.json",
+        "sql_core_transaction_history_ontology.json",
         "substitution_reason_ontology.json",
         "task_list_ontology.json",
         "mfg_order_task_list_ontology.json",

@@ -10,6 +10,20 @@ from typing import Any
 _MOVE = re.compile(r"(?:move|移动|过站|移站|move\s*记录|移动记录|移动历史)", re.I)
 _THROUGHPUT = re.compile(r"(?:产出|产量|throughput|thruput)", re.I)
 _YIELD = re.compile(r"(?:良率|直通率|一次通过率|\byield\b)", re.I)
+_START_HISTORY = re.compile(r"(?:开工历史|开工记录|启动批次|\bstart\s+history\b)", re.I)
+_QUANTITY_HISTORY = re.compile(r"(?:数量变更|数量调整|调整数量|\bqty\s*history\b)", re.I)
+_SPLIT_HISTORY = re.compile(r"(?:拆分历史|拆分记录|批次拆分|\bsplit\s+history\b)", re.I)
+_COMBINE_HISTORY = re.compile(r"(?:合并历史|合并记录|批次合并|\bcombine\s+history\b)", re.I)
+_HOLD_RELEASE_HISTORY = re.compile(
+    r"(?:暂停|Hold|释放|Release).{0,6}(?:历史|记录)|"
+    r"(?:历史|记录).{0,6}(?:暂停|Hold|释放|Release)",
+    re.I,
+)
+_RESOURCE_STATUS_HISTORY = re.compile(
+    r"(?:设备|资源).{0,6}状态.{0,6}(?:历史|记录)|"
+    r"\bresource\s+status\s+history\b",
+    re.I,
+)
 _WIP = re.compile(r"(?:在制品|\bWIP\b|当前批次|当前在制)", re.I)
 _FIELD_LIST = re.compile(r"(?:字段|列名|schema|结构|有哪些列)", re.I)
 _TODAY = re.compile(r"(?:今天|今日|\btoday\b)", re.I)
@@ -23,7 +37,7 @@ _RANGE = re.compile(
 _DIMENSIONS = (
     ("MfgOrder", ("工单", "制造工单", "MfgOrder")),
     ("Operation", ("工序", "Operation")),
-    ("Resource", ("设备", "资源", "Resource")),
+    ("ResourceDef", ("设备", "资源", "Resource", "ResourceDef")),
     ("ProductFamily", ("产品族", "ProductFamily")),
     ("Product", ("产品", "物料", "Product")),
     ("Container", ("批次", "容器", "Container")),
@@ -132,7 +146,16 @@ def _set_next_ambiguity(plan: SqlQueryPlan) -> None:
     plan.clarification_question = None
 
     if (
-        plan.intent in {"throughput", "move_history"}
+        plan.intent in {
+            "throughput",
+            "move_history",
+            "start_history",
+            "quantity_history",
+            "split_history",
+            "combine_history",
+            "hold_release_history",
+            "resource_status_history",
+        }
         and plan.time_scope != "未指定"
         and not plan.time_basis
     ):
@@ -192,6 +215,18 @@ def build_sql_query_plan(
         intent, metric = "yield", "良率"
     elif _THROUGHPUT.search(question):
         intent, metric = "throughput", "产出数量"
+    elif _START_HISTORY.search(question):
+        intent, metric = "start_history", "开工记录"
+    elif _QUANTITY_HISTORY.search(question):
+        intent, metric = "quantity_history", "数量变更记录"
+    elif _SPLIT_HISTORY.search(question):
+        intent, metric = "split_history", "拆分记录"
+    elif _COMBINE_HISTORY.search(question):
+        intent, metric = "combine_history", "合并记录"
+    elif _HOLD_RELEASE_HISTORY.search(question):
+        intent, metric = "hold_release_history", "暂停/释放记录"
+    elif _RESOURCE_STATUS_HISTORY.search(question):
+        intent, metric = "resource_status_history", "资源状态变更记录"
     elif _WIP.search(question):
         intent, metric = "current_wip", "在制数量/状态"
     elif _FIELD_LIST.search(question):
@@ -203,7 +238,7 @@ def build_sql_query_plan(
             {
                 "MfgOrder": "工单",
                 "Operation": "工序",
-                "Resource": "设备",
+                "ResourceDef": "设备",
                 "ProductFamily": "产品族",
                 "Product": "产品",
                 "Container": "批次",

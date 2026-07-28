@@ -22,7 +22,12 @@ CLASSES = {
     "MoveHistory",
     "Product",
     "ProductFamily",
+    "ResourceThruputHistory",
+    "ResourceStatusHistory",
+    "SplitHistory",
+    "SplitHistoryDetails",
     "ThruputHistory",
+    "ThruputHistoryDetail",
     "Workflow",
 }
 
@@ -99,7 +104,41 @@ def test_throughput_intent_adds_history_tables():
         CN_MAP,
     )
 
-    assert result == ["MfgOrder", "HistoryMainline", "ThruputHistory"]
+    assert result == [
+        "MfgOrder",
+        "HistoryMainline",
+        "ThruputHistory",
+        "ResourceThruputHistory",
+    ]
+
+
+def test_split_intent_adds_main_and_detail_history_objects():
+    result = resolve_sql_entities(
+        "查询今日批次拆分记录",
+        CLASSES,
+        CN_MAP,
+    )
+
+    assert result == [
+        "Container",
+        "HistoryMainline",
+        "SplitHistory",
+        "SplitHistoryDetails",
+    ]
+
+
+def test_resource_status_intent_adds_resource_status_history():
+    result = resolve_sql_entities(
+        "查询设备状态历史",
+        CLASSES | {"ResourceDef"},
+        {**CN_MAP, "设备": "ResourceDef"},
+    )
+
+    assert result == [
+        "ResourceDef",
+        "HistoryMainline",
+        "ResourceStatusHistory",
+    ]
 
 
 def test_unresolved_question_has_no_arbitrary_workflow_fallback():
@@ -169,6 +208,34 @@ def test_move_join_plan_uses_history_mainline_as_verified_bridge():
             "HistoryMainlineId",
         ),
     }
+
+
+def test_resource_throughput_join_plan_uses_registered_physical_fks():
+    plan = build_physical_join_plan(
+        ["MfgOrder", "HistoryMainline", "ResourceThruputHistory"]
+    )
+
+    joins = {
+        (
+            edge["from_table"],
+            edge["from_field"],
+            edge["to_table"],
+            edge["to_field"],
+        )
+        for edge in plan["joins"]
+    }
+    assert (
+        "ResourceThruputHistory",
+        "HistoryMainlineId",
+        "HistoryMainline",
+        "HistoryMainlineId",
+    ) in joins
+    assert (
+        "ResourceThruputHistory",
+        "MfgOrderId",
+        "MfgOrder",
+        "MfgOrderId",
+    ) in joins
 
 
 def test_schema_context_exposes_join_plan_before_fields():
@@ -402,6 +469,18 @@ def test_yield_plan_requires_business_formula():
     assert plan.intent == "yield"
     assert plan.clarification_key == "yield_definition"
     assert "分子和分母" in plan.ambiguities[0]
+
+
+def test_today_split_history_plan_requires_time_basis_confirmation():
+    plan = build_sql_query_plan(
+        "查询今日批次拆分记录",
+        ["Container", "HistoryMainline", "SplitHistory", "SplitHistoryDetails"],
+        "oracle",
+    )
+
+    assert plan.intent == "split_history"
+    assert plan.metric == "拆分记录"
+    assert plan.clarification_key == "time_basis"
 
 
 def test_query_plan_context_requires_parameterized_half_open_range():
