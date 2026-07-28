@@ -2288,6 +2288,8 @@
     //  Toolbar Buttons & Export
     // ══════════════════════════════════════════════════════
     function setupToolbar() {
+        document.getElementById("homeLogoBtn").addEventListener("click", resetToHome);
+
         document.getElementById("btnFitView").addEventListener("click", () => {
             if (graph) graph.fitView();
         });
@@ -2664,6 +2666,85 @@
     function updateLayoutLabel() {
         const el = document.getElementById("layoutLabel");
         if (el) el.textContent = LAYOUT_LABELS[layoutMode] || layoutMode;
+    }
+
+    let homeResetBusy = false;
+
+    async function resetToHome() {
+        if (homeResetBusy) return;
+        homeResetBusy = true;
+        const homeButton = document.getElementById("homeLogoBtn");
+        homeButton.setAttribute("aria-busy", "true");
+
+        try {
+            // Close every transient surface immediately.
+            closePanel();
+            hideEdgePopup();
+            closeWikiEditor();
+            document.getElementById("nodeTooltip").classList.add("node-tooltip-hidden");
+            document.getElementById("legend").classList.add("legend-collapsed");
+            document.getElementById("sectionProperties").style.display = "";
+            if (typeof window._closeChatPanel === "function") {
+                window._closeChatPanel();
+            } else {
+                document.getElementById("chatPanel").classList.add("chat-hidden");
+                document.getElementById("chatToggleBtn").classList.remove("active");
+                document.getElementById("chatSessionMenu").classList.add("chat-session-menu-hidden");
+                document.getElementById("mentionDropdown").style.display = "none";
+            }
+
+            // Reset controls that can leave the overview filtered or focused.
+            const searchInput = document.getElementById("searchInput");
+            searchInput.value = "";
+            const legendSearch = document.getElementById("legendSearchInput");
+            legendSearch.value = "";
+            const legendItems = document.querySelectorAll(".legend-item");
+            legendItems.forEach((item) => item.classList.remove("active", "hidden"));
+            document.getElementById("legendCount").textContent = `(${legendItems.length})`;
+            document.activeElement?.blur();
+
+            relMode = false;
+            comboEnabled = false;
+            layoutMode = "preset";
+            document.body.classList.remove("rel-mode");
+            document.getElementById("btnRelMode").classList.remove("icon-btn-active");
+            document.getElementById("btnToggleCombo").classList.remove("icon-btn-active");
+            document.getElementById("layoutLabel").textContent = "初始布局";
+            syncNodePrioritySwitch(null);
+            syncChatContextButton(null);
+
+            if (!graph || !rawData) return;
+
+            // Cancel any in-flight focus render before rebuilding the original
+            // overview. Waiting here prevents an old node click from repainting
+            // its incident edges after the home reset has completed.
+            clearSelection();
+            if (edgeRenderWorker) {
+                try { await edgeRenderWorker; } catch (_) {}
+            }
+            try { await stateApplyChain; } catch (_) {}
+
+            graphMutationBusy = true;
+            pendingHighlightClear = false;
+            stateRevision++;
+            _prevStates = Object.create(null);
+
+            // Recompute deterministic positions so dragged nodes, filtered
+            // states, focused edges, camera position and zoom all return home.
+            indexOverviewData(rawData);
+            const data = buildGraphData(
+                { ...rawData, edges: overviewApiEdges },
+                false,
+            );
+            graph.setLayout(undefined);
+            graph.setData(data);
+            await graph.render();
+            setFocusBackdrop(null);
+            await graph.fitView();
+        } finally {
+            graphMutationBusy = false;
+            homeButton.removeAttribute("aria-busy");
+        }
     }
 
     // ══════════════════════════════════════════════════════

@@ -108,6 +108,28 @@ html, body {
 .siemens-logo {
     display: flex;
     align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.siemens-logo:hover {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 0 7px rgba(0, 255, 185, 0.5));
+}
+
+.siemens-logo:focus-visible {
+    outline: 2px solid var(--si-green);
+    outline-offset: 3px;
+}
+
+.siemens-logo:active {
+    transform: scale(0.94);
 }
 
 /* ── Search Box ── */

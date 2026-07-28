@@ -273,12 +273,17 @@
         }
     });
 
-    // ── Close panel (header X button) ──
-    chatCloseBtn.addEventListener("click", () => {
+    function closeChatPanel() {
         chatPanel.classList.add("chat-hidden");
         chatBtn.classList.remove("active");
         chatSessionMenu.classList.add("chat-session-menu-hidden");
-    });
+        closeMention();
+    }
+
+    window._closeChatPanel = closeChatPanel;
+
+    // ── Close panel (header X button) ──
+    chatCloseBtn.addEventListener("click", closeChatPanel);
 
     // ── Send message ──
     chatSend.addEventListener("click", () => {
