@@ -205,6 +205,76 @@ async def query_stream(
         )
         return
 
+    # Reviewed semantic metrics bypass free-form LLM SQL generation. The
+    # contract fixes the fact table, measure, grain and physical JOINs.
+    metric_id = (query_plan or {}).get("metric_id")
+    if assistant_mode == "sql" and metric_id:
+        from src.qa.semantic.metric_catalog import get_metric
+        from src.qa.semantic.metric_validator import validate_metric_sql
+        from src.qa.semantic.sql_renderer import render_metric_answer
+        from src.qa.sql_query_planner import format_query_plan_markdown
+        from src.qa.sql_validator import validate_sql_answer
+
+        step_metric = trace.add_step("指标语义层") if trace else None
+        metric_contract = get_metric(metric_id)
+        try:
+            yield {
+                "type": "status",
+                "content": f"正在按指标合同 {metric_id} 生成确定性 SQL…",
+            }
+            body = render_metric_answer(
+                metric_contract,
+                dialect=sql_dialect,
+                time_scope=query_plan.get("time_scope", "未指定"),
+                time_basis=query_plan.get("time_basis"),
+                question=query_plan.get("effective_question") or question,
+            )
+            physical_validation = validate_sql_answer(
+                body,
+                dialect=sql_dialect,
+                query_plan=query_plan,
+            )
+            metric_validation = validate_metric_sql(
+                body,
+                metric_contract,
+                time_basis=query_plan.get("time_basis"),
+            )
+            if physical_validation.valid and metric_validation.valid:
+                full_answer = (
+                    f"{format_query_plan_markdown(query_plan)}\n\n{body}"
+                )
+                yield full_answer
+                if step_metric:
+                    step_metric.done(output={
+                        "metric_id": metric_id,
+                        "fact_table": metric_contract["factTable"],
+                        "contract_status": metric_contract.get("status"),
+                        "sql_valid": True,
+                        "llm_bypassed": True,
+                    })
+            else:
+                errors = (
+                    physical_validation.errors + metric_validation.errors
+                )
+                full_answer = (
+                    f"{format_query_plan_markdown(query_plan)}\n\n"
+                    "### 指标 SQL 校验未通过\n\n"
+                    "指标合同生成结果未通过确定性校验，因此没有返回候选 SQL。\n\n"
+                    + "\n".join(f"- {error}" for error in errors)
+                )
+                yield full_answer
+                if step_metric:
+                    step_metric.fail("; ".join(errors))
+            return
+        except Exception as exc:
+            if step_metric:
+                step_metric.fail(str(exc))
+            yield (
+                "### 指标 SQL 生成失败\n\n"
+                f"指标合同 `{metric_id}` 无法生成安全SQL：{exc}"
+            )
+            return
+
     # 2. Graph retrieval
     step_graph = trace.add_step("图谱检索") if trace else None
     ontology_names = set(_get_class_names())

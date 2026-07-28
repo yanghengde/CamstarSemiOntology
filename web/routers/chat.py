@@ -173,11 +173,22 @@ async def chat(req: ChatRequest):
                 req.sql_dialect,
                 session.get("context", {}).get("pending_sql_plan"),
             )
+            if query_plan.metric_id:
+                from src.qa.semantic.metric_catalog import get_metric
+                metric_contract = get_metric(query_plan.metric_id)
+                metric_tables = [
+                    item["table"]
+                    for item in (metric_contract or {}).get("tables", [])
+                ]
+                query_plan.entities = list(dict.fromkeys(metric_tables))
             # A clarification answer inherits the original request's objects,
             # even if the answer itself only says "本地交易时间".
-            all_classes = list(dict.fromkeys(
-                query_plan.entities + all_classes
-            ))
+            if query_plan.metric_id:
+                all_classes = list(query_plan.entities)
+            else:
+                all_classes = list(dict.fromkeys(
+                    query_plan.entities + all_classes
+                ))
         update_context(
             session_id,
             selected_classes=all_classes,

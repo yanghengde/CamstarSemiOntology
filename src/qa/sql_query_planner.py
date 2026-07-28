@@ -53,6 +53,9 @@ class SqlQueryPlan:
     dialect: str = "oracle"
     intent: str = "detail_query"
     metric: str = "明细记录"
+    metric_id: str | None = None
+    fact_table: str | None = None
+    metric_status: str | None = None
     dimensions: list[str] = field(default_factory=list)
     grain: str = "明细记录"
     time_scope: str = "未指定"
@@ -117,6 +120,13 @@ def _explicit_time_basis(question: str) -> str | None:
 
 def _resolve_followup(plan: SqlQueryPlan, answer: str) -> bool:
     key = plan.clarification_key
+    if key == "time_scope":
+        selected = _time_scope(answer)
+        if selected != "未指定":
+            plan.time_scope = selected
+            plan.time_basis = _explicit_time_basis(answer) or plan.time_basis
+            return True
+        return False
     if key == "time_basis":
         selected = _explicit_time_basis(answer)
         if selected:
@@ -145,7 +155,34 @@ def _set_next_ambiguity(plan: SqlQueryPlan) -> None:
     plan.clarification_key = None
     plan.clarification_question = None
 
+    metric_contract = None
+    if plan.metric_id:
+        from src.qa.semantic.metric_catalog import get_metric
+        metric_contract = get_metric(plan.metric_id)
+
     if (
+        metric_contract
+        and metric_contract.get("requiresTimeRange")
+        and plan.time_scope == "未指定"
+    ):
+        plan.ambiguities.append("尚未指定统计时间范围")
+        plan.clarification_key = "time_scope"
+        plan.clarification_question = (
+            "请指定统计时间范围，例如“今日”“昨日”“近7天”，"
+            "或给出明确的开始和结束时间。"
+        )
+    elif (
+        metric_contract
+        and metric_contract.get("requiresTimeRange")
+        and not plan.time_basis
+    ):
+        plan.ambiguities.append("尚未确定时间字段口径")
+        plan.clarification_key = "time_basis"
+        plan.clarification_question = (
+            "这次时间范围使用本地交易时间 `TxnDate`，"
+            "还是 GMT/UTC 交易时间 `TxnDateGMT`？"
+        )
+    elif (
         plan.intent in {
             "throughput",
             "move_history",
@@ -172,7 +209,11 @@ def _set_next_ambiguity(plan: SqlQueryPlan) -> None:
             "请确认良率口径，例如“合格产出数量 ÷ 总产出数量”；"
             "如果你们已有固定分子、分母字段，也请直接说明。"
         )
-    elif plan.intent == "current_wip" and not plan.business_definition:
+    elif (
+        plan.intent == "current_wip"
+        and not plan.metric_id
+        and not plan.business_definition
+    ):
         plan.ambiguities.append("尚未确定查询当前快照还是历史变化")
         plan.clarification_key = "wip_scope"
         plan.clarification_question = (
@@ -248,6 +289,12 @@ def build_sql_query_plan(
     else:
         grain = "明细记录"
 
+    from src.qa.semantic.metric_resolver import resolve_metric
+    metric_contract = resolve_metric(question)
+    if metric_contract:
+        intent = metric_contract["intent"]
+        metric = metric_contract["nameZh"]
+
     plan = SqlQueryPlan(
         original_question=question,
         effective_question=question,
@@ -255,6 +302,9 @@ def build_sql_query_plan(
         dialect=(dialect or "oracle").lower(),
         intent=intent,
         metric=metric,
+        metric_id=metric_contract["id"] if metric_contract else None,
+        fact_table=metric_contract["factTable"] if metric_contract else None,
+        metric_status=metric_contract.get("status") if metric_contract else None,
         dimensions=dimensions,
         grain=grain,
         time_scope=_time_scope(question),
@@ -277,6 +327,9 @@ def format_query_plan_context(plan: SqlQueryPlan | dict[str, Any] | None) -> str
         f"- 时间范围：{value.time_scope}",
         f"- 时间字段：{value.time_basis or '未确认'}",
     ]
+    if value.metric_id:
+        lines.insert(3, f"- 指标合同：{value.metric_id}")
+        lines.insert(4, f"- 事实表：{value.fact_table}")
     if value.business_definition:
         lines.append(f"- 业务口径：{value.business_definition}")
     if value.time_scope != "未指定" and value.time_basis:
@@ -301,6 +354,9 @@ def format_query_plan_markdown(
         f"- 时间范围：{value.time_scope}",
         f"- 时间字段：`{value.time_basis}`" if value.time_basis else "- 时间字段：待确认",
     ]
+    if value.metric_id:
+        rows.insert(2, f"- 指标合同：`{value.metric_id}`")
+        rows.insert(3, f"- 事实表：`{value.fact_table}`")
     if value.business_definition:
         rows.append(f"- 业务口径：{value.business_definition}")
     output = "### 查询理解\n\n" + "\n".join(rows)

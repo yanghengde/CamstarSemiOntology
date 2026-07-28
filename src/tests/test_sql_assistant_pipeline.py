@@ -419,7 +419,9 @@ def test_today_throughput_plan_requires_time_basis_confirmation():
     )
 
     assert plan.intent == "throughput"
-    assert plan.metric == "产出数量"
+    assert plan.metric == "工单产出数量"
+    assert plan.metric_id == "throughput.by_mfg_order"
+    assert plan.fact_table == "ResourceThruputHistory"
     assert plan.grain == "每个工单"
     assert plan.time_scope == "今日"
     assert plan.needs_clarification is True
@@ -442,7 +444,8 @@ def test_time_basis_followup_preserves_original_query_plan():
 
     assert resolved.needs_clarification is False
     assert resolved.time_basis == "TxnDate"
-    assert resolved.metric == "产出数量"
+    assert resolved.metric == "工单产出数量"
+    assert resolved.metric_id == "throughput.by_mfg_order"
     assert resolved.grain == "每个工单"
     assert resolved.original_question == "请写一个今日工单产出的 Oracle SQL"
     assert "用户补充确认：使用本地交易时间" in resolved.effective_question
