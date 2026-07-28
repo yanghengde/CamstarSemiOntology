@@ -131,6 +131,7 @@ async def query(
     selected_classes: list[str] | None = None,
     known_classes: list[str] | None = None,
     sql_dialect: str = "oracle",
+    query_plan: dict | None = None,
 ) -> str:
     """
     Non-streaming query: returns complete answer string.
@@ -145,6 +146,7 @@ async def query(
         selected_classes=selected_classes,
         known_classes=known_classes,
         sql_dialect=sql_dialect,
+        query_plan=query_plan,
     ):
         if isinstance(chunk, str):
             chunks.append(chunk)
@@ -161,6 +163,7 @@ async def query_stream(
     selected_classes: list[str] | None = None,
     known_classes: list[str] | None = None,
     sql_dialect: str = "oracle",
+    query_plan: dict | None = None,
 ):
     """
     Streaming query: yields answer chunks as they arrive from DeepSeek.
@@ -246,14 +249,30 @@ async def query_stream(
     step_prompt = trace.add_step("提示词构建") if trace else None
     sql_schema_context = ""
     sql_domain_context = ""
+    sql_query_plan_context = ""
+    planning_question = question
     if assistant_mode == "sql":
         from src.qa.sql_schema_retriever import build_sql_schema_context
         from src.qa.sql_domain_context import build_sql_domain_context
+        from src.qa.sql_query_planner import (
+            SqlQueryPlan,
+            format_query_plan_context,
+        )
 
-        sql_schema_context = build_sql_schema_context(keywords, question=question)
-        sql_domain_context = build_sql_domain_context(keywords, question=question)
+        plan_value = SqlQueryPlan.from_dict(query_plan)
+        if plan_value:
+            planning_question = plan_value.effective_question or question
+            sql_query_plan_context = format_query_plan_context(plan_value)
+        sql_schema_context = build_sql_schema_context(
+            keywords,
+            question=planning_question,
+        )
+        sql_domain_context = build_sql_domain_context(
+            keywords,
+            question=planning_question,
+        )
     messages = build_prompt(
-        question,
+        planning_question,
         graph_context,
         vector_context,
         history,
@@ -261,6 +280,7 @@ async def query_stream(
         assistant_mode=assistant_mode,
         sql_schema_context=sql_schema_context,
         sql_domain_context=sql_domain_context,
+        sql_query_plan_context=sql_query_plan_context,
         known_classes=known_classes,
         sql_dialect=sql_dialect,
     )
@@ -268,6 +288,7 @@ async def query_stream(
         step_prompt.done(output={
             "system_tokens": len(messages[0]["content"]) // 3 if messages else 0,
             "history_turns": len(history) if history else 0,
+            "query_plan": query_plan or None,
         })
 
     # 5. Stream from DeepSeek
@@ -294,6 +315,7 @@ async def query_stream(
             validation = validate_sql_answer(
                 full_answer,
                 dialect=sql_dialect,
+                query_plan=query_plan,
             )
             attempts = 1
 
@@ -325,14 +347,22 @@ async def query_stream(
                 validation = validate_sql_answer(
                     full_answer,
                     dialect=sql_dialect,
+                    query_plan=query_plan,
                 )
                 attempts = 2
 
             if validation.valid:
+                from src.qa.sql_query_planner import format_query_plan_markdown
+                plan_markdown = format_query_plan_markdown(query_plan)
+                if plan_markdown:
+                    full_answer = f"{plan_markdown}\n\n{full_answer}"
                 yield full_answer
             else:
+                from src.qa.sql_query_planner import format_query_plan_markdown
+                plan_markdown = format_query_plan_markdown(query_plan)
                 full_answer = (
-                    "### SQL 校验未通过\n"
+                    (f"{plan_markdown}\n\n" if plan_markdown else "")
+                    + "### SQL 校验未通过\n"
                     "候选 SQL 包含无法由当前物理 Schema 验证的内容，"
                     "因此本次不展示 SQL。请补充或重新选择业务对象。\n\n"
                     + format_validation_feedback(validation)

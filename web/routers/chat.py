@@ -13,6 +13,7 @@ from src.qa.session_store import (
     list_sessions,
     load_session,
     set_known_classes,
+    set_pending_sql_plan,
     update_context,
 )
 
@@ -135,6 +136,10 @@ async def chat(req: ChatRequest):
         from src.qa.engine import query_stream, extract_keywords, extract_class_links
         from src.qa.graph_retriever import search_graph, find_path_highlight
         from src.qa.sql_entity_resolver import recent_selected_classes
+        from src.qa.sql_query_planner import (
+            build_sql_query_plan,
+            format_query_plan_markdown,
+        )
 
         # 1. Extract keywords from the current question and the persisted
         # conversation context. Referenced tables accumulate across turns.
@@ -159,6 +164,20 @@ async def chat(req: ChatRequest):
 
         # Combine, keeping current keywords first
         all_classes = list(dict.fromkeys(keywords + history_classes))
+
+        query_plan = None
+        if req.assistant_mode == "sql":
+            query_plan = build_sql_query_plan(
+                question,
+                all_classes,
+                req.sql_dialect,
+                session.get("context", {}).get("pending_sql_plan"),
+            )
+            # A clarification answer inherits the original request's objects,
+            # even if the answer itself only says "本地交易时间".
+            all_classes = list(dict.fromkeys(
+                query_plan.entities + all_classes
+            ))
         update_context(
             session_id,
             selected_classes=all_classes,
@@ -180,6 +199,46 @@ async def chat(req: ChatRequest):
 
         full_answer = ""
         error_msg = None
+        if query_plan and query_plan.needs_clarification:
+            set_pending_sql_plan(session_id, query_plan.to_dict())
+            full_answer = format_query_plan_markdown(query_plan)
+            if trace:
+                trace.finalize(answer=full_answer)
+            saved_session = append_exchange(
+                session_id,
+                question=question,
+                answer=full_answer,
+                selected_classes=all_classes,
+            )
+            yield (
+                "data: "
+                + json.dumps(
+                    {"type": "chunk", "content": full_answer},
+                    ensure_ascii=False,
+                )
+                + "\n\n"
+            )
+            yield (
+                "data: "
+                + json.dumps(
+                    {
+                        "type": "done",
+                        "session_id": session_id,
+                        "session_title": saved_session.get("title"),
+                        "session_context": saved_session.get("context", {}),
+                        "keywords": keywords,
+                        "class_links": [],
+                        "highlight": highlight_data,
+                        "trace_id": trace.trace_id if trace else None,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n\n"
+            )
+            return
+        if query_plan:
+            set_pending_sql_plan(session_id, None)
+
         try:
             async for chunk in query_stream(
                 question,
@@ -191,6 +250,7 @@ async def chat(req: ChatRequest):
                 selected_classes=all_classes,
                 known_classes=known_classes,
                 sql_dialect=req.sql_dialect,
+                query_plan=query_plan.to_dict() if query_plan else None,
             ):
                 if isinstance(chunk, dict) and chunk.get("type") == "status":
                     yield f"data: {json.dumps({'type': 'status', 'content': chunk['content']}, ensure_ascii=False)}\n\n"

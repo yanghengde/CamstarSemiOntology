@@ -8,6 +8,10 @@ from src.qa.sql_schema_retriever import (
 )
 from src.qa.sql_validator import validate_sql_answer
 from src.qa.prompt_builder import build_prompt
+from src.qa.sql_query_planner import (
+    build_sql_query_plan,
+    format_query_plan_context,
+)
 
 
 CLASSES = {
@@ -338,3 +342,138 @@ FETCH FIRST 100 ROWS ONLY;
         and message["content"] == valid_answer
         for message in messages
     )
+
+
+def test_today_throughput_plan_requires_time_basis_confirmation():
+    plan = build_sql_query_plan(
+        "请写一个今日工单产出的 Oracle SQL",
+        ["MfgOrder", "HistoryMainline", "ThruputHistory"],
+        "oracle",
+    )
+
+    assert plan.intent == "throughput"
+    assert plan.metric == "产出数量"
+    assert plan.grain == "每个工单"
+    assert plan.time_scope == "今日"
+    assert plan.needs_clarification is True
+    assert plan.clarification_key == "time_basis"
+    assert "TxnDateGMT" in plan.clarification_question
+
+
+def test_time_basis_followup_preserves_original_query_plan():
+    pending = build_sql_query_plan(
+        "请写一个今日工单产出的 Oracle SQL",
+        ["MfgOrder", "HistoryMainline", "ThruputHistory"],
+        "oracle",
+    )
+    resolved = build_sql_query_plan(
+        "使用本地交易时间",
+        pending.entities,
+        "oracle",
+        pending.to_dict(),
+    )
+
+    assert resolved.needs_clarification is False
+    assert resolved.time_basis == "TxnDate"
+    assert resolved.metric == "产出数量"
+    assert resolved.grain == "每个工单"
+    assert resolved.original_question == "请写一个今日工单产出的 Oracle SQL"
+    assert "用户补充确认：使用本地交易时间" in resolved.effective_question
+
+
+def test_explicit_gmt_time_basis_skips_clarification():
+    plan = build_sql_query_plan(
+        "按 TxnDateGMT 查询今日工单产出",
+        ["MfgOrder", "HistoryMainline", "ThruputHistory"],
+        "oracle",
+    )
+
+    assert plan.time_basis == "TxnDateGMT"
+    assert plan.needs_clarification is False
+
+
+def test_yield_plan_requires_business_formula():
+    plan = build_sql_query_plan(
+        "查询产品良率",
+        ["Product", "HistoryMainline", "ThruputHistory"],
+        "oracle",
+    )
+
+    assert plan.intent == "yield"
+    assert plan.clarification_key == "yield_definition"
+    assert "分子和分母" in plan.ambiguities[0]
+
+
+def test_query_plan_context_requires_parameterized_half_open_range():
+    pending = build_sql_query_plan(
+        "查询今日工单产出",
+        ["MfgOrder", "HistoryMainline", "ThruputHistory"],
+    )
+    plan = build_sql_query_plan(
+        "TxnDate",
+        pending.entities,
+        pending_plan=pending.to_dict(),
+    )
+
+    context = format_query_plan_context(plan)
+    assert "TxnDate" in context
+    assert ">= :start_time" in context
+    assert "< :end_time" in context
+    assert "不要对时间字段使用 TRUNC" in context
+
+
+def test_prompt_contains_structured_query_plan_before_schema():
+    messages = build_prompt(
+        "查询今日工单产出",
+        "",
+        "",
+        assistant_mode="sql",
+        sql_query_plan_context="- 指标：产出数量\n- 时间字段：TxnDate",
+        sql_schema_context="### 物理表 [HistoryMainline]",
+    )
+
+    user_prompt = messages[-1]["content"]
+    assert "## 结构化查询计划" in user_prompt
+    assert user_prompt.index("## 结构化查询计划") < user_prompt.index(
+        "## 物理数据库架构"
+    )
+    assert "禁止对时间字段使用 TRUNC" in messages[0]["content"]
+
+
+def test_validator_rejects_truncated_time_field_against_query_plan():
+    answer = """```sql
+SELECT hm.HistoryMainlineId
+FROM HistoryMainline hm
+WHERE TRUNC(hm.TxnDate) = :today;
+```"""
+    result = validate_sql_answer(
+        answer,
+        dialect="oracle",
+        query_plan={
+            "time_scope": "今日",
+            "time_basis": "TxnDate",
+        },
+    )
+
+    assert result.valid is False
+    assert any("不能先经过 TRUNC" in error for error in result.errors)
+    assert any("半开区间" in error for error in result.errors)
+
+
+def test_validator_accepts_planned_half_open_time_range():
+    answer = """```sql
+SELECT hm.HistoryMainlineId
+FROM HistoryMainline hm
+WHERE hm.TxnDate >= :start_time
+  AND hm.TxnDate < :end_time;
+```"""
+    result = validate_sql_answer(
+        answer,
+        dialect="oracle",
+        query_plan={
+            "time_scope": "今日",
+            "time_basis": "TxnDate",
+        },
+    )
+
+    assert result.valid is True

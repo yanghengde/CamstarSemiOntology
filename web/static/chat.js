@@ -714,6 +714,8 @@
             .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="chat-code"><code>$2</code></pre>')
             .replace(/`([^`]+)`/g, '<code class="chat-inline-code">$1</code>')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^### 查询理解\r?\n\r?\n((?:^- .+(?:\r?\n|$))+)/gm, '<div class="chat-query-plan"><div class="chat-query-plan-title">查询理解</div>\n$1</div>')
+            .replace(/^### 需要你确认$/gm, '<div class="chat-clarification-title">需要你确认</div>')
             .replace(/^### (.+)$/gm, '<div class="chat-h3">$1</div>')
             .replace(/^## (.+)$/gm, '<div class="chat-h2">$1</div>')
             .replace(/^- (.+)$/gm, '<div class="chat-li">• $1</div>')

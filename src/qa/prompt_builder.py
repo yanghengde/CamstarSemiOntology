@@ -16,6 +16,7 @@ def build_prompt(
     assistant_mode: str = "sql",
     sql_schema_context: str = "",
     sql_domain_context: str = "",
+    sql_query_plan_context: str = "",
     known_classes: list[str] | None = None,
     sql_dialect: str = "oracle",
 ) -> list[dict]:
@@ -67,7 +68,10 @@ def build_prompt(
             "8. SQL 仅供生成、审核和复制；本系统不连接业务数据库，也不执行 SQL。"
             "9. 输出前逐一自检 SQL 和说明中的表名、字段名；删除所有物理上下文中不存在的对象。"
             "不要主动推荐其他表、事务接口或后续扩展查询。"
-            "10. 当用户请求写操作时只简短拒绝，不自动改写成 SELECT，也不提供任何替代修改方案。"
+            "10. 当用户请求写操作时只简短拒绝，不自动改写成 SELECT，也不提供任何替代修改方案。\n"
+            "11. 若提供了“结构化查询计划”，必须严格遵循其中已确认的对象、指标、粒度、时间范围和时间字段。"
+            "日期范围必须使用参数化半开区间（时间字段 >= 开始参数 AND 时间字段 < 结束参数），"
+            "禁止对时间字段使用 TRUNC、CAST 或 CONVERT 后再比较，以免索引失效或改变时间口径。"
         )
     else:
         show_cn_alias = os.getenv("SHOW_CN_ALIAS", "false").lower() == "true"
@@ -153,6 +157,11 @@ def build_prompt(
             "生成 SQL、选择表及推理 JOIN 路径时必须优先考虑这些对象。"
             "能用物理外键连通时给出经过验证的连接；无法连通时明确说明缺少连接证据，"
             "不得为了全部使用而臆造 JOIN。"
+        )
+    if assistant_mode == "sql" and sql_query_plan_context:
+        parts.append(
+            "## 结构化查询计划（已确认意图，生成时必须遵循）\n"
+            f"{sql_query_plan_context}"
         )
     if assistant_mode == "sql" and sql_schema_context:
         parts.append(f"## 物理数据库架构（唯一SQL事实来源）\n{sql_schema_context}")

@@ -64,6 +64,7 @@ def create_session(
         "context": {
             "selected_classes": [],
             "known_classes": [],
+            "pending_sql_plan": None,
         },
         "messages": [],
     }
@@ -84,6 +85,7 @@ def load_session(session_id: str) -> dict[str, Any] | None:
     context = payload.setdefault("context", {})
     context.setdefault("selected_classes", [])
     context.setdefault("known_classes", [])
+    context.setdefault("pending_sql_plan", None)
     payload.setdefault("messages", [])
     return payload
 
@@ -141,6 +143,22 @@ def set_known_classes(
         context["known_classes"] = list(dict.fromkeys(
             class_name for class_name in known_classes if class_name
         ))
+        payload["updated_at"] = _now()
+        _write_atomic(_path(session_id), payload)
+        return payload
+
+
+def set_pending_sql_plan(
+    session_id: str,
+    plan: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Persist or clear the structured plan awaiting user clarification."""
+    with _lock:
+        payload = load_session(session_id)
+        if payload is None:
+            raise FileNotFoundError(session_id)
+        context = payload.setdefault("context", {})
+        context["pending_sql_plan"] = plan
         payload["updated_at"] = _now()
         _write_atomic(_path(session_id), payload)
         return payload

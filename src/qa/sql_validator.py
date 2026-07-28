@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import Any
 
 from src.qa.sql_schema_retriever import _schema
 
@@ -118,6 +119,7 @@ def validate_sql_answer(
     answer: str,
     *,
     dialect: str = "oracle",
+    query_plan: dict[str, Any] | None = None,
 ) -> SqlValidationResult:
     """Validate one SQL code block against the immutable physical CSV schema."""
     sql = extract_sql(answer)
@@ -151,6 +153,41 @@ def validate_sql_answer(
             errors.append("SQL 中混入了 Oracle 语法或函数。")
         if re.search(r"(?<!:):[A-Za-z_]\w*", scrubbed):
             errors.append("SQL Server 参数必须使用 @参数名，不能使用 :参数名。")
+
+    if query_plan:
+        time_basis = query_plan.get("time_basis")
+        time_scope = query_plan.get("time_scope")
+        if time_basis and time_scope and time_scope != "未指定":
+            field = re.escape(str(time_basis))
+            qualified_field = (
+                rf"(?:{_IDENTIFIER}\s*\.\s*)?"
+                rf"(?:{field}|\"{field}\"|\[{field}\])"
+            )
+            if not re.search(qualified_field, scrubbed, re.IGNORECASE):
+                errors.append(
+                    f"查询计划要求使用时间字段 [{time_basis}]。"
+                )
+            if re.search(
+                rf"\b(?:TRUNC|CAST|CONVERT)\s*\([^)]*{qualified_field}",
+                scrubbed,
+                re.IGNORECASE,
+            ):
+                errors.append(
+                    f"时间字段 [{time_basis}] 不能先经过 TRUNC、CAST 或 CONVERT。"
+                )
+            if not re.search(
+                rf"{qualified_field}\s*>=",
+                scrubbed,
+                re.IGNORECASE,
+            ) or not re.search(
+                rf"{qualified_field}\s*<(?!=)",
+                scrubbed,
+                re.IGNORECASE,
+            ):
+                errors.append(
+                    f"时间范围必须使用 [{time_basis}] >= 开始参数 AND "
+                    f"[{time_basis}] < 结束参数的半开区间。"
+                )
 
     tables, fields_by_table = _schema()
     canonical_tables = {name.lower(): name for name in tables}
