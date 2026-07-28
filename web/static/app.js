@@ -219,6 +219,16 @@
     let relMode = false;  // Relationship focus mode
     let layoutMode = "preset";  // Fast deterministic initial layout
     let selectedNodeId = null;   // Persistent selection
+    let queryPreviewGraph = null;
+    const queryBuilderState = {
+        active: false,
+        selectedNodes: [],
+        plan: null,
+        loading: false,
+        error: "",
+        requestRevision: 0,
+        previousSelectedNodeId: null,
+    };
     const API = "";  // same origin
     const classDetailCache = new Map(); // Client-side cache for class detail API responses
     const nodeInfoCache = new Map();
@@ -685,6 +695,30 @@
                         opacity: 1,
                         zIndex: 20,
                     },
+                    querySelected: {
+                        stroke: "#00FFB9",
+                        lineWidth: 4,
+                        shadowColor: "#00FFB9",
+                        shadowBlur: 14,
+                        opacity: 1,
+                        zIndex: 24,
+                    },
+                    queryBridge: {
+                        stroke: "#4CA6FF",
+                        lineWidth: 3,
+                        shadowColor: "#4CA6FF",
+                        shadowBlur: 9,
+                        opacity: 1,
+                        zIndex: 22,
+                    },
+                    queryUnconnected: {
+                        stroke: "#FF6B6B",
+                        lineWidth: 4,
+                        shadowColor: "#FF6B6B",
+                        shadowBlur: 11,
+                        opacity: 1,
+                        zIndex: 24,
+                    },
                     inactive: {
                         opacity: 0.45,
                         labelOpacity: 0.45,
@@ -851,6 +885,11 @@
         graph.on("node:click", async (evt) => {
             const nodeId = evt.target.id;
 
+            if (queryBuilderState.active) {
+                await toggleQueryNode(nodeId);
+                return;
+            }
+
             // Toggle off if clicking the already selected node
             if (selectedNodeId === nodeId) {
                 clearSelection();
@@ -957,6 +996,7 @@
 
         graph.on("canvas:click", async () => {
             if (edgeClickGuard) { edgeClickGuard = false; return; }
+            if (queryBuilderState.active) return;
             clearSelection();
             closePanel();
             hideEdgePopup();
@@ -965,6 +1005,7 @@
 
         // ── Edge click → show action popup (preserve node selection) ──
         graph.on("edge:click", (evt) => {
+            if (queryBuilderState.active) return;
             edgeClickGuard = true;
             setTimeout(() => { edgeClickGuard = false; }, 200);
 
@@ -1037,12 +1078,12 @@
 
         // ── Hover preview (only when nothing is selected) ──
         graph.on("node:mouseenter", (evt) => {
-            if (selectedNodeId || graphMutationBusy) return;
+            if (queryBuilderState.active || selectedNodeId || graphMutationBusy) return;
             highlightNeighbors(evt.target.id, false);
         });
 
         graph.on("node:mouseleave", () => {
-            if (selectedNodeId || graphMutationBusy) return;
+            if (queryBuilderState.active || selectedNodeId || graphMutationBusy) return;
             clearHighlight();
         });
 
@@ -1060,6 +1101,473 @@
     // Expose for chat.js
     window._selectNode = selectNode;
     window._getSelectedNodeId = () => selectedNodeId;
+
+    // ══════════════════════════════════════════════════════
+    //  Transient SQL Query Builder
+    // ══════════════════════════════════════════════════════
+    function setQueryBuilderStatus(message, isError = false) {
+        const status = document.getElementById("queryBuilderStatus");
+        status.textContent = message || "";
+        status.classList.toggle("error", isError);
+    }
+
+    function renderQuerySelectedNodes() {
+        const container = document.getElementById("querySelectedNodes");
+        const count = document.getElementById("querySelectedCount");
+        container.replaceChildren();
+        count.textContent = `${queryBuilderState.selectedNodes.length} / 8`;
+
+        if (!queryBuilderState.selectedNodes.length) {
+            const empty = document.createElement("span");
+            empty.className = "query-empty-copy";
+            empty.textContent = "请从右侧主图选择对象";
+            container.appendChild(empty);
+            return;
+        }
+
+        queryBuilderState.selectedNodes.forEach((nodeId, index) => {
+            const chip = document.createElement("span");
+            chip.className = "query-selected-chip";
+
+            const order = document.createElement("span");
+            order.className = "query-selected-chip-index";
+            order.textContent = String(index + 1);
+
+            const name = document.createElement("span");
+            name.textContent = nodeId;
+
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.textContent = "×";
+            remove.title = `移出 ${nodeId}`;
+            remove.setAttribute("aria-label", `移出 ${nodeId}`);
+            remove.addEventListener("click", () => toggleQueryNode(nodeId));
+
+            chip.append(order, name, remove);
+            container.appendChild(chip);
+        });
+    }
+
+    function queryPlanNodeSets() {
+        const selected = new Set(queryBuilderState.selectedNodes);
+        const bridge = new Set();
+        const unconnected = new Set(queryBuilderState.plan?.unconnected || []);
+        for (const node of queryBuilderState.plan?.nodes || []) {
+            if (node.bridge) bridge.add(node.id);
+        }
+        return { selected, bridge, unconnected };
+    }
+
+    function applyQueryMainStates(searchQuery = "") {
+        if (!graph || !rawData || !queryBuilderState.active) return;
+        const query = searchQuery.trim().toLowerCase();
+        const { selected, bridge, unconnected } = queryPlanNodeSets();
+        const states = {};
+        for (const node of graph.getNodeData()) {
+            if (selected.has(node.id)) {
+                states[node.id] = [
+                    unconnected.has(node.id) ? "queryUnconnected" : "querySelected",
+                ];
+                continue;
+            }
+            if (bridge.has(node.id)) {
+                states[node.id] = ["queryBridge"];
+                continue;
+            }
+            if (query) {
+                const source = nodeInfoCache.get(node.id) || node;
+                const label = String(source.data?.label || node.id).toLowerCase();
+                const chineseName = String(source.data?.chineseName || "").toLowerCase();
+                states[node.id] = (
+                    label.includes(query) || chineseName.includes(query)
+                ) ? ["active"] : ["inactive"];
+            } else {
+                states[node.id] = [];
+            }
+        }
+        for (const edge of graph.getEdgeData()) states[edge.id] = [];
+        _applyStates(states);
+    }
+
+    function destroyQueryPreviewGraph() {
+        if (!queryPreviewGraph) return;
+        try {
+            queryPreviewGraph.destroy();
+        } catch (error) {
+            console.debug("Query preview graph cleanup skipped:", error);
+        }
+        queryPreviewGraph = null;
+        document.getElementById("queryPreviewCanvas").replaceChildren();
+    }
+
+    async function renderQueryPreviewGraph() {
+        destroyQueryPreviewGraph();
+        const plan = queryBuilderState.plan;
+        const canvas = document.getElementById("queryPreviewCanvas");
+        const empty = document.getElementById("queryPreviewEmpty");
+        const edgeDetail = document.getElementById("queryEdgeDetail");
+        if (!plan?.nodes?.length) {
+            empty.hidden = false;
+            edgeDetail.textContent = "点击关系线可查看物理 JOIN 条件";
+            return;
+        }
+
+        empty.hidden = true;
+        const selected = new Set(plan.selected_nodes || []);
+        const unconnected = new Set(plan.unconnected || []);
+        const previewNodes = plan.nodes.map((node) => ({
+            id: node.id,
+            data: {
+                selected: selected.has(node.id),
+                bridge: node.bridge,
+                unconnected: unconnected.has(node.id),
+            },
+        }));
+        const previewEdges = plan.joins.map((edge, index) => ({
+            id: `query-edge-${index}`,
+            source: edge.from_table,
+            target: edge.to_table,
+            data: {
+                edgeIndex: index,
+            },
+        }));
+
+        queryPreviewGraph = new G6.Graph({
+            container: canvas,
+            width: canvas.clientWidth,
+            height: canvas.clientHeight,
+            autoFit: "view",
+            padding: [34, 26, 38, 26],
+            animation: false,
+            behaviors: ["drag-element", "drag-canvas", "zoom-canvas"],
+            layout: {
+                type: "dagre",
+                rankdir: "LR",
+                nodesep: 22,
+                ranksep: 72,
+            },
+            node: {
+                type: "circle",
+                style: {
+                    size: (d) => d.data?.selected ? 38 : 30,
+                    fill: (d) => {
+                        if (d.data?.unconnected) return "#8F333D";
+                        return d.data?.selected ? "#008C76" : "#245F91";
+                    },
+                    stroke: (d) => {
+                        if (d.data?.unconnected) return "#FF6B6B";
+                        return d.data?.selected ? "#00FFB9" : "#4CA6FF";
+                    },
+                    lineWidth: (d) => d.data?.selected ? 3 : 2,
+                    labelText: (d) => d.id,
+                    labelFill: "#DDEBF0",
+                    labelFontSize: 9,
+                    labelFontWeight: 600,
+                    labelPlacement: "bottom",
+                    labelOffsetY: 5,
+                    cursor: "pointer",
+                },
+            },
+            edge: {
+                type: "line",
+                style: {
+                    stroke: "#4CA6FF",
+                    lineWidth: 1.6,
+                    endArrow: true,
+                    endArrowSize: 6,
+                    cursor: "pointer",
+                },
+                state: {
+                    selected: {
+                        stroke: "#00FFB9",
+                        lineWidth: 3,
+                    },
+                },
+            },
+            data: {
+                nodes: previewNodes,
+                edges: previewEdges,
+            },
+        });
+
+        queryPreviewGraph.on("edge:click", async (event) => {
+            const edgeData = queryPreviewGraph.getEdgeData(event.target.id);
+            const edge = plan.joins[edgeData?.data?.edgeIndex];
+            if (!edge) return;
+            edgeDetail.textContent = (
+                `${edge.from_table}.${edge.from_field} = `
+                + `${edge.to_table}.${edge.to_field}`
+            );
+            const states = {};
+            for (const item of queryPreviewGraph.getEdgeData()) {
+                states[item.id] = item.id === event.target.id ? ["selected"] : [];
+            }
+            await queryPreviewGraph.setElementState(states);
+        });
+
+        queryPreviewGraph.on("node:click", (event) => {
+            const nodeId = event.target.id;
+            if (selected.has(nodeId)) {
+                toggleQueryNode(nodeId);
+                return;
+            }
+            edgeDetail.textContent = `${nodeId} 是系统补充的中间对象，仅用于连接物理 JOIN。`;
+        });
+
+        try {
+            await queryPreviewGraph.render();
+        } catch (error) {
+            console.error("Query preview graph render failed:", error);
+            empty.hidden = false;
+            empty.textContent = "关联数据已生成，但小图渲染失败";
+        }
+    }
+
+    function renderQueryBuilderPlan() {
+        renderQuerySelectedNodes();
+        const plan = queryBuilderState.plan;
+        const previewSection = document.querySelector(".query-preview-section");
+        const summary = document.getElementById("queryPlanSummary");
+        const warning = document.getElementById("queryBuilderWarning");
+        const sqlPreview = document.getElementById("querySqlPreview");
+        const dialect = document.getElementById("querySqlDialect");
+        const hasSql = Boolean(plan?.sql);
+        const hasSelection = queryBuilderState.selectedNodes.length > 0;
+
+        previewSection.classList.toggle("loading", queryBuilderState.loading);
+        dialect.textContent = SQL_DIALECTS[currentSqlDialect].label;
+        if (plan?.nodes?.length) {
+            const bridgeCount = plan.nodes.filter((node) => node.bridge).length;
+            summary.textContent = (
+                `${plan.selected_nodes.length} 个已选 · ${bridgeCount} 个中间对象`
+            );
+        } else {
+            summary.textContent = hasSelection ? "正在规划" : "等待选择";
+        }
+
+        const warningText = queryBuilderState.error
+            || (plan?.warnings || []).join("\n");
+        warning.hidden = !warningText;
+        warning.textContent = warningText;
+
+        sqlPreview.textContent = hasSql
+            ? plan.sql
+            : "-- 请选择至少一个查询对象";
+        document.getElementById("btnClearQuery").disabled = !hasSelection;
+        document.getElementById("btnCopyQuerySql").disabled = !hasSql;
+        document.getElementById("btnContinueQuerySql").disabled = !hasSql;
+        applyQueryMainStates(document.getElementById("searchInput").value);
+    }
+
+    async function requestQueryBuilderPlan() {
+        const revision = ++queryBuilderState.requestRevision;
+        queryBuilderState.error = "";
+        queryBuilderState.loading = queryBuilderState.selectedNodes.length > 0;
+        if (!queryBuilderState.selectedNodes.length) {
+            queryBuilderState.plan = null;
+            queryBuilderState.loading = false;
+            renderQueryBuilderPlan();
+            await renderQueryPreviewGraph();
+            setQueryBuilderStatus("");
+            return;
+        }
+
+        renderQueryBuilderPlan();
+        setQueryBuilderStatus("正在读取物理 Schema…");
+        try {
+            const response = await fetch("/api/sql-builder/plan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    selected_nodes: queryBuilderState.selectedNodes,
+                    dialect: currentSqlDialect,
+                }),
+            });
+            const payload = await response.json();
+            if (revision !== queryBuilderState.requestRevision) return;
+            if (!response.ok) {
+                throw new Error(payload.detail || payload.error || `HTTP ${response.status}`);
+            }
+            queryBuilderState.plan = payload;
+            queryBuilderState.error = "";
+            setQueryBuilderStatus(
+                payload.warnings?.length
+                    ? "已生成 SQL，请检查关联提示"
+                    : "物理关联和 SQL 已同步",
+                Boolean(payload.unconnected?.length),
+            );
+        } catch (error) {
+            if (revision !== queryBuilderState.requestRevision) return;
+            queryBuilderState.plan = null;
+            queryBuilderState.error = error.message || "查询规划失败";
+            setQueryBuilderStatus(queryBuilderState.error, true);
+        } finally {
+            if (revision !== queryBuilderState.requestRevision) return;
+            queryBuilderState.loading = false;
+            renderQueryBuilderPlan();
+            await renderQueryPreviewGraph();
+        }
+    }
+
+    async function toggleQueryNode(nodeId) {
+        if (!queryBuilderState.active) return;
+        const index = queryBuilderState.selectedNodes.indexOf(nodeId);
+        if (index >= 0) {
+            queryBuilderState.selectedNodes.splice(index, 1);
+        } else {
+            if (queryBuilderState.selectedNodes.length >= 8) {
+                setQueryBuilderStatus("最多可选择 8 个查询对象", true);
+                return;
+            }
+            queryBuilderState.selectedNodes.push(nodeId);
+        }
+        renderQuerySelectedNodes();
+        applyQueryMainStates();
+        await requestQueryBuilderPlan();
+    }
+
+    async function enterQueryBuilderMode() {
+        if (queryBuilderState.active) return;
+        queryBuilderState.active = true;
+        queryBuilderState.previousSelectedNodeId = selectedNodeId;
+        queryBuilderState.selectedNodes = [];
+        queryBuilderState.plan = null;
+        queryBuilderState.error = "";
+        selectedNodeId = null;
+
+        document.body.classList.add("query-builder-mode");
+        document.getElementById("queryBuilderPanel").classList.remove("query-builder-hidden");
+        const toggle = document.getElementById("btnQueryMode");
+        toggle.classList.add("active");
+        toggle.setAttribute("aria-pressed", "true");
+        closePanel();
+        hideEdgePopup();
+        await restoreOverviewEdges();
+        renderQueryBuilderPlan();
+        await renderQueryPreviewGraph();
+        setQueryBuilderStatus("点击主图节点开始构建查询");
+    }
+
+    async function exitQueryBuilderMode() {
+        if (!queryBuilderState.active) return;
+        const previousNodeId = queryBuilderState.previousSelectedNodeId;
+        queryBuilderState.requestRevision += 1;
+        queryBuilderState.active = false;
+        queryBuilderState.loading = false;
+        queryBuilderState.selectedNodes = [];
+        queryBuilderState.plan = null;
+        queryBuilderState.error = "";
+        queryBuilderState.previousSelectedNodeId = null;
+
+        document.body.classList.remove("query-builder-mode");
+        document.getElementById("queryBuilderPanel").classList.add("query-builder-hidden");
+        const toggle = document.getElementById("btnQueryMode");
+        toggle.classList.remove("active");
+        toggle.setAttribute("aria-pressed", "false");
+        destroyQueryPreviewGraph();
+        await _applyStates({});
+        if (previousNodeId && nodeInfoCache.has(previousNodeId)) {
+            selectNode(previousNodeId);
+            queueIncidentEdgeRender(previousNodeId);
+            await showClassDetail(previousNodeId);
+        } else {
+            selectedNodeId = null;
+            await restoreOverviewEdges();
+        }
+    }
+
+    async function toggleQueryBuilderMode() {
+        if (queryBuilderState.active) await exitQueryBuilderMode();
+        else await enterQueryBuilderMode();
+    }
+
+    async function copyQuerySql() {
+        const sql = queryBuilderState.plan?.sql;
+        if (!sql) return;
+        try {
+            await navigator.clipboard.writeText(sql);
+        } catch (_) {
+            const textarea = document.createElement("textarea");
+            textarea.value = sql;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+        }
+        setQueryBuilderStatus("SQL 已复制");
+    }
+
+    async function continueQueryInAssistant() {
+        const sql = queryBuilderState.plan?.sql;
+        if (!sql) return;
+        if (typeof window._continueSqlDraft !== "function") {
+            setQueryBuilderStatus("SQL 助手尚未加载完成", true);
+            return;
+        }
+        try {
+            await window._continueSqlDraft(
+                queryBuilderState.selectedNodes,
+                sql,
+            );
+            setQueryBuilderStatus("已将对象和 SQL 草稿送入助手");
+        } catch (error) {
+            setQueryBuilderStatus(error.message || "无法打开 SQL 助手", true);
+        }
+    }
+
+    function setupQueryBuilder() {
+        document.getElementById("btnQueryMode").addEventListener(
+            "click",
+            toggleQueryBuilderMode,
+        );
+        document.getElementById("btnCloseQueryMode").addEventListener(
+            "click",
+            exitQueryBuilderMode,
+        );
+        document.getElementById("btnClearQuery").addEventListener("click", async () => {
+            queryBuilderState.selectedNodes = [];
+            await requestQueryBuilderPlan();
+            setQueryBuilderStatus("查询已清空");
+        });
+        document.getElementById("btnCopyQuerySql").addEventListener(
+            "click",
+            copyQuerySql,
+        );
+        document.getElementById("btnContinueQuerySql").addEventListener(
+            "click",
+            continueQueryInAssistant,
+        );
+        document.addEventListener("keydown", (event) => {
+            if (
+                event.key === "Escape"
+                && queryBuilderState.active
+                && !["INPUT", "TEXTAREA", "SELECT"].includes(event.target?.tagName)
+            ) {
+                exitQueryBuilderMode();
+            }
+        });
+        window.addEventListener("camstar:sql-dialect-change", () => {
+            if (queryBuilderState.active && queryBuilderState.selectedNodes.length) {
+                requestQueryBuilderPlan();
+            } else if (queryBuilderState.active) {
+                renderQueryBuilderPlan();
+            }
+        });
+        if ("ResizeObserver" in window) {
+            const previewCanvas = document.getElementById("queryPreviewCanvas");
+            const previewObserver = new ResizeObserver(() => {
+                if (queryPreviewGraph) {
+                    queryPreviewGraph.resize(
+                        previewCanvas.clientWidth,
+                        previewCanvas.clientHeight,
+                    );
+                }
+            });
+            previewObserver.observe(previewCanvas);
+        }
+    }
 
     async function hideAllCanvasEdges() {
         if (!graph) return;
@@ -2142,6 +2650,11 @@
             const query = text.toLowerCase();
             if (!graph || !rawData) return;
 
+            if (queryBuilderState.active) {
+                applyQueryMainStates(query);
+                return;
+            }
+
             if (!query) {
                 clearHighlight();
                 return;
@@ -3079,6 +3592,7 @@
 
             // Setup UI
             setupSearch();
+            setupQueryBuilder();
             setupNodePriorityControl();
             setupChatContextControl();
             setupToolbar();

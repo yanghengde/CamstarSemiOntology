@@ -172,6 +172,30 @@
         return classes;
     };
 
+    window._continueSqlDraft = async (classNames, sql) => {
+        await ensureSession();
+        const queryClasses = [...new Set(
+            Array.isArray(classNames) ? classNames : [],
+        )];
+        if (queryClasses.length > 8) {
+            throw new Error("当前会话最多添加 8 个已知对象");
+        }
+        // A query-builder handoff is an explicit context boundary. Replace
+        // stale chat objects so they cannot silently influence this SQL draft.
+        await saveKnownClasses(queryClasses);
+        if (chatPanel.classList.contains("chat-hidden")) {
+            chatPanel.classList.remove("chat-hidden");
+            chatBtn.classList.add("active");
+        }
+        chatInput.value = (
+            "请基于以下经过物理外键验证的 SQL 骨架，继续补充查询条件和返回字段：\n\n"
+            + sql
+        );
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 180) + "px";
+        chatInput.focus();
+    };
+
     async function createNewSession() {
         stopStreaming();
         const product_line = (typeof window._getCurrentProductLine === "function")

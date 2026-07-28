@@ -495,6 +495,40 @@ html, body {
     margin-left: 0;
 }
 
+.query-mode-toggle {
+    height: var(--topbar-control-h);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    border: 1px solid rgba(0, 255, 185, 0.3);
+    border-radius: 8px;
+    background: rgba(0, 255, 185, 0.06);
+    color: var(--si-green);
+    font-size: 12px;
+    font-weight: 650;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.query-mode-toggle:hover,
+.query-mode-toggle.active {
+    border-color: var(--si-green);
+    background: rgba(0, 255, 185, 0.14);
+    box-shadow: 0 0 14px rgba(0, 255, 185, 0.16);
+}
+
+.query-mode-toggle.active::after {
+    content: "ON";
+    padding: 2px 5px;
+    border-radius: 8px;
+    background: var(--si-green);
+    color: var(--si-navy);
+    font-size: 8px;
+    font-weight: 800;
+}
+
 .product-line-selector select {
     height: var(--topbar-control-h);
     background: var(--bg-glass);
@@ -1133,6 +1167,344 @@ html, body {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-subtle);
     background: rgba(0, 20, 40, .96);
+}
+
+/* ══════════════════════════════════════════════════════
+   Transient SQL Query Builder
+   ══════════════════════════════════════════════════════ */
+#queryBuilderPanel {
+    order: -2;
+    flex: 0 0 440px;
+    width: 440px;
+    height: 100%;
+    background:
+        linear-gradient(160deg, rgba(0, 31, 48, .98), rgba(0, 11, 24, .99));
+    border-right: 1px solid rgba(0, 255, 185, .24);
+    box-shadow: 18px 0 40px rgba(0, 0, 0, .22);
+    overflow: hidden;
+    z-index: 110;
+    transition: transform .3s ease, opacity .25s ease;
+}
+
+#queryBuilderPanel.query-builder-hidden {
+    position: absolute;
+    left: 0;
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.query-builder-header {
+    min-height: 76px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 18px 13px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(0, 24, 42, .96);
+}
+
+.query-builder-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.query-builder-title-row h2 {
+    color: var(--si-green);
+    font-size: 16px;
+    font-weight: 650;
+}
+
+.query-builder-mode-badge {
+    padding: 2px 7px;
+    border: 1px solid rgba(141, 164, 184, .3);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 9px;
+    letter-spacing: .3px;
+}
+
+.query-builder-header p {
+    margin-top: 5px;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.query-builder-body {
+    height: calc(100% - 76px);
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+}
+
+.query-builder-section {
+    margin-bottom: 14px;
+}
+
+.query-section-heading {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.query-section-heading h3 {
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.query-section-heading span {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.query-selected-nodes {
+    min-height: 44px;
+    display: flex;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: rgba(0, 13, 26, .6);
+}
+
+.query-empty-copy {
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.query-selected-chip {
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 5px 0 8px;
+    border: 1px solid rgba(0, 255, 185, .34);
+    border-radius: 13px;
+    background: rgba(0, 255, 185, .1);
+    color: #dffff5;
+    font: 600 10px 'Cascadia Code', 'Fira Code', monospace;
+}
+
+.query-selected-chip-index {
+    color: var(--si-green);
+    font-size: 9px;
+}
+
+.query-selected-chip button {
+    width: 18px;
+    height: 18px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.query-selected-chip button:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+.query-preview-section {
+    position: relative;
+}
+
+.query-preview-canvas {
+    width: 100%;
+    height: 250px;
+    border: 1px solid rgba(0, 153, 153, .28);
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 50% 45%, rgba(0, 153, 153, .1), transparent 68%),
+        rgba(0, 9, 20, .78);
+    overflow: hidden;
+}
+
+.query-preview-empty {
+    position: absolute;
+    top: 55px;
+    left: 22px;
+    right: 22px;
+    height: 210px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.7;
+    text-align: center;
+    pointer-events: none;
+}
+
+.query-preview-section.loading .query-preview-canvas {
+    opacity: .48;
+}
+
+.query-preview-section.loading::after {
+    content: "正在计算物理关联…";
+    position: absolute;
+    left: 50%;
+    top: 145px;
+    transform: translate(-50%, -50%);
+    padding: 7px 10px;
+    border-radius: 12px;
+    background: rgba(0, 13, 26, .92);
+    color: var(--si-green);
+    font-size: 10px;
+    z-index: 3;
+}
+
+.query-preview-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+.query-preview-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.query-legend-dot {
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    border-radius: 50%;
+}
+
+.query-legend-dot.selected { background: var(--si-green); }
+.query-legend-dot.bridge { background: #4CA6FF; }
+.query-legend-dot.warning { background: #FF6B6B; }
+
+.query-edge-detail {
+    min-height: 32px;
+    margin-top: 7px;
+    padding: 7px 9px;
+    border-radius: 6px;
+    background: rgba(76, 166, 255, .08);
+    color: var(--text-secondary);
+    font: 9px/1.6 'Cascadia Code', 'Fira Code', monospace;
+}
+
+.query-builder-warning {
+    margin: 0 0 13px;
+    padding: 9px 10px;
+    border: 1px solid rgba(255, 107, 107, .32);
+    border-radius: 7px;
+    background: rgba(255, 107, 107, .08);
+    color: #ffb5b5;
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+.query-sql-preview {
+    min-height: 132px;
+    max-height: 245px;
+    padding: 12px;
+    overflow: auto;
+    border: 1px solid rgba(0, 255, 185, .2);
+    border-radius: 8px;
+    background: #000b15;
+    color: #cde9e2;
+    font: 10.5px/1.65 'Cascadia Code', 'Fira Code', monospace;
+    white-space: pre;
+}
+
+.query-builder-status {
+    min-height: 18px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    text-align: right;
+}
+
+.query-builder-status.error {
+    color: #ff8b8b;
+}
+
+.query-builder-actions {
+    position: sticky;
+    bottom: -18px;
+    display: grid;
+    grid-template-columns: 70px 1fr 1.35fr;
+    gap: 7px;
+    padding: 10px 0 2px;
+    background: linear-gradient(180deg, transparent, rgba(0, 11, 24, .99) 24%);
+}
+
+.query-action-btn {
+    min-height: 34px;
+    padding: 0 9px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
+    color: var(--text-primary);
+    font-size: 10px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.query-action-btn.secondary {
+    background: rgba(255, 255, 255, .05);
+}
+
+.query-action-btn.primary {
+    border-color: rgba(0, 255, 185, .42);
+    background: rgba(0, 255, 185, .13);
+    color: var(--si-green);
+}
+
+.query-action-btn:hover:not(:disabled) {
+    border-color: var(--si-green);
+    background: rgba(0, 255, 185, .18);
+}
+
+.query-action-btn:disabled {
+    opacity: .38;
+    cursor: not-allowed;
+}
+
+body.query-builder-mode #graphContainer {
+    box-shadow: inset 0 0 0 1px rgba(0, 255, 185, .12);
+}
+
+body.query-builder-mode #graphContainer::after {
+    content: "查询构建模式 · 点击节点加入或移出查询";
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 7px 13px;
+    border: 1px solid rgba(0, 255, 185, .3);
+    border-radius: 16px;
+    background: rgba(0, 20, 36, .9);
+    color: var(--si-green);
+    font-size: 10px;
+    letter-spacing: .2px;
+    pointer-events: none;
+    z-index: 15;
+}
+
+@media (max-width: 1180px) {
+    #queryBuilderPanel {
+        flex-basis: 390px;
+        width: 390px;
+    }
+
+    .query-mode-toggle span {
+        display: none;
+    }
 }
 
 .panel-header-actions { display: flex; align-items: center; gap: 6px; }

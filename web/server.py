@@ -32,10 +32,12 @@ app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__
 from web.routers.graph import router as graph_router
 from web.routers.wiki import router as wiki_router
 from web.routers.chat import router as chat_router
+from web.routers.sql_builder import router as sql_builder_router
 
 app.include_router(graph_router)
 app.include_router(wiki_router)
 app.include_router(chat_router)
+app.include_router(sql_builder_router)
 
 
 @app.get("/")

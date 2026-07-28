@@ -53,6 +53,17 @@
             <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> 类</div>
             <div class="stat-chip" id="statProps"><span class="stat-num">-</span> 属性</div>
             <div class="stat-chip" id="statRels"><span class="stat-num">-</span> 关系</div>
+            <button type="button" class="query-mode-toggle" id="btnQueryMode"
+                aria-pressed="false" title="选择多个图谱对象，预览物理关联并生成 SQL 骨架">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" aria-hidden="true">
+                    <circle cx="5" cy="6" r="2" />
+                    <circle cx="19" cy="6" r="2" />
+                    <circle cx="12" cy="18" r="2" />
+                    <path d="M7 7.5l3.5 8M17 7.5l-3.5 8M7 6h10" />
+                </svg>
+                <span>查询构建</span>
+            </button>
             <a href="/static/industry.html" class="nav-link-btn" title="行业/产品线设置">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     aria-hidden="true">
@@ -128,6 +139,74 @@
     <main id="app">
         <!-- Graph Canvas -->
         <div id="graphContainer"></div>
+
+        <!-- Transient SQL Query Builder -->
+        <aside id="queryBuilderPanel" class="query-builder-hidden" aria-label="查询构建器">
+            <div class="query-builder-header">
+                <div>
+                    <div class="query-builder-title-row">
+                        <h2>查询构建器</h2>
+                        <span class="query-builder-mode-badge">临时模式</span>
+                    </div>
+                    <p>在主图中点击对象，确认物理关联后生成 SQL</p>
+                </div>
+                <button type="button" class="icon-btn panel-close" id="btnCloseQueryMode"
+                    aria-label="退出查询构建模式" title="退出查询构建模式">×</button>
+            </div>
+            <div class="query-builder-body">
+                <section class="query-builder-section">
+                    <div class="query-section-heading">
+                        <h3>已选对象</h3>
+                        <span id="querySelectedCount">0 / 8</span>
+                    </div>
+                    <div id="querySelectedNodes" class="query-selected-nodes">
+                        <span class="query-empty-copy">请从右侧主图选择对象</span>
+                    </div>
+                </section>
+
+                <section class="query-builder-section query-preview-section">
+                    <div class="query-section-heading">
+                        <h3>查询关系预览</h3>
+                        <span id="queryPlanSummary">等待选择</span>
+                    </div>
+                    <div id="queryPreviewCanvas" class="query-preview-canvas"></div>
+                    <div id="queryPreviewEmpty" class="query-preview-empty">
+                        选择对象后，将在这里展示经过物理外键验证的 Join 路径
+                    </div>
+                    <div class="query-preview-legend">
+                        <span><i class="query-legend-dot selected"></i>已选对象</span>
+                        <span><i class="query-legend-dot bridge"></i>中间对象</span>
+                        <span><i class="query-legend-dot warning"></i>未连接</span>
+                    </div>
+                    <div id="queryEdgeDetail" class="query-edge-detail">
+                        点击关系线可查看物理 JOIN 条件
+                    </div>
+                </section>
+
+                <div id="queryBuilderWarning" class="query-builder-warning" hidden></div>
+
+                <section class="query-builder-section query-sql-section">
+                    <div class="query-section-heading">
+                        <h3>SQL 骨架</h3>
+                        <span id="querySqlDialect">Oracle</span>
+                    </div>
+                    <pre id="querySqlPreview" class="query-sql-preview"><code>-- 请选择至少一个查询对象</code></pre>
+                </section>
+
+                <div id="queryBuilderStatus" class="query-builder-status" aria-live="polite"></div>
+                <div class="query-builder-actions">
+                    <button type="button" class="query-action-btn secondary" id="btnClearQuery" disabled>
+                        清空
+                    </button>
+                    <button type="button" class="query-action-btn secondary" id="btnCopyQuerySql" disabled>
+                        复制 SQL
+                    </button>
+                    <button type="button" class="query-action-btn primary" id="btnContinueQuerySql" disabled>
+                        在助手中继续
+                    </button>
+                </div>
+            </div>
+        </aside>
 
         <!-- Right Side Panel -->
         <aside id="detailPanel" class="panel-hidden">
@@ -355,8 +434,8 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/app.js?v=20260728-home-link"></script>
-    <script src="/static/chat.js?v=20260728-home-link"></script>
+    <script src="/static/app.js?v=20260728-query-builder"></script>
+    <script src="/static/chat.js?v=20260728-query-builder"></script>
 </body>
 
 </html>
