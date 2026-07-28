@@ -52,6 +52,22 @@ html, body {
     overflow: hidden;
 }
 
+.app-icon {
+    display: inline-block;
+    flex: 0 0 auto;
+    vertical-align: -0.15em;
+}
+
+.icon-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-icon-spin {
+    animation: spin 0.8s linear infinite;
+}
+
 /* ══════════════════════════════════════════════════════
    Top Navigation Bar
    ══════════════════════════════════════════════════════ */
@@ -421,7 +437,7 @@ html, body {
 
 /* ── Relationship Focus Mode (body.rel-mode) ── */
 .rel-mode #graphContainer::after {
-    content: '🔗 关系聚焦模式';
+    content: '关系聚焦模式';
     position: absolute;
     top: 12px;
     left: 50%;
@@ -810,8 +826,17 @@ html, body {
 }
 
 .wiki-empty-icon {
-    font-size: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
     opacity: 0.5;
+}
+
+.wiki-empty-icon .app-icon {
+    width: 26px;
+    height: 26px;
 }
 
 /* ── Edge Popup Action Buttons ── */

@@ -646,7 +646,7 @@
                                 }
                             }
                         } else if (payload.type === "error") {
-                            contentEl.innerHTML = `<span style="color:#FF6666">❌ ${payload.content}</span>`;
+                            contentEl.innerHTML = `<span class="icon-label" style="color:#FF6666">${AppIcons.svg("xCircle", { size: 15 })}<span>${escapeHtml(payload.content)}</span></span>`;
                         }
                     } catch (_) {}
                 }
@@ -684,7 +684,9 @@
     function appendMessage(role, content) {
         const wrapper = document.createElement("div");
         wrapper.className = `chat-msg chat-msg-${role}`;
-        const avatar = role === "user" ? "👤" : '<img src="/static/siemens_logo.svg" style="width:24px;height:24px;border-radius:4px;" />';
+        const avatar = role === "user"
+            ? AppIcons.svg("user", { size: 20 })
+            : '<img src="/static/siemens_logo.svg" alt="Opcenter" style="width:24px;height:24px;border-radius:4px;" />';
         wrapper.innerHTML = `
             <div class="chat-msg-avatar" style="background:transparent;padding:0;">${avatar}</div>
             <div class="chat-msg-bubble">

@@ -255,7 +255,7 @@ class ProductLineModel(BaseModel):
     id: str
     name: str
     description: str = ""
-    icon: str = "📦"
+    icon: str = "package"
     color: str = "#999999"
 
 

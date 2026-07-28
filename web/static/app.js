@@ -9,6 +9,16 @@
 (() => {
     "use strict";
 
+    function setIconContent(element, iconName, label, { size = 14, spin = false } = {}) {
+        element.innerHTML = AppIcons.svg(iconName, {
+            size,
+            className: spin ? "app-icon-spin" : "",
+        });
+        const text = document.createElement("span");
+        text.textContent = label;
+        element.appendChild(text);
+    }
+
     // ── Global SQL dialect ──
     // One selector controls every SQL surface: relationship examples and chat.
     const SQL_DIALECT_COOKIE = "camstar_sql_dialect";
@@ -1474,7 +1484,7 @@
             for (const pl of productLineList) {
                 const opt = document.createElement("option");
                 opt.value = pl.id;
-                opt.textContent = `${pl.icon} ${pl.name}`;
+                opt.textContent = pl.name;
                 select.appendChild(opt);
             }
             // Read from URL params or fallback to localStorage
@@ -1517,7 +1527,7 @@
     }
 
     function getProductLineInfo(plId) {
-        return productLineList.find(p => p.id === plId) || { id: plId, name: plId, icon: "📦", color: "#999" };
+        return productLineList.find(p => p.id === plId) || { id: plId, name: plId, icon: "package", color: "#999" };
     }
 
     // Expose for chat.js
@@ -1616,7 +1626,7 @@
 
         // Show product line badge
         const plInfo = getProductLineInfo(currentProductLine);
-        plEl.textContent = `${plInfo.icon} ${plInfo.name}`;
+        setIconContent(plEl, plInfo.icon || "package", plInfo.name, { size: 13 });
 
         // Store for buttons
         currentEdgeInfo = { relName, source, target, desc, cardinality };
@@ -1633,7 +1643,7 @@
         wikiContent.style.whiteSpace = "";
         wikiEmpty.style.display = "none";
         wikiEmpty.innerHTML = `
-            <span class="wiki-empty-icon">📭</span>
+            <span class="wiki-empty-icon">${AppIcons.svg("inbox", { size: 26 })}</span>
             <span>暂无 Relationship 用法 Wiki</span>
             <span style="font-size:10px;color:var(--text-muted);margin-top:4px">点击下方「生成 Wiki」按钮，AI 将自动生成</span>
         `;
@@ -1683,7 +1693,7 @@
             sqlContent.textContent = `SQL 读取失败：${String(e.message || e)}`;
             wikiLoading.style.display = "none";
             wikiEmpty.innerHTML = `
-                <span class="wiki-empty-icon">⚠️</span>
+                <span class="wiki-empty-icon">${AppIcons.svg("alert", { size: 26 })}</span>
                 <span>Wiki 读取失败</span>
                 <span style="font-size:10px;color:var(--text-muted);margin-top:4px">${String(e.message || e)}</span>
             `;
@@ -1712,7 +1722,7 @@
         const editBtn = document.getElementById("edgePopupEdit");
 
         generateBtn.disabled = true;
-        generateBtn.textContent = "⏳ 加载中...";
+        setIconContent(generateBtn, "loader", "加载中...", { spin: true });
         wikiEmpty.style.display = "none";
         wikiLoading.style.display = "flex";
 
@@ -1733,7 +1743,7 @@
             }
 
             // Step 2: Wiki doesn't exist, generate via LLM
-            generateBtn.textContent = "🤖 AI 生成中...";
+            setIconContent(generateBtn, "bot", "AI 生成中...");
             const res = await fetch("/api/wiki/generate-one", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1748,7 +1758,7 @@
 
             wikiLoading.style.display = "none";
             wikiContent.style.display = "block";
-            wikiContent.innerHTML = `<div style="color:var(--si-green);display:flex;align-items:center;gap:8px;"><div class="wiki-spinner"></div> 🤖 AI 正在规划撰写知识库...</div>`;
+            wikiContent.innerHTML = `<div style="color:var(--si-green);display:flex;align-items:center;gap:8px;"><div class="wiki-spinner"></div>${AppIcons.svg("bot", { size: 15 })}<span>AI 正在规划撰写知识库...</span></div>`;
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
@@ -1779,7 +1789,8 @@
                         } else if (payload.type === "done") {
                             currentWikiContent = payload.content;
                         } else if (payload.type === "error") {
-                            wikiContent.innerHTML = `<span style="color:#FF6666">❌ 生成失败: ${payload.content}</span>`;
+                            wikiContent.style.color = "#FF6666";
+                            setIconContent(wikiContent, "xCircle", `生成失败: ${payload.content}`, { size: 15 });
                         }
                     } catch (_) {}
                 }
@@ -1876,7 +1887,7 @@
         const { relName, source, target } = currentEdgeInfo;
         const plInfo = getProductLineInfo(currentProductLine);
 
-        titleEl.textContent = `编辑 Wiki: ${source} → ${relName} → ${target}  (${plInfo.icon} ${plInfo.name})`;
+        titleEl.textContent = `编辑 Wiki: ${source} → ${relName} → ${target}  (${plInfo.name})`;
         textarea.value = currentWikiContent || "";
         modal.classList.remove("wiki-editor-hidden");
         textarea.focus();
@@ -1899,7 +1910,7 @@
         if (!content) return;
 
         saveBtn.disabled = true;
-        saveBtn.textContent = "⏳ 保存中...";
+        setIconContent(saveBtn, "loader", "保存中...", { spin: true });
 
         try {
             const res = await fetch("/api/wiki/save", {
@@ -1933,7 +1944,7 @@
             alert("保存失败: " + e.message);
         } finally {
             saveBtn.disabled = false;
-            saveBtn.textContent = "💾 保存";
+            setIconContent(saveBtn, "save", "保存");
         }
     });
 

@@ -4,7 +4,7 @@
             "id": "general",
             "name": "通用 (无产品线)",
             "description": "通用 Camstar/Opcenter 本体知识，不绑定特定产品线",
-            "icon": "📦",
+            "icon": "package",
             "color": "#009999"
         }
     ]

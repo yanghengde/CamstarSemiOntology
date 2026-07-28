@@ -97,7 +97,6 @@
         }
 
         .industry-icon {
-            font-size: 20px;
             background: rgba(255, 255, 255, 0.03);
             width: 36px;
             height: 36px;
@@ -107,6 +106,11 @@
             border-radius: 6px;
             flex-shrink: 0;
             border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .industry-icon .app-icon {
+            width: 20px;
+            height: 20px;
         }
 
         .industry-info {
@@ -334,6 +338,9 @@
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-copy:hover {
@@ -474,7 +481,7 @@
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
                         <label for="industryIcon">行业图标 (Icon)</label>
-                        <input type="text" id="industryIcon" class="form-control" placeholder="填入单个Emoji，如 ⚡" />
+                        <select id="industryIcon" class="form-control" aria-label="行业图标"></select>
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="industryColor">代表色彩 (Color)</label>
@@ -492,7 +499,10 @@
 
                 <div class="form-actions">
                     <button class="btn btn-secondary" id="btnReset">重置</button>
-                    <button class="btn btn-primary" id="btnSave">💾 保存设置</button>
+                    <button class="btn btn-primary" id="btnSave">
+                        <span data-app-icon="save" data-icon-size="14"></span>
+                        <span>保存设置</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -502,9 +512,13 @@
             <div class="prompt-container">
                 <div class="prompt-header">
                     <div class="prompt-title">
-                        <span>🤖 关系建模 AI 提示词 (Prompt)</span>
+                        <span data-app-icon="bot" data-icon-size="16"></span>
+                        <span>关系建模 AI 提示词 (Prompt)</span>
                     </div>
-                    <button class="btn-copy" id="btnCopyPrompt">📋 复制当前提示词</button>
+                    <button class="btn-copy" id="btnCopyPrompt">
+                        <span data-app-icon="copy" data-icon-size="14"></span>
+                        <span>复制当前提示词</span>
+                    </button>
                 </div>
                 <div class="prompt-body-wrapper">
                     <div class="prompt-body" id="promptText">
@@ -527,11 +541,26 @@
         </section>
     </main>
 
+    <script src="/static/icons.js?v=20260728-professional-icons"></script>
     <script>
         // Store lines loaded from API
         let productLines = [];
         let activeLineId = "general";
         let isCreatingNew = false;
+
+        function setButtonContent(button, iconName, label, spin = false) {
+            button.innerHTML = `${AppIcons.svg(iconName, {
+                size: 14,
+                className: spin ? "app-icon-spin" : "",
+            })}<span>${label}</span>`;
+        }
+
+        function populateIconChoices() {
+            const select = document.getElementById("industryIcon");
+            select.innerHTML = AppIcons.catalog.map(([value, label]) =>
+                `<option value="${value}">${label}</option>`
+            ).join("");
+        }
 
         // Load lines from API
         async function loadProductLines() {
@@ -564,7 +593,7 @@
                 const icon = document.createElement("div");
                 icon.className = "industry-icon";
                 icon.style.color = pl.color || "#009999";
-                icon.textContent = pl.icon || "📦";
+                icon.innerHTML = AppIcons.svg(pl.icon || "package", { size: 20 });
 
                 const info = document.createElement("div");
                 info.className = "industry-info";
@@ -642,7 +671,7 @@
             idInput.disabled = true; // Lock ID for editing
 
             document.getElementById("industryName").value = pl.name;
-            document.getElementById("industryIcon").value = pl.icon || "📦";
+            document.getElementById("industryIcon").value = AppIcons.normalize(pl.icon || "package");
             document.getElementById("industryColor").value = pl.color || "#999999";
             document.getElementById("industryColorPicker").value = pl.color || "#999999";
             document.getElementById("industryDesc").value = pl.description || "";
@@ -675,7 +704,7 @@
             idInput.placeholder = "例如: semiconductor (小写字母/下划线)";
 
             document.getElementById("industryName").value = "";
-            document.getElementById("industryIcon").value = "⚡";
+            document.getElementById("industryIcon").value = "factory";
             document.getElementById("industryColor").value = "#00FFB9";
             document.getElementById("industryColorPicker").value = "#00FFB9";
             document.getElementById("industryDesc").value = "";
@@ -731,7 +760,7 @@
             try {
                 const btn = document.getElementById("btnSave");
                 btn.disabled = true;
-                btn.textContent = "⏳ 保存中...";
+                setButtonContent(btn, "loader", "保存中...", true);
 
                 const res = await fetch("/api/product-lines", {
                     method: "POST",
@@ -752,7 +781,7 @@
             } finally {
                 const btn = document.getElementById("btnSave");
                 btn.disabled = false;
-                btn.textContent = "💾 保存设置";
+                setButtonContent(btn, "save", "保存设置");
             }
         };
 
@@ -844,12 +873,11 @@ A: (详细解答)`;
             const text = document.getElementById("promptText").textContent;
             navigator.clipboard.writeText(text).then(() => {
                 const btn = document.getElementById("btnCopyPrompt");
-                const oldText = btn.textContent;
-                btn.textContent = "✅ 已复制到剪贴板！";
+                setButtonContent(btn, "check", "已复制到剪贴板");
                 btn.style.background = "var(--si-green)";
                 btn.style.color = "#000";
                 setTimeout(() => {
-                    btn.textContent = oldText;
+                    setButtonContent(btn, "copy", "复制当前提示词");
                     btn.style.background = "";
                     btn.style.color = "";
                 }, 2000);
@@ -860,6 +888,7 @@ A: (详细解答)`;
 
         // Initial load
         window.onload = () => {
+            populateIconChoices();
             const urlParams = new URLSearchParams(window.location.search);
             const plParam = urlParams.get("product_line") || urlParams.get("industry") || localStorage.getItem("selected_product_line");
             if (plParam) {

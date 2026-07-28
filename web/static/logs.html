@@ -7,6 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        .app-icon { display: inline-block; flex: 0 0 auto; vertical-align: -0.15em; }
+        .icon-label { display: inline-flex; align-items: center; gap: 5px; }
+        .app-icon-spin { animation: iconSpin 0.8s linear infinite; }
+        @keyframes iconSpin { to { transform: rotate(360deg); } }
         body {
             font-family: 'Inter', -apple-system, sans-serif;
             background: #0F172A;
@@ -308,6 +312,7 @@
     <!-- ── Toast Container ── -->
     <div id="toastContainer"></div>
 
+    <script src="/static/icons.js?v=20260728-professional-icons"></script>
     <script>
         (() => {
             "use strict";
@@ -400,13 +405,13 @@
                 $logList.innerHTML = items.map(item => `
                     <div class="log-item${item.trace_id === currentTraceId ? ' selected' : ''}" data-trace="${item.trace_id}">
                         <div class="status-icon ${item.has_error ? 'error' : 'success'}">
-                            ${item.has_error ? '✕' : '✓'}
+                            ${AppIcons.svg(item.has_error ? "xCircle" : "check", { size: 17 })}
                         </div>
                         <div class="log-body">
                             <div class="log-question">${escapeHtml(item.question || '(空问题)')}</div>
                             <div class="log-meta">
-                                <span>⏱ ${item.total_elapsed_ms ?? '?'}ms</span>
-                                <span>📋 ${item.step_count || 0} 步骤</span>
+                                <span class="icon-label">${AppIcons.svg("clock", { size: 12 })}${item.total_elapsed_ms ?? '?'}ms</span>
+                                <span class="icon-label">${AppIcons.svg("clipboard", { size: 12 })}${item.step_count || 0} 步骤</span>
                                 <span class="tag">${item.trace_id?.substring(0, 8) || ''}</span>
                                 <span>${formatTime(item.timestamp)}</span>
                             </div>
@@ -445,7 +450,7 @@
 
                 // Build a step tree like Dify
                 let stepsHtml = steps.map((s, i) => {
-                    const icon = s.status === "error" ? "✕" : s.status === "running" ? "○" : "✓";
+                    const iconName = s.status === "error" ? "xCircle" : s.status === "running" ? "loader" : "check";
                     const iconClass = s.status === "error" ? "error" : "success";
                     let detail = "";
                     if (s.output && typeof s.output === "object") {
@@ -457,7 +462,10 @@
                     const pct = totalMs > 0 ? ((s.elapsed_ms / totalMs) * 100).toFixed(0) : 0;
                     return `
                         <div class="trace-step">
-                            <div class="step-icon ${iconClass}">${icon}</div>
+                            <div class="step-icon ${iconClass}">${AppIcons.svg(iconName, {
+                                size: 15,
+                                className: s.status === "running" ? "app-icon-spin" : "",
+                            })}</div>
                             <div class="step-info">
                                 <div class="step-name">${escapeHtml(s.name)}</div>
                                 ${detail ? `<div class="step-detail">${escapeHtml(detail)}</div>` : ""}
@@ -479,17 +487,17 @@
 
                 $logDetail.innerHTML = `
                     <div class="detail-header">
-                        <h3>📋 Trace ${rec.trace_id?.substring(0, 8)}</h3>
+                        <h3 class="icon-label">${AppIcons.svg("clipboard", { size: 16 })}<span>Trace ${rec.trace_id?.substring(0, 8)}</span></h3>
                         <span style="font-family:JetBrains Mono,monospace;font-size:14px;color:#A5B4FC;">${totalMs}ms</span>
                     </div>
-                    <div class="detail-question">💬 ${escapeHtml(rec.question || "")}</div>
+                    <div class="detail-question"><span class="icon-label">${AppIcons.svg("message", { size: 15 })}<span>${escapeHtml(rec.question || "")}</span></span></div>
 
                     <div style="height:6px;background:#1E293B;border-radius:3px;display:flex;gap:1px;margin-bottom:16px;">${barHtml}</div>
 
                     <div class="trace-steps">${stepsHtml}</div>
 
-                    ${rec.answer ? `<div class="detail-answer"><div style="color:#64748B;font-size:11px;margin-bottom:6px;">📝 回答</div>${escapeHtml(rec.answer)}</div>` : ""}
-                    ${rec.error ? `<div class="detail-answer" style="border-left:3px solid #EF4444;"><div style="color:#EF4444;font-size:11px;margin-bottom:6px;">❌ 错误</div>${escapeHtml(rec.error)}</div>` : ""}
+                    ${rec.answer ? `<div class="detail-answer"><div class="icon-label" style="color:#64748B;font-size:11px;margin-bottom:6px;">${AppIcons.svg("fileText", { size: 13 })}<span>回答</span></div>${escapeHtml(rec.answer)}</div>` : ""}
+                    ${rec.error ? `<div class="detail-answer" style="border-left:3px solid #EF4444;"><div class="icon-label" style="color:#EF4444;font-size:11px;margin-bottom:6px;">${AppIcons.svg("xCircle", { size: 13 })}<span>错误</span></div>${escapeHtml(rec.error)}</div>` : ""}
                 `;
             }
 
