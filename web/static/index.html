@@ -173,6 +173,15 @@
                         <h3>查询关系预览</h3>
                         <div class="query-section-heading-actions">
                             <span id="queryPlanSummary">等待选择</span>
+                            <button type="button" class="query-heading-btn" id="btnViewQueryRelationship"
+                                disabled title="请先在小图中选择 Relationship">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+                                    <circle cx="12" cy="12" r="2.5" />
+                                </svg>
+                                查看关系
+                            </button>
                             <button type="button" class="query-heading-btn" id="btnFitQueryPreview"
                                 disabled title="将小图重新适应当前窗口" aria-label="适应小图窗口">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -193,7 +202,7 @@
                         <span><i class="query-legend-dot warning"></i>未连接</span>
                     </div>
                     <div id="queryEdgeDetail" class="query-edge-detail">
-                        点击关系线可查看物理 JOIN 条件
+                        点击关系线选中并查看物理 JOIN 条件
                     </div>
                 </section>
 
@@ -452,7 +461,7 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/app.js?v=20260728-query-builder-v12"></script>
+    <script src="/static/app.js?v=20260728-query-builder-v14"></script>
     <script src="/static/chat.js?v=20260728-query-builder"></script>
 </body>
 

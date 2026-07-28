@@ -230,6 +230,7 @@
         error: "",
         requestRevision: 0,
         previousSelectedNodeId: null,
+        selectedPreviewJoin: null,
     };
     const API = "";  // same origin
     const classDetailCache = new Map(); // Client-side cache for class detail API responses
@@ -265,6 +266,63 @@
     // direct neighbor remains visible on the canvas.
     const MAX_OVERVIEW_EDGES = 360;
     const INITIAL_PROPERTY_ROWS = 60;
+
+    function hideNodeTooltip() {
+        document.getElementById("nodeTooltip").classList.add("node-tooltip-hidden");
+    }
+
+    function showNodeTooltip(context) {
+        const tooltip = document.getElementById("nodeTooltip");
+        tooltip.replaceChildren();
+
+        const title = document.createElement("div");
+        title.className = "tt-title";
+        title.textContent = context.data.label || context.nodeId;
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "tt-sub";
+        subtitle.textContent = context.data.chineseName || "";
+
+        const description = document.createElement("div");
+        description.className = "tt-description";
+        description.textContent = context.data.description || "";
+
+        tooltip.append(title, subtitle, description);
+        const tooltipWidth = 300;
+        tooltip.style.left = `${Math.min(
+            context.clientX + 16,
+            window.innerWidth - tooltipWidth - 12,
+        )}px`;
+        tooltip.style.top = `${Math.max(12, context.clientY - 10)}px`;
+        tooltip.classList.remove("node-tooltip-hidden");
+    }
+
+    function getNodeTooltipContext(targetGraph, event, defaultSize = 52) {
+        const nodeId = event.target?.id;
+        const clientX = event.client?.x;
+        const clientY = event.client?.y;
+        if (!nodeId || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+
+        const nodeData = targetGraph.getNodeData(nodeId);
+        if (!nodeData?.data) return null;
+        const data = nodeData.data;
+        if (!(data.type === "class" || data.module)) return null;
+
+        // G6 treats a node label as part of the node element. Only show the
+        // information card when the pointer is inside the circle itself.
+        const canvasPos = targetGraph.getCanvasByClient({ x: clientX, y: clientY });
+        const nodePos = targetGraph.getElementPosition(nodeId);
+        const sizeValue = nodeData.style?.size ?? defaultSize;
+        const resolvedSize = typeof sizeValue === "function"
+            ? sizeValue(nodeData)
+            : sizeValue;
+        const radius = (typeof resolvedSize === "number" ? resolvedSize : defaultSize) / 2;
+        const dx = canvasPos.x - nodePos[0];
+        const dy = canvasPos.y - nodePos[1];
+        if (Math.hypot(dx, dy) > radius + 6) return null;
+
+        return { nodeId, data, clientX, clientY };
+    }
 
     function defaultNodeSize(nodeOrData) {
         return DEFAULT_CORE_NODE_IDS.has(nodeOrData?.id) ? 76 : 52;
@@ -972,68 +1030,17 @@
             }
         });
 
-        // ── Custom tooltip: show on node hover, hide on leave ──
-        const tooltip = document.getElementById("nodeTooltip");
+        // ── Shared tooltip: show on node hover, hide on leave ──
         const graphContainer = document.getElementById("graphContainer");
 
-        function hideNodeTooltip() {
-            tooltip.classList.add("node-tooltip-hidden");
-        }
-
-        function getNodeTooltipContext(evt) {
-            const nodeId = evt.target?.id;
-            const clientX = evt.client?.x;
-            const clientY = evt.client?.y;
-            if (!nodeId || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
-
-            const nodeData = graph.getNodeData(nodeId);
-            if (!nodeData?.data) return null;
-            const data = nodeData.data;
-            if (!(data.type === "class" || data.module)) return null;
-
-            // G6 treats the label and node as one element. Confirm that the
-            // pointer is physically inside the circular node, not its label.
-            const canvasPos = graph.getCanvasByClient({ x: clientX, y: clientY });
-            const nodePos = graph.getElementPosition(nodeId);
-            const sizeValue = nodeData.style?.size || 52;
-            const resolvedSize = typeof sizeValue === "function" ? sizeValue(data) : sizeValue;
-            const radius = (typeof resolvedSize === "number" ? resolvedSize : 52) / 2;
-            const dx = canvasPos.x - nodePos[0];
-            const dy = canvasPos.y - nodePos[1];
-            if (Math.hypot(dx, dy) > radius + 6) return null;
-
-            return { nodeId, data, clientX, clientY };
-        }
-
-        function showNodeTooltip(context) {
-            tooltip.replaceChildren();
-
-            const title = document.createElement("div");
-            title.className = "tt-title";
-            title.textContent = context.data.label || context.nodeId;
-
-            const subtitle = document.createElement("div");
-            subtitle.className = "tt-sub";
-            subtitle.textContent = context.data.chineseName || "";
-
-            const description = document.createElement("div");
-            description.className = "tt-description";
-            description.textContent = context.data.description || "";
-
-            tooltip.append(title, subtitle, description);
-            tooltip.style.left = `${context.clientX + 16}px`;
-            tooltip.style.top = `${context.clientY - 10}px`;
-            tooltip.classList.remove("node-tooltip-hidden");
-        }
-
         graph.on("node:pointerenter", (evt) => {
-            const context = getNodeTooltipContext(evt);
+            const context = getNodeTooltipContext(graph, evt);
             if (context) showNodeTooltip(context);
             else hideNodeTooltip();
         });
 
         graph.on("node:pointermove", (evt) => {
-            const context = getNodeTooltipContext(evt);
+            const context = getNodeTooltipContext(graph, evt);
             if (context) showNodeTooltip(context);
             else hideNodeTooltip();
         });
@@ -1045,7 +1052,13 @@
         // takes over pointer targeting, so native boundaries also clear it.
         graphContainer.addEventListener("pointerleave", hideNodeTooltip, { passive: true });
         document.addEventListener("pointermove", (event) => {
-            if (!graphContainer.contains(event.target)) hideNodeTooltip();
+            const previewCanvas = document.getElementById("queryPreviewCanvas");
+            if (
+                !graphContainer.contains(event.target)
+                && !previewCanvas?.contains(event.target)
+            ) {
+                hideNodeTooltip();
+            }
         }, { capture: true, passive: true });
         document.getElementById("chatPanel").addEventListener("pointerenter", hideNodeTooltip, { passive: true });
         window.addEventListener("blur", hideNodeTooltip);
@@ -1349,14 +1362,72 @@
     }
 
     function destroyQueryPreviewGraph() {
-        if (!queryPreviewGraph) return;
-        try {
-            queryPreviewGraph.destroy();
-        } catch (error) {
-            console.debug("Query preview graph cleanup skipped:", error);
+        if (queryPreviewGraph) {
+            try {
+                queryPreviewGraph.destroy();
+            } catch (error) {
+                console.debug("Query preview graph cleanup skipped:", error);
+            }
         }
         queryPreviewGraph = null;
+        queryBuilderState.selectedPreviewJoin = null;
+        const viewButton = document.getElementById("btnViewQueryRelationship");
+        viewButton.disabled = true;
+        viewButton.title = "请先在小图中选择 Relationship";
+        hideNodeTooltip();
         document.getElementById("queryPreviewCanvas").replaceChildren();
+    }
+
+    function relationshipNameForPhysicalField(fieldName) {
+        const baseName = String(fieldName || "").replace(/Id$/i, "");
+        const snakeName = baseName
+            .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+            .replace(/[^A-Za-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .toUpperCase();
+        return snakeName ? `HAS_${snakeName}` : "PHYSICAL_JOIN";
+    }
+
+    function relationshipForPhysicalJoin(join) {
+        const expectedName = relationshipNameForPhysicalField(join?.from_field);
+        const candidates = [...edgeInfoById.values()].filter((edge) => (
+            edge.source === join?.from_table
+            && edge.target === join?.to_table
+        ));
+        return (
+            candidates.find((edge) => edge.data?.label === expectedName)
+            || candidates[0]
+            || null
+        );
+    }
+
+    async function viewSelectedQueryRelationship() {
+        const selectedJoin = queryBuilderState.selectedPreviewJoin;
+        if (!selectedJoin) {
+            setQueryBuilderStatus("请先在小图中点击一条 Relationship", true);
+            return;
+        }
+        const relationship = relationshipForPhysicalJoin(selectedJoin);
+        const relationshipName = (
+            relationship?.data?.label
+            || relationshipNameForPhysicalField(selectedJoin.from_field)
+        );
+        const description = (
+            `${selectedJoin.from_table}.${selectedJoin.from_field} = `
+            + `${selectedJoin.to_table}.${selectedJoin.to_field}`
+        );
+        const button = document.getElementById("btnViewQueryRelationship");
+        const rect = button.getBoundingClientRect();
+        await showEdgePopup(
+            relationshipName,
+            selectedJoin.from_table,
+            selectedJoin.to_table,
+            description,
+            relationship?.data?.cardinality || "MANY_TO_ONE",
+            rect.right,
+            rect.bottom + 8,
+        );
     }
 
     async function renderQueryPreviewGraph() {
@@ -1367,21 +1438,27 @@
         const edgeDetail = document.getElementById("queryEdgeDetail");
         if (!plan?.nodes?.length) {
             empty.hidden = false;
-            edgeDetail.textContent = "点击关系线可查看物理 JOIN 条件";
+            edgeDetail.textContent = "点击关系线选中并查看物理 JOIN 条件";
             return;
         }
 
         empty.hidden = true;
         const selected = new Set(plan.selected_nodes || []);
         const unconnected = new Set(plan.unconnected || []);
-        const previewNodes = plan.nodes.map((node) => ({
-            id: node.id,
-            data: {
-                selected: selected.has(node.id),
-                bridge: node.bridge,
-                unconnected: unconnected.has(node.id),
-            },
-        }));
+        const previewNodes = plan.nodes.map((node) => {
+            const sourceNode = nodeInfoCache.get(node.id);
+            return {
+                id: node.id,
+                data: {
+                    ...(sourceNode?.data || {}),
+                    label: sourceNode?.data?.label || node.id,
+                    type: sourceNode?.data?.type || "class",
+                    selected: selected.has(node.id),
+                    bridge: node.bridge,
+                    unconnected: unconnected.has(node.id),
+                },
+            };
+        });
         const previewEdges = plan.joins.map((edge, index) => ({
             id: `query-edge-${index}`,
             source: edge.from_table,
@@ -1440,6 +1517,9 @@
                     selected: {
                         stroke: "#00FFB9",
                         lineWidth: 3,
+                        shadowColor: "#00FFB9",
+                        shadowBlur: 8,
+                        zIndex: 5,
                     },
                 },
             },
@@ -1453,9 +1533,15 @@
             const edgeData = queryPreviewGraph.getEdgeData(event.target.id);
             const edge = plan.joins[edgeData?.data?.edgeIndex];
             if (!edge) return;
+            queryBuilderState.selectedPreviewJoin = { ...edge };
             edgeDetail.textContent = (
                 `${edge.from_table}.${edge.from_field} = `
                 + `${edge.to_table}.${edge.to_field}`
+            );
+            const viewButton = document.getElementById("btnViewQueryRelationship");
+            viewButton.disabled = false;
+            viewButton.title = (
+                `查看 ${edge.from_table} → ${edge.to_table} Relationship`
             );
             const states = {};
             for (const item of queryPreviewGraph.getEdgeData()) {
@@ -1465,6 +1551,7 @@
         });
 
         queryPreviewGraph.on("node:click", (event) => {
+            hideNodeTooltip();
             const nodeId = event.target.id;
             if (selected.has(nodeId)) {
                 toggleQueryNode(nodeId);
@@ -1472,6 +1559,20 @@
             }
             edgeDetail.textContent = `${nodeId} 是系统补充的中间对象，仅用于连接物理 JOIN。`;
         });
+
+        queryPreviewGraph.on("node:pointerenter", (event) => {
+            const context = getNodeTooltipContext(queryPreviewGraph, event, 38);
+            if (context) showNodeTooltip(context);
+            else hideNodeTooltip();
+        });
+        queryPreviewGraph.on("node:pointermove", (event) => {
+            const context = getNodeTooltipContext(queryPreviewGraph, event, 38);
+            if (context) showNodeTooltip(context);
+            else hideNodeTooltip();
+        });
+        queryPreviewGraph.on("node:pointerleave", hideNodeTooltip);
+        queryPreviewGraph.on("edge:pointermove", hideNodeTooltip);
+        canvas.addEventListener("pointerleave", hideNodeTooltip, { passive: true });
 
         try {
             await queryPreviewGraph.render();
@@ -1525,6 +1626,11 @@
     async function requestQueryBuilderPlan() {
         const revision = ++queryBuilderState.requestRevision;
         queryBuilderState.error = "";
+        queryBuilderState.selectedPreviewJoin = null;
+        const viewRelationshipButton = document.getElementById("btnViewQueryRelationship");
+        viewRelationshipButton.disabled = true;
+        viewRelationshipButton.title = "请先在小图中选择 Relationship";
+        hideEdgePopup();
         queryBuilderState.loading = queryBuilderState.selectedNodes.length > 0;
         if (!queryBuilderState.selectedNodes.length) {
             queryBuilderState.plan = null;
@@ -1611,6 +1717,7 @@
         queryBuilderState.activeNodeId = null;
         queryBuilderState.plan = null;
         queryBuilderState.error = "";
+        queryBuilderState.selectedPreviewJoin = null;
         selectedNodeId = null;
 
         document.body.classList.add("query-builder-mode");
@@ -1636,6 +1743,7 @@
         queryBuilderState.activeNodeId = null;
         queryBuilderState.plan = null;
         queryBuilderState.error = "";
+        queryBuilderState.selectedPreviewJoin = null;
         queryBuilderState.previousSelectedNodeId = null;
 
         document.body.classList.remove("query-builder-mode");
@@ -1643,6 +1751,7 @@
         const toggle = document.getElementById("btnQueryMode");
         toggle.classList.remove("active");
         toggle.setAttribute("aria-pressed", "false");
+        hideEdgePopup();
         destroyQueryPreviewGraph();
         await _applyStates({});
         await restoreDefaultGraphZOrder();
@@ -1750,6 +1859,10 @@
         document.getElementById("btnFitQueryPreview").addEventListener(
             "click",
             fitQueryPreview,
+        );
+        document.getElementById("btnViewQueryRelationship").addEventListener(
+            "click",
+            viewSelectedQueryRelationship,
         );
         document.getElementById("btnContinueQuerySql").addEventListener(
             "click",
