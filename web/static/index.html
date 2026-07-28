@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-global-sql-dialect" />
+    <link rel="stylesheet" href="/static/style.css?v=20260728-topbar-polish" />
 </head>
 
 <body>
@@ -34,14 +34,10 @@
         </div>
         <div class="topbar-center">
             <label class="global-dialect-control" for="globalSqlDialect" title="全局数据库方言：同时控制 Relationship 示例与 SQL 助手">
-                <span class="global-dialect-icon">SQL</span>
-                <span class="global-dialect-copy">
-                    <span class="global-dialect-caption">数据库</span>
-                    <select id="globalSqlDialect" class="global-dialect-select">
-                        <option value="oracle">Oracle</option>
-                        <option value="sqlserver">SQL Server</option>
-                    </select>
-                </span>
+                <select id="globalSqlDialect" class="global-dialect-select" aria-label="SQL 数据库">
+                    <option value="oracle">Oracle</option>
+                    <option value="sqlserver">SQL Server</option>
+                </select>
             </label>
             <div class="search-box" id="searchBox">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -55,11 +51,9 @@
             <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> 类</div>
             <div class="stat-chip" id="statProps"><span class="stat-num">-</span> 属性</div>
             <div class="stat-chip" id="statRels"><span class="stat-num">-</span> 关系</div>
-            <a href="/static/industry.html" class="nav-link-btn"
-                style="color: #00FFB9; text-decoration: none; border: 1px solid rgba(0, 255, 185, 0.4); padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; background: rgba(0, 255, 185, 0.04); transition: all 0.2s;"
-                title="行业/产品线设置">
+            <a href="/static/industry.html" class="nav-link-btn" title="行业/产品线设置">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="vertical-align: middle;">
+                    aria-hidden="true">
                     <path d="M12 2L2 7l10 5 10-5-10-5z" />
                     <path d="M2 17l10 5 10-5" />
                     <path d="M2 12l10 5 10-5" />
@@ -275,7 +269,7 @@
             <div class="chat-header-left">
                 <img src="/static/siemens_logo.svg" alt="Bot" class="chat-header-icon"
                     style="width:20px;height:20px;border-radius:4px;" />
-                <span class="chat-dialect-summary" id="chatDialectSummary">Oracle SQL</span>
+                <span class="chat-dialect-summary" id="chatDialectSummary">Oracle</span>
                 <span class="chat-header-badge">READ ONLY</span>
             </div>
             <div class="chat-header-right">
