@@ -1,9 +1,12 @@
 import unittest
 
-from src.qa.sql_query_builder import build_query_builder_plan
+from src.qa.sql_query_builder import MAX_QUERY_OBJECTS, build_query_builder_plan
 
 
 class SqlQueryBuilderTests(unittest.TestCase):
+    def test_selection_limit_is_sixteen(self):
+        self.assertEqual(MAX_QUERY_OBJECTS, 16)
+
     def test_empty_plan(self):
         plan = build_query_builder_plan([])
         self.assertEqual(plan["nodes"], [])

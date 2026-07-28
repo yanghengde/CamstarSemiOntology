@@ -1178,7 +1178,7 @@
         const container = document.getElementById("querySelectedNodes");
         const count = document.getElementById("querySelectedCount");
         container.replaceChildren();
-        count.textContent = `${queryBuilderState.selectedNodes.length} / 8`;
+        count.textContent = `${queryBuilderState.selectedNodes.length} / 16`;
 
         if (!queryBuilderState.selectedNodes.length) {
             const empty = document.createElement("span");
@@ -1586,8 +1586,8 @@
                 );
             }
         } else {
-            if (queryBuilderState.selectedNodes.length >= 8) {
-                setQueryBuilderStatus("最多可选择 8 个查询对象", true);
+            if (queryBuilderState.selectedNodes.length >= 16) {
+                setQueryBuilderStatus("最多可选择 16 个查询对象", true);
                 return;
             }
             queryBuilderState.selectedNodes.push(nodeId);

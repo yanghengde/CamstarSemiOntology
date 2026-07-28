@@ -12,7 +12,7 @@ from src.qa.sql_schema_retriever import (
 )
 
 
-MAX_QUERY_OBJECTS = 8
+MAX_QUERY_OBJECTS = 16
 MAX_PLAN_TABLES = 24
 REFERENCE_SCHEMA_SOURCE = "docs/Database_Fields.csv"
 
