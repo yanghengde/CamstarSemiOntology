@@ -1524,6 +1524,12 @@ html, body {
     font-size: 11px;
 }
 
+#nodeTooltip .tt-description {
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
     width: 6px;

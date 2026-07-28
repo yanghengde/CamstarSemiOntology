@@ -872,59 +872,83 @@
 
         // ── Custom tooltip: show on node hover, hide on leave ──
         const tooltip = document.getElementById("nodeTooltip");
+        const graphContainer = document.getElementById("graphContainer");
 
-        graph.on("node:pointerenter", (evt) => {
-            const nodeId = evt.target.id;
+        function hideNodeTooltip() {
+            tooltip.classList.add("node-tooltip-hidden");
+        }
+
+        function getNodeTooltipContext(evt) {
+            const nodeId = evt.target?.id;
+            const clientX = evt.client?.x;
+            const clientY = evt.client?.y;
+            if (!nodeId || !Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+
             const nodeData = graph.getNodeData(nodeId);
-            if (!nodeData || !nodeData.data) return;
-            const d = nodeData.data;
-            if (!(d.type === "class" || d.module)) return;
+            if (!nodeData?.data) return null;
+            const data = nodeData.data;
+            if (!(data.type === "class" || data.module)) return null;
 
-            // Only show tooltip when hovering over the circle, not the label text below
-            const canvasPos = graph.getCanvasByClient({ x: evt.client.x, y: evt.client.y });
+            // G6 treats the label and node as one element. Confirm that the
+            // pointer is physically inside the circular node, not its label.
+            const canvasPos = graph.getCanvasByClient({ x: clientX, y: clientY });
             const nodePos = graph.getElementPosition(nodeId);
-            const nodeSize = nodeData.style?.size || 52;
-            const radius = (typeof nodeSize === 'function'
-                ? nodeSize(d)
-                : typeof nodeSize === 'number' ? nodeSize : 52) / 2;
+            const sizeValue = nodeData.style?.size || 52;
+            const resolvedSize = typeof sizeValue === "function" ? sizeValue(data) : sizeValue;
+            const radius = (typeof resolvedSize === "number" ? resolvedSize : 52) / 2;
             const dx = canvasPos.x - nodePos[0];
             const dy = canvasPos.y - nodePos[1];
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist > radius + 6) return; // pointer outside the circle
+            if (Math.hypot(dx, dy) > radius + 6) return null;
 
-            tooltip.innerHTML = `<div class="tt-title">${d.label || nodeId}</div>
-                                 <div class="tt-sub">${d.chineseName || ""}</div>
-                                 <div style="margin-top:4px;color:#8DA4B8;font-size:11px">${d.description || ""}</div>`;
+            return { nodeId, data, clientX, clientY };
+        }
+
+        function showNodeTooltip(context) {
+            tooltip.replaceChildren();
+
+            const title = document.createElement("div");
+            title.className = "tt-title";
+            title.textContent = context.data.label || context.nodeId;
+
+            const subtitle = document.createElement("div");
+            subtitle.className = "tt-sub";
+            subtitle.textContent = context.data.chineseName || "";
+
+            const description = document.createElement("div");
+            description.className = "tt-description";
+            description.textContent = context.data.description || "";
+
+            tooltip.append(title, subtitle, description);
+            tooltip.style.left = `${context.clientX + 16}px`;
+            tooltip.style.top = `${context.clientY - 10}px`;
             tooltip.classList.remove("node-tooltip-hidden");
+        }
+
+        graph.on("node:pointerenter", (evt) => {
+            const context = getNodeTooltipContext(evt);
+            if (context) showNodeTooltip(context);
+            else hideNodeTooltip();
         });
 
         graph.on("node:pointermove", (evt) => {
-            if (tooltip.classList.contains("node-tooltip-hidden")) return;
-
-            // Hide tooltip when pointer moves outside the circle onto the label
-            const nodeId = evt.target.id;
-            const nodeData = graph.getNodeData(nodeId);
-            if (nodeData) {
-                const canvasPos = graph.getCanvasByClient({ x: evt.client.x, y: evt.client.y });
-                const nodePos = graph.getElementPosition(nodeId);
-                const sizeVal = nodeData.style?.size || 52;
-                const radius = (typeof sizeVal === 'number' ? sizeVal : 52) / 2;
-                const dx = canvasPos.x - nodePos[0];
-                const dy = canvasPos.y - nodePos[1];
-                if (Math.sqrt(dx * dx + dy * dy) > radius + 6) {
-                    tooltip.classList.add("node-tooltip-hidden");
-                    return;
-                }
-            }
-
-            const clientX = evt.client?.x ?? 0;
-            const clientY = evt.client?.y ?? 0;
-            tooltip.style.left = (clientX + 16) + "px";
-            tooltip.style.top = (clientY - 10) + "px";
+            const context = getNodeTooltipContext(evt);
+            if (context) showNodeTooltip(context);
+            else hideNodeTooltip();
         });
 
-        graph.on("node:pointerleave", () => {
-            tooltip.classList.add("node-tooltip-hidden");
+        graph.on("node:pointerleave", hideNodeTooltip);
+        graph.on("edge:pointermove", hideNodeTooltip);
+
+        // G6 can miss node:pointerleave when an overlay such as the chat panel
+        // takes over pointer targeting, so native boundaries also clear it.
+        graphContainer.addEventListener("pointerleave", hideNodeTooltip, { passive: true });
+        document.addEventListener("pointermove", (event) => {
+            if (!graphContainer.contains(event.target)) hideNodeTooltip();
+        }, { capture: true, passive: true });
+        document.getElementById("chatPanel").addEventListener("pointerenter", hideNodeTooltip, { passive: true });
+        window.addEventListener("blur", hideNodeTooltip);
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) hideNodeTooltip();
         });
 
         // ── Canvas click → clear selection + close panel + hide edge popup ──
