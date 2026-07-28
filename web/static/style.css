@@ -93,6 +93,16 @@ html, body {
     gap: 10px;
 }
 
+.home-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
 .topbar-left h1 {
     font-size: 16px;
     font-weight: 600;
@@ -110,11 +120,7 @@ html, body {
     align-items: center;
     justify-content: center;
     padding: 0;
-    border: 0;
     border-radius: 50%;
-    color: inherit;
-    background: transparent;
-    cursor: pointer;
     transition: transform 0.18s ease, filter 0.18s ease;
 }
 
@@ -123,12 +129,13 @@ html, body {
     filter: drop-shadow(0 0 7px rgba(0, 255, 185, 0.5));
 }
 
-.siemens-logo:focus-visible {
+.home-brand:focus-visible {
     outline: 2px solid var(--si-green);
     outline-offset: 3px;
+    border-radius: 6px;
 }
 
-.siemens-logo:active {
+.home-brand:active .siemens-logo {
     transform: scale(0.94);
 }
 

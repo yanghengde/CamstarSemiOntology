@@ -11,22 +11,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-topbar-polish" />
+    <link rel="stylesheet" href="/static/style.css?v=20260728-home-link" />
 </head>
 
 <body>
     <!-- ── Top Navigation Bar ── -->
     <header id="topbar">
         <div class="topbar-left">
-            <button type="button" class="siemens-logo" id="homeLogoBtn"
-                aria-label="返回图谱首页" title="返回图谱首页">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                    <circle cx="14" cy="14" r="13" stroke="#00FFB9" stroke-width="2" fill="none" />
-                    <text x="14" y="18" text-anchor="middle" fill="#00FFB9" font-size="12" font-weight="700"
-                        font-family="Inter">S</text>
-                </svg>
-            </button>
-            <h1>Opcenter <span class="accent">Ontology</span> Explorer</h1>
+            <a href="/" class="home-brand" aria-label="返回图谱首页" title="返回图谱首页">
+                <span class="siemens-logo">
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                        <circle cx="14" cy="14" r="13" stroke="#00FFB9" stroke-width="2" fill="none" />
+                        <text x="14" y="18" text-anchor="middle" fill="#00FFB9" font-size="12" font-weight="700"
+                            font-family="Inter">S</text>
+                    </svg>
+                </span>
+                <h1>Opcenter <span class="accent">Ontology</span> Explorer</h1>
+            </a>
             <div class="product-line-selector" id="productLineSelector">
                 <select id="productLineSelect" title="切换产品线">
                     <option value="default">通用</option>
@@ -354,8 +355,8 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/app.js?v=20260728-home-reset"></script>
-    <script src="/static/chat.js?v=20260728-home-reset"></script>
+    <script src="/static/app.js?v=20260728-home-link"></script>
+    <script src="/static/chat.js?v=20260728-home-link"></script>
 </body>
 
 </html>
