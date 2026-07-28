@@ -719,6 +719,12 @@
                         opacity: 1,
                         zIndex: 24,
                     },
+                    queryInactive: {
+                        opacity: 0.16,
+                        labelOpacity: 0.1,
+                        iconOpacity: 0.16,
+                        zIndex: 1,
+                    },
                     inactive: {
                         opacity: 0.45,
                         labelOpacity: 0.45,
@@ -812,6 +818,16 @@
                         haloPointerEvents: "none",
                         interactive: false,
                         zIndex: -2,
+                    },
+                    queryInactive: {
+                        opacity: 0.08,
+                        labelOpacity: 0,
+                        labelBackgroundOpacity: 0,
+                        halo: 0,
+                        pointerEvents: "none",
+                        haloPointerEvents: "none",
+                        interactive: false,
+                        zIndex: -3,
                     },
                 },
             },
@@ -1162,6 +1178,12 @@
         if (!graph || !rawData || !queryBuilderState.active) return;
         const query = searchQuery.trim().toLowerCase();
         const { selected, bridge, unconnected } = queryPlanNodeSets();
+        const relatedCandidates = new Set(bridge);
+        for (const nodeId of selected) {
+            for (const neighborId of adjacencyIndex?.get(nodeId)?.neighbors || []) {
+                relatedCandidates.add(neighborId);
+            }
+        }
         const states = {};
         for (const node of graph.getNodeData()) {
             if (selected.has(node.id)) {
@@ -1180,12 +1202,29 @@
                 const chineseName = String(source.data?.chineseName || "").toLowerCase();
                 states[node.id] = (
                     label.includes(query) || chineseName.includes(query)
-                ) ? ["active"] : ["inactive"];
+                ) ? ["active"] : ["queryInactive"];
+            } else if (selected.size && !relatedCandidates.has(node.id)) {
+                states[node.id] = ["queryInactive"];
             } else {
                 states[node.id] = [];
             }
         }
-        for (const edge of graph.getEdgeData()) states[edge.id] = [];
+        const visibleQueryNodes = new Set([
+            ...selected,
+            ...relatedCandidates,
+        ]);
+        for (const edge of graph.getEdgeData()) {
+            const sourceId = String(edge.source?.id || edge.source);
+            const targetId = String(edge.target?.id || edge.target);
+            const touchesSelection = selected.has(sourceId) || selected.has(targetId);
+            const staysInQueryFocus = (
+                visibleQueryNodes.has(sourceId)
+                && visibleQueryNodes.has(targetId)
+            );
+            states[edge.id] = (
+                selected.size && touchesSelection && staysInQueryFocus
+            ) ? ["active"] : (selected.size ? ["queryInactive"] : []);
+        }
         _applyStates(states);
     }
 
@@ -1386,6 +1425,9 @@
             const payload = await response.json();
             if (revision !== queryBuilderState.requestRevision) return;
             if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("查询规划服务尚未加载，请重启后端服务");
+                }
                 throw new Error(payload.detail || payload.error || `HTTP ${response.status}`);
             }
             queryBuilderState.plan = payload;
