@@ -142,7 +142,7 @@ def main() -> int:
         lines.append("_无。_")
     lines += [
         "",
-        "本报告只验证SQL生成、物理Schema和指标合同，不连接或查询业务数据库。",
+        "本报告只验证固定SQL模板、物理Schema和指标合同，不连接或查询业务数据库。",
         "",
     ]
     REPORT.write_text("\n".join(lines), encoding="utf-8")

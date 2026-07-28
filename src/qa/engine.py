@@ -209,25 +209,67 @@ async def query_stream(
     # contract fixes the fact table, measure, grain and physical JOINs.
     metric_id = (query_plan or {}).get("metric_id")
     if assistant_mode == "sql" and metric_id:
+        from src.qa.semantic.example_index import resolve_static_sql_example
         from src.qa.semantic.metric_catalog import get_metric
         from src.qa.semantic.metric_validator import validate_metric_sql
-        from src.qa.semantic.sql_renderer import render_metric_answer
+        from src.qa.semantic.sql_renderer import render_static_metric_answer
         from src.qa.sql_query_planner import format_query_plan_markdown
         from src.qa.sql_validator import validate_sql_answer
 
         step_metric = trace.add_step("指标语义层") if trace else None
         metric_contract = get_metric(metric_id)
         try:
+            effective_question = (
+                query_plan.get("effective_question") or question
+            )
+            static_example = resolve_static_sql_example(
+                effective_question,
+                dialect=sql_dialect,
+                metric_id=metric_id,
+                time_scope=query_plan.get("time_scope"),
+                time_basis=query_plan.get("time_basis"),
+            )
+            if not static_example:
+                yield {
+                    "type": "status",
+                    "content": (
+                        f"已识别指标合同 {metric_id}，"
+                        "但未命中固定 SQL 模板。"
+                    ),
+                }
+                full_answer = (
+                    f"{format_query_plan_markdown(query_plan)}\n\n"
+                    "### 未命中标准 SQL 模板\n\n"
+                    "当前问题与语义模板库中的标准问题距离不足，"
+                    "因此没有返回或临时生成 SQL。请换用更接近的标准问法，"
+                    "或先将该问法及审核后的 SQL 加入模板库。"
+                )
+                yield full_answer
+                if step_metric:
+                    step_metric.done(output={
+                        "metric_id": metric_id,
+                        "fact_table": metric_contract["factTable"],
+                        "contract_status": metric_contract.get("status"),
+                        "sql_valid": False,
+                        "llm_bypassed": True,
+                        "sql_source": None,
+                        "semantic_example_id": None,
+                        "template_matched": False,
+                    })
+                return
+
             yield {
                 "type": "status",
-                "content": f"正在按指标合同 {metric_id} 生成确定性 SQL…",
+                "content": (
+                    f"已命中标准问题 {static_example['case_id']}，"
+                    "正在读取不可变 Golden SQL…"
+                ),
             }
-            body = render_metric_answer(
+            body = render_static_metric_answer(
                 metric_contract,
-                dialect=sql_dialect,
-                time_scope=query_plan.get("time_scope", "未指定"),
-                time_basis=query_plan.get("time_basis"),
-                question=query_plan.get("effective_question") or question,
+                sql=static_example["golden_sql"],
+                example_id=static_example["case_id"],
+                distance=static_example["distance"],
             )
             physical_validation = validate_sql_answer(
                 body,
@@ -251,6 +293,11 @@ async def query_stream(
                         "contract_status": metric_contract.get("status"),
                         "sql_valid": True,
                         "llm_bypassed": True,
+                        "sql_source": (
+                            "immutable_golden_sql"
+                        ),
+                        "semantic_example_id": static_example.get("case_id"),
+                        "template_matched": True,
                     })
             else:
                 errors = (

@@ -10,9 +10,23 @@ from .metric_catalog import get_metric
 
 _THROUGHPUT = re.compile(r"(?:产出|产量|throughput|thruput)", re.I)
 _QUANTITY_WORD = re.compile(r"(?:数量|总量|多少|汇总|统计|合计|qty)", re.I)
+_SEMANTIC_QUERY = re.compile(
+    r"(?:查询|查看|列出|统计|汇总|合计|多少|报表|趋势|数量|时长|"
+    r"\bselect\b|\bsql\b)",
+    re.I,
+)
+_UNSAFE_OR_SCHEMA_ONLY = re.compile(
+    r"(?:删除|修改|更新|插入|建表|删表|truncate|drop|delete|update|insert|"
+    r"字段|列名|schema|表结构)",
+    re.I,
+)
 
 
-def resolve_metric(question: str) -> dict[str, Any] | None:
+def resolve_metric(
+    question: str,
+    *,
+    dialect: str | None = None,
+) -> dict[str, Any] | None:
     text = question or ""
 
     if re.search(r"(?:良率|直通率|一次通过率|\byield\b)", text, re.I):
@@ -65,4 +79,17 @@ def resolve_metric(question: str) -> dict[str, Any] | None:
     ):
         metric_id = "resource_status.change_count"
 
-    return get_metric(metric_id)
+    if metric_id:
+        return get_metric(metric_id)
+
+    if (
+        _SEMANTIC_QUERY.search(text)
+        and not _UNSAFE_OR_SCHEMA_ONLY.search(text)
+    ):
+        from .example_index import resolve_metric_id_semantically
+
+        return get_metric(resolve_metric_id_semantically(
+            text,
+            dialect=dialect,
+        ))
+    return None

@@ -290,7 +290,7 @@ def build_sql_query_plan(
         grain = "明细记录"
 
     from src.qa.semantic.metric_resolver import resolve_metric
-    metric_contract = resolve_metric(question)
+    metric_contract = resolve_metric(question, dialect=dialect)
     if metric_contract:
         intent = metric_contract["intent"]
         metric = metric_contract["nameZh"]

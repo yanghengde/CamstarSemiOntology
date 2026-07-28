@@ -181,3 +181,54 @@ def render_metric_answer(
     lines.extend(f"- {rule}" for rule in rules)
     lines.append("- SQL仅供审核和复制，本系统不连接业务数据库执行查询。")
     return "\n".join(lines)
+
+
+def render_static_metric_answer(
+    metric_or_id: dict[str, Any] | str,
+    *,
+    sql: str,
+    example_id: str,
+    distance: float,
+) -> str:
+    """Wrap an immutable SQL template without modifying any SQL character."""
+    metric = (
+        get_metric(metric_or_id)
+        if isinstance(metric_or_id, str)
+        else metric_or_id
+    )
+    joins = metric.get("joins", [])
+    rules = metric.get("businessRules", [])
+    lines = [
+        "### SQL",
+        "",
+        "```sql",
+        sql,
+        "```",
+        "",
+        "### 标准模板",
+        "",
+        f"- 标准问题：`{example_id}`",
+        f"- 语义距离：`{distance:.4f}`",
+        "- SQL来源：向量库绑定的不可变 Golden SQL，未经过模型改写。",
+        "",
+        "### 指标口径",
+        "",
+        f"- 指标合同：`{metric['id']}`（{metric['nameZh']}）",
+        f"- 事实表：`{metric['factTable']}`",
+        f"- 合同状态：`{metric.get('status', 'approved')}`",
+        f"- 定义：{metric['description']}",
+        "",
+        "### 使用的表与连接",
+        "",
+    ]
+    if joins:
+        lines.extend(
+            f"- `{item['left']} = {item['right']}`"
+            for item in joins
+        )
+    else:
+        lines.append("- 单表查询，无 JOIN。")
+    lines += ["", "### 注意事项", ""]
+    lines.extend(f"- {rule}" for rule in rules)
+    lines.append("- SQL仅供审核和复制，本系统不连接业务数据库执行查询。")
+    return "\n".join(lines)

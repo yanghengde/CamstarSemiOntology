@@ -187,3 +187,41 @@ def test_semantic_metric_query_bypasses_llm(monkeypatch):
     assert "throughput.by_mfg_order" in answer
     assert "SUM(rth.Qty)" in answer
     assert "rth.MfgOrderId = mo.MfgOrderId" in answer
+    assert "不可变 Golden SQL" in answer
+    assert "throughput_order_001" in answer
+
+
+def test_contracted_metric_does_not_generate_sql_without_template(monkeypatch):
+    from src.qa import engine
+    from src.qa.semantic import example_index
+
+    monkeypatch.setattr(
+        example_index,
+        "resolve_static_sql_example",
+        lambda *args, **kwargs: None,
+    )
+
+    def fail_if_called():
+        raise AssertionError("LLM must not be called for a contracted metric")
+
+    monkeypatch.setattr(engine, "_get_async_llm", fail_if_called)
+    question = "请写一个今日工单产出的sql，使用本地交易时间"
+    classes = engine.extract_keywords(question, fallback=False)
+    plan = build_sql_query_plan(question, classes, "oracle")
+
+    async def collect():
+        chunks = []
+        async for chunk in engine.query_stream(
+            question,
+            assistant_mode="sql",
+            selected_classes=classes,
+            sql_dialect="oracle",
+            query_plan=plan.to_dict(),
+        ):
+            if isinstance(chunk, str):
+                chunks.append(chunk)
+        return "".join(chunks)
+
+    answer = asyncio.run(collect())
+    assert "未命中标准 SQL 模板" in answer
+    assert "```sql" not in answer

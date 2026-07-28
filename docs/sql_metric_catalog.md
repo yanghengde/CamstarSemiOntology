@@ -36,7 +36,8 @@
 2. 时间过滤使用参数化半开区间，不对时间字段执行 `TRUNC`、`CAST` 或 `CONVERT`。
 3. 指标SQL只使用合同登记的事实表、物理外键和聚合表达式。
 4. `provisional` 指标不推测 `ReversalStatus`、返工、状态或数量符号枚举。
-5. 命中指标合同后由程序渲染SQL，不调用LLM决定表、JOIN或统计口径。
+5. 标准问题先通过独立向量集合 `sql_metric_examples` 解析到指标合同，
+   再读取该条目绑定的不可变 Golden SQL；不调用LLM改写SQL。
 6. “良率”“一次通过率”和OEE在分子、分母及排除规则确认前不生成确定性SQL。
 
 ## 回归基线
@@ -44,3 +45,6 @@
 Golden数据集位于 `src/tests/fixtures/sql_semantic_benchmark.jsonl`，共50条。
 来源包括现有聊天日志中的SQL问法及依据物理Schema补齐的真实业务场景问法。
 每条记录保存预期指标、事实表、时间口径、必需JOIN及静态标准SQL。
+这50条记录已全部写入 `sql_metric_examples`，向量元数据同时保存
+`case_id`、`metric_id`、方言、时间口径和 Golden SQL。线上命中后还会与
+版本化 fixture 做逐字一致性校验；不一致时拒绝使用该模板。
