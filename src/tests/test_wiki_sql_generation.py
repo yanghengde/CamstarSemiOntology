@@ -36,6 +36,10 @@ def test_master_recipe_printer_label_join_uses_physical_fk():
         "tgt.[PrinterLabelDefinitionId]"
     ) in section
     assert "WHERE src.[MasterRecipeId] = @SourceId" in section
+    assert section.startswith("### 查询示例")
+    assert "物理关联" not in section
+    assert "源表：" not in section
+    assert "LEFT JOIN` 会保留" not in section
 
 
 def test_authored_wiki_prefix_does_not_embed_sql():
@@ -86,7 +90,7 @@ def test_every_relationship_exposes_sql_in_its_own_field():
             relationship["relationName"],
             relationship["toClass"],
         )
-        if "## SQL 关联示例" not in result["sql_content"]:
+        if "### 查询示例" not in result["sql_content"]:
             unavailable_sql.append(
                 (
                     relationship["fromClass"],
@@ -159,7 +163,7 @@ def test_authored_wiki_keeps_usage_and_hides_embedded_sql():
     assert result["found"] is True
     assert "## 关系说明" in result["content"]
     assert "## SQL 关联示例" not in result["content"]
-    assert "## SQL 关联示例" in result["sql_content"]
+    assert "### 查询示例" in result["sql_content"]
 
 
 def test_wiki_stats_include_factual_fallback_coverage():

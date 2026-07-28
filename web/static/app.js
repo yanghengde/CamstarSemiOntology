@@ -1551,8 +1551,8 @@
         editBtn.style.display = "none";
 
         // Position popup near click, but keep within viewport
-        const popupW = 380;
-        const popupH = 620;
+        const popupW = 560;
+        const popupH = 590;
         let left = Math.min(x + 12, window.innerWidth - popupW - 16);
         let top = Math.min(y - 60, window.innerHeight - popupH - 16);
         top = Math.max(60, top);

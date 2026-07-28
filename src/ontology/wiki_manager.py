@@ -555,13 +555,11 @@ def build_relationship_sql_section(
     to_class: str,
     description: str = "",
 ) -> str:
-    """Build a deterministic, read-only SQL section for the wiki header."""
+    """Build only the deterministic, read-only query example."""
     join = resolve_relationship_join(from_class, to_class, description)
     if not join["resolved"]:
         return "\n".join(
             [
-                "## SQL 关联示例",
-                "",
                 "> ⚠️ 当前物理 Schema 无法唯一确定该关系的 JOIN 字段，"
                 "因此未生成猜测性 SQL。请先核对 `Database_Fields.csv`。",
             ]
@@ -572,20 +570,6 @@ def build_relationship_sql_section(
     target_table = _sql_identifier(join["targetTable"])
     target_field = _sql_identifier(join["targetField"])
     lines = [
-        "## SQL 关联示例",
-        "",
-        "### 物理关联",
-        "",
-        f"- 源表：`{source_table}`（别名 `src`）",
-        f"- 目标表：`{target_table}`（别名 `tgt`）",
-        (
-            f"- JOIN 条件：`src.{source_field} = tgt.{target_field}`"
-        ),
-        (
-            f"- 物理外键：`{_sql_identifier(join['physicalForeignKeyTable'])}"
-            f".{_sql_identifier(join['physicalForeignKeyField'])}`"
-        ),
-        "",
         "### 查询示例",
         "",
         "```sql",
@@ -602,13 +586,7 @@ def build_relationship_sql_section(
         )
     else:
         lines[-1] += ";"
-    lines += [
-        "```",
-        "",
-        "> `LEFT JOIN` 会保留没有关联记录的源对象；"
-        "如果只需要已建立该关系的数据，可改为 `INNER JOIN`。"
-        "`@SourceId` 是查询参数，请使用参数化查询传值。",
-    ]
+    lines.append("```")
     return "\n".join(lines)
 
 

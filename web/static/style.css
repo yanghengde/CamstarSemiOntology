@@ -419,10 +419,12 @@ html, body {
 .edge-popup {
     position: fixed;
     z-index: 1000;
-    min-width: 340px;
-    max-width: 480px;
-    max-height: 85vh;
-    padding: 14px 16px;
+    width: min(560px, calc(100vw - 32px));
+    min-width: 0;
+    max-width: none;
+    max-height: 88vh;
+    padding: 16px 18px;
+    box-sizing: border-box;
     background: rgba(10, 20, 40, 0.97);
     border: 1px solid rgba(0, 255, 185, 0.3);
     border-radius: 14px;
@@ -433,7 +435,7 @@ html, body {
     pointer-events: auto;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     resize: none;
 }
 
@@ -469,11 +471,11 @@ html, body {
 }
 
 .edge-popup-title {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--si-green);
     letter-spacing: 0.3px;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     padding-right: 30px;
     cursor: grab;
 }
@@ -483,9 +485,9 @@ html, body {
 }
 
 .edge-popup-meta {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     white-space: pre-wrap;
     cursor: grab;
 }
@@ -498,7 +500,7 @@ html, body {
     border-radius: 12px;
     font-size: 10px;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     background: rgba(0, 188, 212, 0.1);
     border: 1px solid rgba(0, 188, 212, 0.25);
     color: #4DD0E1;
@@ -508,71 +510,58 @@ html, body {
 
 /* ── Separate physical SQL field and authored relationship Wiki ── */
 .edge-section-label {
-    margin: 2px 2px 5px;
+    margin: 0 2px 6px;
     color: var(--text-primary);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.2px;
 }
 
 .edge-sql-area {
-    margin-bottom: 9px;
-    padding: 8px 10px;
-    border-radius: 9px;
-    background: rgba(0, 153, 153, 0.06);
-    border: 1px solid rgba(0, 255, 185, 0.18);
-    max-height: 210px;
-    overflow: auto;
+    flex: 0 0 auto;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(3, 13, 30, 0.8);
+    border: 1px solid rgba(0, 188, 212, 0.24);
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .edge-sql-content {
-    color: var(--text-secondary);
-    font-size: 11px;
-    line-height: 1.55;
+    color: var(--text-primary);
+    font-size: 12px;
+    line-height: 1.6;
     user-select: text;
 }
 
-.edge-sql-content h2 {
-    display: none;
-}
-
 .edge-sql-content h3 {
-    margin: 6px 0 4px;
-    color: var(--si-petrol-light);
-    font-size: 11px;
-}
-
-.edge-sql-content p,
-.edge-sql-content ul {
-    margin: 4px 0;
-}
-
-.edge-sql-content ul {
-    padding-left: 18px;
+    margin: 0 0 8px;
+    color: var(--si-green);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 650;
 }
 
 .edge-sql-content pre {
-    margin: 6px 0;
-    padding: 8px;
-    overflow-x: auto;
-    border-radius: 6px;
-    background: rgba(0, 0, 20, 0.65);
-    border: 1px solid rgba(0, 188, 212, 0.15);
+    margin: 0;
+    padding: 11px 12px;
+    overflow: visible;
+    border-radius: 8px;
+    background: rgba(0, 8, 22, 0.92);
+    border: 1px solid rgba(0, 188, 212, 0.16);
 }
 
 .edge-sql-content code {
-    color: var(--si-petrol-light);
+    display: block;
+    color: #9be7ea;
     font-family: 'JetBrains Mono', 'Consolas', monospace;
-    font-size: 10px;
+    font-size: 11px;
+    line-height: 1.65;
     white-space: pre;
-}
-
-.edge-sql-content blockquote {
-    margin: 5px 0 0;
-    padding: 4px 8px;
-    border-left: 2px solid var(--si-petrol);
-    color: var(--text-muted);
-    font-size: 10px;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
 }
 
 /* ── Wiki Content Area inside Edge Popup ── */
@@ -582,9 +571,9 @@ html, body {
     border-radius: 10px;
     background: rgba(0, 0, 20, 0.5);
     border: 1px solid rgba(0, 153, 153, 0.15);
-    flex: 1 1 auto;
-    min-height: 60px;
-    max-height: 42vh;
+    flex: 1 1 180px;
+    min-height: 150px;
+    max-height: 38vh;
     overflow-y: auto;
     resize: none;
 }
@@ -696,7 +685,9 @@ html, body {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 20px 0;
+    min-height: 126px;
+    padding: 12px 0;
+    justify-content: center;
     color: var(--text-muted);
     font-size: 12px;
 }
@@ -710,6 +701,7 @@ html, body {
 .edge-popup-actions {
     display: flex;
     gap: 6px;
+    flex: 0 0 auto;
 }
 
 .edge-popup-btn {
@@ -718,7 +710,8 @@ html, body {
     justify-content: center;
     gap: 5px;
     flex: 1;
-    padding: 7px 10px;
+    min-height: 38px;
+    padding: 8px 12px;
     background: rgba(0, 255, 185, 0.08);
     border: 1px solid rgba(0, 255, 185, 0.25);
     border-radius: 8px;
@@ -1596,7 +1589,7 @@ html, body {
 }
 
 .chat-session-list {
-    overflow-y: auto;
+    overflow: hidden;
     padding: 6px;
 }
 
