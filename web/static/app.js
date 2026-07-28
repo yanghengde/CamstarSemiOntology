@@ -703,7 +703,17 @@
                         shadowColor: "#00FFB9",
                         shadowBlur: 14,
                         opacity: 1,
-                        zIndex: 24,
+                        zIndex: 60,
+                    },
+                    queryRelated: {
+                        stroke: "#00FFB9",
+                        lineWidth: 3,
+                        shadowColor: "#00FFB9",
+                        shadowBlur: 7,
+                        opacity: 1,
+                        labelOpacity: 1,
+                        iconOpacity: 1,
+                        zIndex: 50,
                     },
                     queryBridge: {
                         stroke: "#4CA6FF",
@@ -711,7 +721,7 @@
                         shadowColor: "#4CA6FF",
                         shadowBlur: 9,
                         opacity: 1,
-                        zIndex: 22,
+                        zIndex: 52,
                     },
                     queryUnconnected: {
                         stroke: "#FF6B6B",
@@ -719,7 +729,7 @@
                         shadowColor: "#FF6B6B",
                         shadowBlur: 11,
                         opacity: 1,
-                        zIndex: 24,
+                        zIndex: 60,
                     },
                     queryPreviousSelected: {
                         stroke: "rgba(0,255,185,0.55)",
@@ -738,7 +748,7 @@
                         opacity: 1,
                         labelOpacity: 1,
                         iconOpacity: 1,
-                        zIndex: 21,
+                        zIndex: 51,
                     },
                     queryInactive: {
                         opacity: 0.08,
@@ -849,6 +859,22 @@
                         haloPointerEvents: "none",
                         interactive: false,
                         zIndex: -3,
+                    },
+                    queryActiveEdge: {
+                        stroke: "#00FFB9",
+                        lineWidth: 2.5,
+                        shadowColor: "#00FFB9",
+                        shadowBlur: 10,
+                        halo: 12,
+                        haloOpacity: 0,
+                        haloPointerEvents: "auto",
+                        pointerEvents: "auto",
+                        interactive: true,
+                        labelOpacity: 1,
+                        labelBackgroundOpacity: 1,
+                        labelFill: "#00FFB9",
+                        opacity: 1,
+                        zIndex: 40,
                     },
                 },
             },
@@ -1195,8 +1221,13 @@
         return { selected, bridge, unconnected };
     }
 
-    function applyQueryMainStates(searchQuery = "") {
-        if (!graph || !rawData || !queryBuilderState.active) return;
+    function applyQueryMainStates(searchQuery = "", force = false) {
+        // The incident-edge layer is replaced asynchronously. Do not cache or
+        // apply query states while that layer is temporarily empty; the render
+        // worker performs one authoritative update after the new edges exist.
+        if (!graph || !rawData || !queryBuilderState.active || graphMutationBusy) {
+            return Promise.resolve();
+        }
         const query = searchQuery.trim().toLowerCase();
         const { selected, bridge, unconnected } = queryPlanNodeSets();
         const activeNodeId = (
@@ -1204,7 +1235,7 @@
             && selected.has(queryBuilderState.activeNodeId)
         )
             ? queryBuilderState.activeNodeId
-            : queryBuilderState.selectedNodes.at(-1);
+            : (queryBuilderState.selectedNodes.at(-1) || null);
         const relatedCandidates = new Set();
         // Only retain neighbors that have a relationship currently rendered
         // on the canvas. Using the full ontology adjacency here leaves bright
@@ -1217,19 +1248,23 @@
             if (targetId === activeNodeId) relatedCandidates.add(sourceId);
         }
         const states = {};
+        const zOrder = {};
         for (const node of graph.getNodeData()) {
             if (selected.has(node.id)) {
                 if (node.id === activeNodeId) {
                     states[node.id] = [
                         unconnected.has(node.id) ? "queryUnconnected" : "querySelected",
                     ];
+                    zOrder[node.id] = 60;
                 } else if (relatedCandidates.has(node.id)) {
                     // A previously selected object is still a direct neighbor
                     // of the current focus. Relationship visibility takes
                     // priority over its historical-selection state.
                     states[node.id] = ["queryRelatedSelected"];
+                    zOrder[node.id] = 51;
                 } else {
                     states[node.id] = ["queryPreviousSelected"];
+                    zOrder[node.id] = 4;
                 }
                 continue;
             }
@@ -1237,6 +1272,7 @@
                 states[node.id] = relatedCandidates.has(node.id)
                     ? ["queryBridge"]
                     : ["queryInactive"];
+                zOrder[node.id] = relatedCandidates.has(node.id) ? 52 : 1;
                 continue;
             }
             if (query) {
@@ -1246,14 +1282,20 @@
                 states[node.id] = (
                     label.includes(query) || chineseName.includes(query)
                 ) ? ["active"] : ["queryInactive"];
+                zOrder[node.id] = (
+                    label.includes(query) || chineseName.includes(query)
+                ) ? 50 : 1;
             } else if (selected.size && !relatedCandidates.has(node.id)) {
                 states[node.id] = ["queryInactive"];
+                zOrder[node.id] = 1;
             } else if (selected.size && relatedCandidates.has(node.id)) {
                 // Match the normal browsing behavior: every endpoint of a
                 // visible relationship is promoted together with its edge.
-                states[node.id] = ["active"];
+                states[node.id] = ["queryRelated"];
+                zOrder[node.id] = 50;
             } else {
                 states[node.id] = [];
+                zOrder[node.id] = 10;
             }
         }
         const visibleQueryNodes = new Set([
@@ -1272,9 +1314,38 @@
             );
             states[edge.id] = (
                 selected.size && touchesSelection && staysInQueryFocus
-            ) ? ["active"] : (selected.size ? ["queryInactive"] : []);
+            ) ? ["queryActiveEdge"] : (selected.size ? ["queryInactive"] : []);
+            zOrder[edge.id] = (
+                selected.size && touchesSelection && staysInQueryFocus
+            ) ? 40 : (selected.size ? -3 : 0);
         }
-        _applyStates(states);
+        for (const combo of graph.getComboData()) zOrder[combo.id] = -5;
+        const focusAtRequest = activeNodeId;
+        return _applyStates(states, { force }).then(async () => {
+            if (
+                !graph
+                || !queryBuilderState.active
+                || queryBuilderState.activeNodeId !== focusAtRequest
+            ) return;
+            const currentIds = new Set([
+                ...graph.getNodeData().map((item) => item.id),
+                ...graph.getEdgeData().map((item) => item.id),
+                ...graph.getComboData().map((item) => item.id),
+            ]);
+            const currentZOrder = Object.fromEntries(
+                Object.entries(zOrder).filter(([id]) => currentIds.has(id)),
+            );
+            await graph.setElementZIndex(currentZOrder);
+        });
+    }
+
+    async function restoreDefaultGraphZOrder() {
+        if (!graph) return;
+        const zOrder = {};
+        for (const node of graph.getNodeData()) zOrder[node.id] = 10;
+        for (const edge of graph.getEdgeData()) zOrder[edge.id] = 0;
+        for (const combo of graph.getComboData()) zOrder[combo.id] = -5;
+        await graph.setElementZIndex(zOrder);
     }
 
     function destroyQueryPreviewGraph() {
@@ -1574,6 +1645,7 @@
         toggle.setAttribute("aria-pressed", "false");
         destroyQueryPreviewGraph();
         await _applyStates({});
+        await restoreDefaultGraphZOrder();
         if (previousNodeId && nodeInfoCache.has(previousNodeId)) {
             selectNode(previousNodeId);
             queueIncidentEdgeRender(previousNodeId);
@@ -1858,7 +1930,12 @@
             && !pendingEdgeNodeId
         ) {
             pendingHighlightClear = false;
-            applyQueryMainStates(document.getElementById("searchInput").value);
+            // Newly-created G6 edge shapes must receive their complete state,
+            // even when their ontology IDs were present in an older layer.
+            await applyQueryMainStates(
+                document.getElementById("searchInput").value,
+                true,
+            );
         } else if (pendingHighlightClear || !selectedNodeId) {
             pendingHighlightClear = false;
             await clearHighlight();
@@ -1898,7 +1975,7 @@
             && previous.every((value, index) => value === next[index]);
     }
 
-    function _applyStates(states) {
+    function _applyStates(states, { force = false } = {}) {
         const requested = Object.create(null);
         for (const [id, values] of Object.entries(states || {})) {
             requested[id] = [...values];
@@ -1926,12 +2003,21 @@
                     if (!currentIds.has(id)) continue;
                     const previous = _prevStates[id] || [];
                     const next = requested[id] || [];
-                    if (!sameState(previous, next)) diff[id] = next;
+                    if (force || !sameState(previous, next)) diff[id] = next;
                 }
                 if (Object.keys(diff).length) {
                     await graph.setElementState(diff);
                 }
-                _prevStates = requested;
+                // Dynamic relationship layers remove and later re-add edges,
+                // sometimes with the same ontology IDs. Never remember state
+                // for an element that was absent at apply time; otherwise its
+                // replacement can be mistaken for an already-styled edge and
+                // remain in the default dim layer.
+                const currentSnapshot = Object.create(null);
+                for (const [id, values] of Object.entries(requested)) {
+                    if (currentIds.has(id)) currentSnapshot[id] = values;
+                }
+                _prevStates = currentSnapshot;
             });
 
         return stateApplyChain;
