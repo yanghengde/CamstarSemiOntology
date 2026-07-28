@@ -23,6 +23,13 @@ class SqlQueryBuilderTests(unittest.TestCase):
         self.assertIn("CurrentStatusId", plan["sql"])
         self.assertTrue(all(edge["from_field"] for edge in plan["joins"]))
         self.assertTrue(all(edge["to_field"] for edge in plan["joins"]))
+        self.assertEqual(
+            plan["reference_validation"]["status"],
+            "validated",
+        )
+        self.assertFalse(
+            plan["reference_validation"]["runtime_database_checked"],
+        )
 
     def test_sqlserver_identifiers_and_aliases(self):
         plan = build_query_builder_plan(

@@ -220,6 +220,7 @@
     let layoutMode = "preset";  // Fast deterministic initial layout
     let selectedNodeId = null;   // Persistent selection
     let queryPreviewGraph = null;
+    let queryCopyFeedbackTimer = null;
     const queryBuilderState = {
         active: false,
         selectedNodes: [],
@@ -1394,6 +1395,9 @@
             : "-- 请选择至少一个查询对象";
         document.getElementById("btnClearQuery").disabled = !hasSelection;
         document.getElementById("btnCopyQuerySql").disabled = !hasSql;
+        document.getElementById("btnFitQueryPreview").disabled = (
+            queryBuilderState.loading || !plan?.nodes?.length
+        );
         document.getElementById("btnContinueQuerySql").disabled = !hasSql;
         applyQueryMainStates(document.getElementById("searchInput").value);
     }
@@ -1434,8 +1438,8 @@
             queryBuilderState.error = "";
             setQueryBuilderStatus(
                 payload.warnings?.length
-                    ? "已生成 SQL，请检查关联提示"
-                    : "物理关联和 SQL 已同步",
+                    ? "参考 Schema 已校验，请检查关联语义提示"
+                    : "参考 Schema 已校验 · 未连接当前运行库",
                 Boolean(payload.unconnected?.length),
             );
         } catch (error) {
@@ -1538,7 +1542,28 @@
             document.execCommand("copy");
             textarea.remove();
         }
+        const copyButton = document.getElementById("btnCopyQuerySql");
+        clearTimeout(queryCopyFeedbackTimer);
+        setIconContent(copyButton, "check", "已复制", { size: 12 });
+        copyButton.classList.add("success");
+        queryCopyFeedbackTimer = setTimeout(() => {
+            setIconContent(copyButton, "copy", "复制", { size: 12 });
+            copyButton.classList.remove("success");
+        }, 1600);
         setQueryBuilderStatus("SQL 已复制");
+    }
+
+    async function fitQueryPreview() {
+        if (!queryPreviewGraph) {
+            setQueryBuilderStatus("请先选择查询对象", true);
+            return;
+        }
+        try {
+            await queryPreviewGraph.fitView();
+            setQueryBuilderStatus("小图已适应当前窗口");
+        } catch (error) {
+            setQueryBuilderStatus(error.message || "小图适应失败", true);
+        }
     }
 
     async function continueQueryInAssistant() {
@@ -1576,6 +1601,10 @@
         document.getElementById("btnCopyQuerySql").addEventListener(
             "click",
             copyQuerySql,
+        );
+        document.getElementById("btnFitQueryPreview").addEventListener(
+            "click",
+            fitQueryPreview,
         );
         document.getElementById("btnContinueQuerySql").addEventListener(
             "click",

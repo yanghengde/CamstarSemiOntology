@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-home-link" />
+    <link rel="stylesheet" href="/static/style.css?v=20260728-query-builder-v3" />
 </head>
 
 <body>
@@ -167,7 +167,17 @@
                 <section class="query-builder-section query-preview-section">
                     <div class="query-section-heading">
                         <h3>查询关系预览</h3>
-                        <span id="queryPlanSummary">等待选择</span>
+                        <div class="query-section-heading-actions">
+                            <span id="queryPlanSummary">等待选择</span>
+                            <button type="button" class="query-heading-btn" id="btnFitQueryPreview"
+                                disabled title="将小图重新适应当前窗口" aria-label="适应小图窗口">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+                                </svg>
+                                适应
+                            </button>
+                        </div>
                     </div>
                     <div id="queryPreviewCanvas" class="query-preview-canvas"></div>
                     <div id="queryPreviewEmpty" class="query-preview-empty">
@@ -188,7 +198,14 @@
                 <section class="query-builder-section query-sql-section">
                     <div class="query-section-heading">
                         <h3>SQL 骨架</h3>
-                        <span id="querySqlDialect">Oracle</span>
+                        <div class="query-section-heading-actions">
+                            <span id="querySqlDialect">Oracle</span>
+                            <button type="button" class="query-heading-btn query-copy-btn"
+                                id="btnCopyQuerySql" disabled title="复制 SQL">
+                                <span data-app-icon="copy" data-icon-size="12"></span>
+                                复制
+                            </button>
+                        </div>
                     </div>
                     <pre id="querySqlPreview" class="query-sql-preview"><code>-- 请选择至少一个查询对象</code></pre>
                 </section>
@@ -197,9 +214,6 @@
                 <div class="query-builder-actions">
                     <button type="button" class="query-action-btn secondary" id="btnClearQuery" disabled>
                         清空
-                    </button>
-                    <button type="button" class="query-action-btn secondary" id="btnCopyQuerySql" disabled>
-                        复制 SQL
                     </button>
                     <button type="button" class="query-action-btn primary" id="btnContinueQuerySql" disabled>
                         在助手中继续
@@ -434,7 +448,7 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/app.js?v=20260728-query-builder-v2"></script>
+    <script src="/static/app.js?v=20260728-query-builder-v4"></script>
     <script src="/static/chat.js?v=20260728-query-builder"></script>
 </body>
 

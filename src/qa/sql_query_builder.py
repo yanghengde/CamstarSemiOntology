@@ -14,6 +14,7 @@ from src.qa.sql_schema_retriever import (
 
 MAX_QUERY_OBJECTS = 8
 MAX_PLAN_TABLES = 24
+REFERENCE_SCHEMA_SOURCE = "docs/Database_Fields.csv"
 
 
 def _table_alias(table_name: str, used: set[str]) -> str:
@@ -112,6 +113,57 @@ def _ambiguous_join_warnings(joins: list[dict[str, str]]) -> list[str]:
             f"{selected['to_table']}.{selected['to_field']}，请核对业务语义。"
         )
     return warnings
+
+
+def _validate_reference_plan(
+    tables: list[str],
+    joins: list[dict[str, str]],
+    selected_nodes: list[str],
+) -> dict:
+    """Fail closed unless every generated identifier is backed by the CSV."""
+    schema_tables, fields_by_table = _schema()
+    errors = []
+
+    for table in tables:
+        if table not in schema_tables:
+            errors.append(f"参考 Schema 中不存在物理表 {table}")
+
+    for table in selected_nodes:
+        known_fields = {row["FieldName"] for row in fields_by_table.get(table, [])}
+        for field in _default_select_fields(table):
+            if field not in known_fields:
+                errors.append(f"参考 Schema 中不存在字段 {table}.{field}")
+
+    for edge in joins:
+        from_table = edge["from_table"]
+        from_field = edge["from_field"]
+        to_table = edge["to_table"]
+        to_field = edge["to_field"]
+        matching_fk = any(
+            row["FieldName"] == from_field
+            and row.get("IsForeignKey", "").lower() == "true"
+            and row.get("FKTableName") == to_table
+            and row.get("FKFieldName") == to_field
+            for row in fields_by_table.get(from_table, [])
+        )
+        if not matching_fk:
+            errors.append(
+                "JOIN 未匹配参考物理外键："
+                f"{from_table}.{from_field} = {to_table}.{to_field}"
+            )
+        target_fields = {
+            row["FieldName"] for row in fields_by_table.get(to_table, [])
+        }
+        if to_field not in target_fields:
+            errors.append(f"参考 Schema 中不存在字段 {to_table}.{to_field}")
+
+    if errors:
+        raise ValueError("；".join(errors))
+    return {
+        "status": "validated",
+        "source": REFERENCE_SCHEMA_SOURCE,
+        "runtime_database_checked": False,
+    }
 
 
 def _render_sql(
@@ -242,6 +294,11 @@ def build_query_builder_plan(
         physical_plan["unconnected"],
         normalized_dialect,
     )
+    reference_validation = _validate_reference_plan(
+        physical_plan["tables"],
+        rendered_joins,
+        normalized_nodes,
+    )
     selected_set = set(normalized_nodes)
     unconnected_set = set(physical_plan["unconnected"])
     node_payload = [
@@ -275,4 +332,5 @@ def build_query_builder_plan(
         "sql": sql,
         "dialect": normalized_dialect,
         "warnings": warnings,
+        "reference_validation": reference_validation,
     }
