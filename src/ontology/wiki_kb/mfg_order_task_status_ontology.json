@@ -20,12 +20,12 @@
         {
           "name": "taskComplete",
           "type": "Boolean",
-          "description": "物理字段 TaskComplete"
+          "description": "指示具有此状态的任务将被视为完成。"
         },
         {
           "name": "taskFailed",
           "type": "Boolean",
-          "description": "物理字段 TaskFailed"
+          "description": "指示具有此状态的Mfg Order Task处于失败状态。"
         },
         {
           "name": "description",

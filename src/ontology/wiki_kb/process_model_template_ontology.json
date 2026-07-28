@@ -14,7 +14,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "iconId",
@@ -39,7 +39,7 @@
         {
           "name": "revision",
           "type": "String",
-          "description": "物理字段 Revision"
+          "description": "版本（基础实体范围内唯一）。"
         },
         {
           "name": "status",
@@ -49,7 +49,7 @@
         {
           "name": "effectiveFromDate",
           "type": "DateTime",
-          "description": "物理字段 EffectiveFromDate"
+          "description": "生效起始日期。"
         },
         {
           "name": "effectiveFromDateGmt",
@@ -59,7 +59,7 @@
         {
           "name": "effectiveThruDate",
           "type": "DateTime",
-          "description": "物理字段 EffectiveThruDate"
+          "description": "生效截止日期。"
         },
         {
           "name": "effectiveThruDateGmt",

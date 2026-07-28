@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "description",
@@ -19,7 +19,7 @@
         {
           "name": "eco",
           "type": "String",
-          "description": "物理字段 ECO"
+          "description": "工程变更单（ECO）。"
         },
         {
           "name": "filterTags",
@@ -49,22 +49,22 @@
         {
           "name": "revision",
           "type": "String",
-          "description": "物理字段 Revision"
+          "description": "修订版（在基础实体上下文中唯一）。"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "当前状态：1=激活，2=停用。"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "erpItem",
           "type": "String",
-          "description": "物理字段 ERPItem"
+          "description": "引用使用此路线的ERP物料，通常可选。"
         },
         {
           "name": "product",

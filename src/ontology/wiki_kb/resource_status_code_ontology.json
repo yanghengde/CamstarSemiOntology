@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "isAvailable",
@@ -19,7 +19,7 @@
         {
           "name": "nextTxnType",
           "type": "Integer",
-          "description": "物理字段 NextTxnType"
+          "description": "资源处于此状态时默认“下一步”（生产）事务的ID。"
         },
         {
           "name": "changeHistory",
@@ -55,17 +55,17 @@
         {
           "name": "resourceState",
           "type": "Integer",
-          "description": "物理字段 ResourceState"
+          "description": "资源状态定义：1.非计划，2.非计划停机，3.计划停机，4.工程，5.生产，6.待机。"
         },
         {
           "name": "resourceStatusReasons",
           "type": "Navigation",
-          "description": "物理字段 ResourceStatusReasonsId → ResStatusReasonGroup"
+          "description": "关联的资源状态原因组。"
         },
         {
           "name": "availability",
           "type": "Integer",
-          "description": "物理字段 Availability"
+          "description": "定义资源的当前可用性状态：1=正常（可用），2=停机（不可用）。"
         },
         {
           "name": "resourceCdoTypeName",
@@ -75,17 +75,17 @@
         {
           "name": "statusCodeBehavior",
           "type": "Integer",
-          "description": "物理字段 StatusCodeBehavior"
+          "description": "用于MM/MDM集成。"
         },
         {
           "name": "omlStatus",
           "type": "String",
-          "description": "物理字段 OMLStatus"
+          "description": "OML状态。"
         },
         {
           "name": "statusId",
           "type": "Integer",
-          "description": "物理字段 StatusId"
+          "description": "通用整数。"
         },
         {
           "name": "filterTags",

@@ -45,7 +45,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         }
       ]
     },

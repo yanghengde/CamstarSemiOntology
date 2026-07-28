@@ -84,17 +84,17 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "是否已冻结；冻结后不允许修改该实例或其修订。"
         },
         {
           "name": "revision",
@@ -124,12 +124,12 @@
         {
           "name": "image",
           "type": "String",
-          "description": "物理字段 Image"
+          "description": "图像。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "eco",
@@ -149,7 +149,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         },
         {
           "name": "erpRoute",

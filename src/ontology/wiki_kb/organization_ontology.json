@@ -29,7 +29,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "name",

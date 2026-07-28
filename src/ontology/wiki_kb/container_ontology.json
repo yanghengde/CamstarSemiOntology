@@ -159,7 +159,7 @@
         {
           "name": "moveInQty",
           "type": "Float",
-          "description": "物理字段 MoveInQty"
+          "description": "容器移入当前步骤的数量，初始来自上一步移出，移入事务可更新。"
         },
         {
           "name": "futureCombineCount",
@@ -219,7 +219,7 @@
         {
           "name": "moveInQty2",
           "type": "Float",
-          "description": "物理字段 MoveInQty2"
+          "description": "容器移入当前步骤的数量2，初始来自上一步移出，移入事务可更新。"
         },
         {
           "name": "scheduleResidueQty",
@@ -459,22 +459,22 @@
         {
           "name": "currentThruputQty",
           "type": "Float",
-          "description": "物理字段 CurrentThruputQty"
+          "description": "当前步骤已处理的物料数量。"
         },
         {
           "name": "currentThruputQty2",
           "type": "Float",
-          "description": "物理字段 CurrentThruputQty2"
+          "description": "当前步骤已处理的物料数量2。"
         },
         {
           "name": "currentThruputChildCount",
           "type": "Integer",
-          "description": "物理字段 CurrentThruputChildCount"
+          "description": "当前步骤已处理的子容器数量。"
         },
         {
           "name": "currentThruputUnitCount",
           "type": "Integer",
-          "description": "物理字段 CurrentThruputUnitCount"
+          "description": "当前步骤已处理的单元数量。"
         },
         {
           "name": "bom",
@@ -509,12 +509,12 @@
         {
           "name": "thruputAdjustmentChildCount",
           "type": "Integer",
-          "description": "物理字段 ThruputAdjustmentChildCount"
+          "description": "产量调整中调整的子容器计数。"
         },
         {
           "name": "thruputAdjustmentUnitCount",
           "type": "Integer",
-          "description": "物理字段 ThruputAdjustmentUnitCount"
+          "description": "产量调整中调整的单元计数。"
         },
         {
           "name": "detail",
@@ -524,17 +524,17 @@
         {
           "name": "onHoldDate",
           "type": "DateTime",
-          "description": "物理字段 OnHoldDate"
+          "description": "容器变为保持状态的日期和时间 (CurrentHoldCount=0时)。"
         },
         {
           "name": "currentHoldCount",
           "type": "Integer",
-          "description": "物理字段 CurrentHoldCount"
+          "description": "当前容器及其所有后代中处于保持状态的容器总数。"
         },
         {
           "name": "qty2",
           "type": "Float",
-          "description": "物理字段 Qty2"
+          "description": "容器中物料的当前数量2。"
         },
         {
           "name": "uom2",
@@ -544,7 +544,7 @@
         {
           "name": "requestDate",
           "type": "DateTime",
-          "description": "物理字段 RequestDate"
+          "description": "客户希望接收此容器的日期和时间。"
         },
         {
           "name": "requestDateGmt",
@@ -584,7 +584,7 @@
         {
           "name": "unitCount",
           "type": "Integer",
-          "description": "物理字段 UnitCount"
+          "description": "此容器中的单元容器数量。"
         },
         {
           "name": "qty",
@@ -594,7 +594,7 @@
         {
           "name": "relativePriority",
           "type": "Integer",
-          "description": "物理字段 RelativePriority"
+          "description": "用于调度排序的数值。"
         },
         {
           "name": "originalUom",
@@ -625,7 +625,7 @@
         {
           "name": "originalStartDate",
           "type": "DateTime",
-          "description": "物理字段 OriginalStartDate"
+          "description": "容器开始或分拆的原始日期和时间。"
         },
         {
           "name": "originalStartDateGmt",
@@ -640,7 +640,7 @@
         {
           "name": "originalQty2",
           "type": "Float",
-          "description": "物理字段 OriginalQty2"
+          "description": "容器的原始数量2。"
         },
         {
           "name": "lastActivityDateGmt",
@@ -670,12 +670,12 @@
         {
           "name": "plannedQty",
           "type": "Float",
-          "description": "物理字段 PlannedQty"
+          "description": "容器计划生产的产品数量。"
         },
         {
           "name": "plannedQty2",
           "type": "Float",
-          "description": "物理字段 PlannedQty2"
+          "description": "容器计划的物料数量（个体）。"
         },
         {
           "name": "priorityCode",
@@ -690,7 +690,7 @@
         {
           "name": "originalQty",
           "type": "Float",
-          "description": "物理字段 OriginalQty"
+          "description": "此容器的原始数量。"
         },
         {
           "name": "dueDateGmt",
@@ -700,7 +700,7 @@
         {
           "name": "containerComments",
           "type": "String",
-          "description": "物理字段 ContainerComments"
+          "description": "此容器的注释或备注。"
         },
         {
           "name": "currentStatus",
@@ -715,17 +715,17 @@
         {
           "name": "dueDate",
           "type": "DateTime",
-          "description": "物理字段 DueDate"
+          "description": "此容器计划完成的日期时间，用于绩效报告。"
         },
         {
           "name": "lastCompletionDate",
           "type": "DateTime",
-          "description": "物理字段 LastCompletionDate"
+          "description": "上次记录此容器产出量的日期时间。"
         },
         {
           "name": "factoryStartDate",
           "type": "DateTime",
-          "description": "物理字段 FactoryStartDate"
+          "description": "此容器到达或创建当前工厂的日期时间。"
         },
         {
           "name": "factoryStartDateGmt",
@@ -735,12 +735,12 @@
         {
           "name": "factoryStartQty",
           "type": "Float",
-          "description": "物理字段 FactoryStartQty"
+          "description": "此容器到达或创建当前工厂时的数量。"
         },
         {
           "name": "factoryStartQty2",
           "type": "Float",
-          "description": "物理字段 FactoryStartQty2"
+          "description": "此容器到达或创建当前工厂时的数量。"
         },
         {
           "name": "factoryStartUom",
@@ -760,7 +760,7 @@
         {
           "name": "lastActivityDate",
           "type": "DateTime",
-          "description": "物理字段 LastActivityDate"
+          "description": "此容器最后交易的日期时间（不影响父容器）。"
         },
         {
           "name": "customer",
@@ -785,22 +785,22 @@
         {
           "name": "childCount",
           "type": "Integer",
-          "description": "物理字段 ChildCount"
+          "description": "此容器直接子容器的计数。"
         },
         {
           "name": "thruputAdjustmentQty",
           "type": "Float",
-          "description": "物理字段 ThruputAdjustmentQty"
+          "description": "物料数量（单个）。"
         },
         {
           "name": "thisContainerLost",
           "type": "Boolean",
-          "description": "物理字段 ThisContainerLost"
+          "description": "指示此容器是否被ChangeQty交易标记为丢失（完全报废）。"
         },
         {
           "name": "thruputAdjustmentQty2",
           "type": "Float",
-          "description": "物理字段 ThruputAdjustmentQty2"
+          "description": "物料数量（单个）。"
         },
         {
           "name": "billOfProcess",
@@ -810,12 +810,12 @@
         {
           "name": "expirationDate",
           "type": "DateTime",
-          "description": "物理字段 ExpirationDate"
+          "description": "容器不再视为一等品的日期时间。"
         },
         {
           "name": "samplingRequired",
           "type": "Boolean",
-          "description": "物理字段 SamplingRequired"
+          "description": "确定此容器是否需要抽样；若为true则需要。"
         },
         {
           "name": "vendorItem",
@@ -825,7 +825,7 @@
         {
           "name": "samplingPassed",
           "type": "Boolean",
-          "description": "物理字段 SamplingPassed"
+          "description": "标识抽样结果：若所有抽样测试通过则为True，否则为False。"
         },
         {
           "name": "containerStartGuid",
@@ -845,7 +845,7 @@
         {
           "name": "plannedStartDate",
           "type": "DateTime",
-          "description": "物理字段 PlannedStartDate"
+          "description": "计划对此容器开始处理的日期。"
         },
         {
           "name": "plannedStartDateGmt",
@@ -855,12 +855,12 @@
         {
           "name": "remainingProcessTime",
           "type": "Float",
-          "description": "物理字段 RemainingProcessTime"
+          "description": "剩余处理时间值，用于RPT计算。"
         },
         {
           "name": "holdMessage",
           "type": "String",
-          "description": "物理字段 HoldMessage"
+          "description": "若指定则显示的保持信息。"
         },
         {
           "name": "spcChartSaveOptionsEnum",
@@ -870,72 +870,72 @@
         {
           "name": "supplyFromName",
           "type": "String",
-          "description": "物理字段 SupplyFromName"
+          "description": "供应来源名称。"
         },
         {
           "name": "supplyFromType",
           "type": "String",
-          "description": "物理字段 SupplyFromType"
+          "description": "供应来源类型描述。"
         },
         {
           "name": "dateCode",
           "type": "String",
-          "description": "物理字段 DateCode"
+          "description": "日期代码。"
         },
         {
           "name": "nickName",
           "type": "String",
-          "description": "物理字段 NickName"
+          "description": "容器的备用名称。"
         },
         {
           "name": "mfgPartNumber",
           "type": "String",
-          "description": "物理字段 MfgPartNumber"
+          "description": "制造商零件号。"
         },
         {
           "name": "shapeName",
           "type": "String",
-          "description": "物理字段 ShapeName"
+          "description": "容器外形名称。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "实体说明；未指定时默认使用实体名称。"
         },
         {
           "name": "direction",
           "type": "Integer",
-          "description": "物理字段 Direction"
+          "description": "物料在机器上的安装方向，如0/90/180等。"
         },
         {
           "name": "binSize",
           "type": "String",
-          "description": "物理字段 BinSize"
+          "description": "包装单元的大小。"
         },
         {
           "name": "leadFree",
           "type": "Integer",
-          "description": "物理字段 LeadFree"
+          "description": "无铅状态：NotSet、No、Yes。"
         },
         {
           "name": "supplier",
           "type": "String",
-          "description": "物理字段 Supplier"
+          "description": "供应商名称。"
         },
         {
           "name": "productionComplete",
           "type": "Boolean",
-          "description": "物理字段 ProductionComplete"
+          "description": "标记容器已完成生产的标志。"
         },
         {
           "name": "inQualityControl",
           "type": "Integer",
-          "description": "物理字段 InQualityControl"
+          "description": "改进报告并防止发运受影响产品的标志。"
         },
         {
           "name": "consumingOrder",
           "type": "String",
-          "description": "物理字段 ConsumingOrder"
+          "description": "消耗订单（字符串字段）。"
         },
         {
           "name": "startParentContainer",

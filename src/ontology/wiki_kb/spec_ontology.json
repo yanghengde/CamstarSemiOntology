@@ -389,7 +389,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "description",
@@ -424,7 +424,7 @@
         {
           "name": "warningQueueTime",
           "type": "Float",
-          "description": "物理字段 WarningQueueTime"
+          "description": "容器排队状态触发警告前的时长（当前版本未实现）。"
         },
         {
           "name": "documentSet",
@@ -439,7 +439,7 @@
         {
           "name": "allowReworkTo",
           "type": "Boolean",
-          "description": "物理字段 AllowReworkTo"
+          "description": "允许此规格的步骤作为返工目标步骤。"
         },
         {
           "name": "trainingReqGroup",
@@ -454,7 +454,7 @@
         {
           "name": "allowOverrides",
           "type": "Boolean",
-          "description": "物理字段 AllowOverrides"
+          "description": "允许覆盖。"
         },
         {
           "name": "eco",
@@ -464,12 +464,12 @@
         {
           "name": "validateMaterialConsumption",
           "type": "Boolean",
-          "description": "物理字段 ValidateMaterialConsumption"
+          "description": "对规格强制执行材料消耗检查。"
         },
         {
           "name": "allowReprocess",
           "type": "Boolean",
-          "description": "物理字段 AllowReprocess"
+          "description": "允许容器重复移入此规格（如重测）。"
         },
         {
           "name": "ssIsSendAheadRequired",
@@ -479,37 +479,37 @@
         {
           "name": "autoFillDataPointHistoryValue",
           "type": "Boolean",
-          "description": "物理字段 AutoFillDataPointHistoryValue"
+          "description": "从最新记录自动填充数据采集值。"
         },
         {
           "name": "validateActiveMfgOrder",
           "type": "Boolean",
-          "description": "物理字段 ValidateActiveMfgOrder"
+          "description": "启用或禁用对资源活动工单的验证。"
         },
         {
           "name": "allowOtherResource",
           "type": "Boolean",
-          "description": "物理字段 AllowOtherResource"
+          "description": "允许其他资源（非上次移动的资源）。"
         },
         {
           "name": "optional",
           "type": "Integer",
-          "description": "物理字段 Optional"
+          "description": "步骤可选并可跳过。"
         },
         {
           "name": "postProductionAction",
           "type": "Integer",
-          "description": "物理字段 PostProductionAction"
+          "description": "工单完成后操作：1=启用过程 2=要求过程。"
         },
         {
           "name": "requirePreProductionProcedure",
           "type": "Boolean",
-          "description": "物理字段 RequirePreProductionProcedure"
+          "description": "标识容器移动被阻止直到预生产程序完成的步骤。"
         },
         {
           "name": "validateLotSamplingComplete",
           "type": "Boolean",
-          "description": "物理字段 ValidateLotSamplingComplete"
+          "description": "若为True，则验证批次抽样是否已完成。"
         },
         {
           "name": "filterTags",

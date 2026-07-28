@@ -295,7 +295,7 @@
         {
           "name": "permission",
           "type": "Integer",
-          "description": "物理字段 Permission"
+          "description": "权限。"
         },
         {
           "name": "filterTags",

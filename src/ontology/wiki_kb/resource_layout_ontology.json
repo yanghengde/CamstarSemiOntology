@@ -35,17 +35,17 @@
         {
           "name": "backgroundFilename",
           "type": "String",
-          "description": "物理字段 BackgroundFilename"
+          "description": "用于显示应用程序的背景图片。"
         },
         {
           "name": "layoutHeight",
           "type": "Integer",
-          "description": "物理字段 LayoutHeight"
+          "description": "布局的高度。"
         },
         {
           "name": "layoutWidth",
           "type": "Integer",
-          "description": "物理字段 LayoutWidth"
+          "description": "布局的宽度。"
         },
         {
           "name": "setupAccess",

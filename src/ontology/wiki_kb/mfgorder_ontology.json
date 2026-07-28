@@ -255,7 +255,7 @@
         {
           "name": "preProductionProcedureRequired",
           "type": "Integer",
-          "description": "物理字段 PreProductionProcedureRequired"
+          "description": "指示是否需要预生产程序（0=否，1=是，默认-1），首次Move/MoveIn时更新。"
         },
         {
           "name": "holdStatus",
@@ -270,12 +270,12 @@
         {
           "name": "preProductionProcedureState",
           "type": "Integer",
-          "description": "物理字段 PreProductionProcedureState"
+          "description": "MfgOrderTaskState：1-未开始，2-进行中，3-失败，4-完成。"
         },
         {
           "name": "postProductionProcedureState",
           "type": "Integer",
-          "description": "物理字段 PostProductionProcedureState"
+          "description": "MfgOrderTaskState：1-未开始，2-进行中，3-失败，4-完成。"
         },
         {
           "name": "preProductionStartDateGmt",

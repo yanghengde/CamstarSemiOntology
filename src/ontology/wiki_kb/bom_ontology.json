@@ -19,12 +19,12 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "isFrozen",

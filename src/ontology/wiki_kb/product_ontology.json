@@ -109,7 +109,7 @@
         {
           "name": "tcReleaseStatus",
           "type": "String",
-          "description": "物理字段 TCReleaseStatus"
+          "description": "Teamcenter 发布状态（TC状态字符串）。"
         },
         {
           "name": "uom2",
@@ -364,7 +364,7 @@
         {
           "name": "fefoEnforce",
           "type": "Integer",
-          "description": "物理字段 FEFOEnforce"
+          "description": "FEFO强制类型枚举（0=未强制，1=强制，2=警告，3=带电子签名的警告）。"
         },
         {
           "name": "fefoOverrideESigRequirement",
@@ -374,7 +374,7 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "isPhantom",
@@ -409,7 +409,7 @@
         {
           "name": "stdStartQty2",
           "type": "Float",
-          "description": "物理字段 StdStartQty2"
+          "description": "容器启动事务的默认起始数量。"
         },
         {
           "name": "stdStartUom",
@@ -454,7 +454,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "description",
@@ -484,7 +484,7 @@
         {
           "name": "concomitantProductNumber",
           "type": "String",
-          "description": "物理字段 ConcomitantProductNumber"
+          "description": "伴随产品编号。"
         },
         {
           "name": "deviceType",
@@ -504,7 +504,7 @@
         {
           "name": "stockPointControlled",
           "type": "Boolean",
-          "description": "物理字段 StockPointControlled"
+          "description": "标识产品是否受ERP库位控制（受控产品需分配ERP库位）。"
         },
         {
           "name": "externallyControlled",
@@ -529,12 +529,12 @@
         {
           "name": "subFactory",
           "type": "String",
-          "description": "物理字段 SubFactory"
+          "description": "细分子工厂区域（库存或车间考量）。"
         },
         {
           "name": "glEntity",
           "type": "String",
-          "description": "物理字段 GLEntity"
+          "description": "该产品的ERP会计ID，用于处理ERP杂项交易。"
         },
         {
           "name": "serialControlled",
@@ -544,7 +544,7 @@
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "eco",
@@ -554,7 +554,7 @@
         {
           "name": "inspectAll",
           "type": "Boolean",
-          "description": "物理字段 InspectAll"
+          "description": "若设置此标记，每批采样率设为1，即每个容器都将被采样。"
         },
         {
           "name": "targetFinalYield",
@@ -569,7 +569,7 @@
         {
           "name": "targetDurationPerUnit",
           "type": "Float",
-          "description": "物理字段 TargetDurationPerUnit"
+          "description": "BI 每单位目标持续时间。"
         },
         {
           "name": "targetCycleTime",
@@ -589,7 +589,7 @@
         {
           "name": "slitCount",
           "type": "Integer",
-          "description": "物理字段 SlitCount"
+          "description": "对父容器的分割次数。"
         },
         {
           "name": "slitProduct",
@@ -604,12 +604,12 @@
         {
           "name": "adjustmentType",
           "type": "Integer",
-          "description": "物理字段 AdjustmentType"
+          "description": "调整类型（百分比或数量），用于自动调整计算。"
         },
         {
           "name": "adjustmentValue",
           "type": "Float",
-          "description": "物理字段 AdjustmentValue"
+          "description": "定义基于所选调整类型用于自动调整计算的值。"
         },
         {
           "name": "totalProcessTimeBulk",
@@ -624,7 +624,7 @@
         {
           "name": "rptMinimumValue",
           "type": "Float",
-          "description": "物理字段 RPTMinimumValue"
+          "description": "允许的最小RPT值，默认为1，用户可改为大于1.0的值。"
         },
         {
           "name": "holdStatus",
@@ -634,7 +634,7 @@
         {
           "name": "allowAllRevisionsAsSubstitute",
           "type": "Boolean",
-          "description": "物理字段 AllowAllRevisionsAsSubstitute"
+          "description": "若为true，则允许该产品的所有修订版作为物料需求的替代品发放。"
         },
         {
           "name": "isImage",
@@ -644,7 +644,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         },
         {
           "name": "workflowBase",

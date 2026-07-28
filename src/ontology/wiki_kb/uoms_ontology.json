@@ -14,7 +14,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "isFrozen",
@@ -45,7 +45,7 @@
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "filterTags",

@@ -125,7 +125,7 @@
         {
           "name": "userComment",
           "type": "String",
-          "description": "物理字段 UserComment"
+          "description": "额外描述字段。"
         },
         {
           "name": "canLogin",
@@ -170,7 +170,7 @@
         {
           "name": "skipTrainingReqValidation",
           "type": "Boolean",
-          "description": "物理字段 SkipTrainingReqValidation"
+          "description": "跳过员工认证验证的新标志。"
         },
         {
           "name": "portalV8MenuDefinition",
@@ -190,7 +190,7 @@
         {
           "name": "filterTagsSession",
           "type": "String",
-          "description": "物理字段 FilterTagsSession"
+          "description": "过滤器标签会话。"
         },
         {
           "name": "portalMobileMenuDefinition",

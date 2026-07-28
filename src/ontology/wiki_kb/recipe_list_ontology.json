@@ -71,7 +71,7 @@
         {
           "name": "eco",
           "type": "String",
-          "description": "物理字段 ECO"
+          "description": "工程变更单（ECO）。"
         },
         {
           "name": "workstation",
@@ -106,7 +106,7 @@
         {
           "name": "targetContainerPlannedQty",
           "type": "String",
-          "description": "物理字段 TargetContainerPlannedQty"
+          "description": "定义目标容器计划数量的表达式。"
         },
         {
           "name": "targetContainerUom",

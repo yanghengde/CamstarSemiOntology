@@ -14,7 +14,7 @@
         {
           "name": "firstStep",
           "type": "Navigation",
-          "description": "物理字段 FirstStepId → WorkflowStep"
+          "description": "关联的第一步工作流步骤。"
         },
         {
           "name": "notes",
@@ -24,7 +24,7 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "description",
@@ -49,12 +49,12 @@
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "实例的当前状态 (Active=1, Inactive=2)。"
         },
         {
           "name": "eco",
@@ -86,7 +86,7 @@
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "实例的当前状态 (Active=1, Inactive=2)。"
         },
         {
           "name": "eco",
@@ -101,7 +101,7 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "description",
@@ -121,7 +121,7 @@
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "isFrozen",

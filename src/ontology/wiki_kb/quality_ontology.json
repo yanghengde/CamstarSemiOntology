@@ -362,7 +362,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "wipMsgDefMgr",
@@ -415,7 +415,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "notes",
@@ -451,12 +451,12 @@
         {
           "name": "associatedPackages",
           "type": "Integer",
-          "description": "物理字段 AssociatedPackages"
+          "description": "关联变更包的数量。"
         },
         {
           "name": "instanceLocked",
           "type": "Boolean",
-          "description": "物理字段 InstanceLocked"
+          "description": "是否已被变更管理锁定。"
         },
         {
           "name": "filterTags",
@@ -526,7 +526,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "isFrozen",
@@ -536,7 +536,7 @@
         {
           "name": "eventSubClassification",
           "type": "Integer",
-          "description": "物理字段 EventSubClassification"
+          "description": "用于对质量对象进行子分类。"
         },
         {
           "name": "iconId",
@@ -579,7 +579,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "name",

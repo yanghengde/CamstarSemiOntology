@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "name",
@@ -20,17 +20,17 @@
         {
           "name": "isLastDayOfMonth",
           "type": "Boolean",
-          "description": "物理字段 IsLastDayOfMonth"
+          "description": "是否为当月的最后一天。"
         },
         {
           "name": "executionContext",
           "type": "Integer",
-          "description": "物理字段 ExecutionContext"
+          "description": "关联的执行上下文。"
         },
         {
           "name": "dueTime",
           "type": "DateTime",
-          "description": "物理字段 DueTime"
+          "description": "到期时间。"
         },
         {
           "name": "dueTimeGmt",
@@ -40,32 +40,32 @@
         {
           "name": "recurrencePattern",
           "type": "Integer",
-          "description": "物理字段 RecurrencePattern"
+          "description": "定义维护计划执行的间隔。"
         },
         {
           "name": "recurrenceFrequency",
           "type": "Integer",
-          "description": "物理字段 RecurrenceFrequency"
+          "description": "重复频率。"
         },
         {
           "name": "recurrenceCount",
           "type": "Integer",
-          "description": "物理字段 RecurrenceCount"
+          "description": "重复次数。"
         },
         {
           "name": "dayOfWeek",
           "type": "Integer",
-          "description": "物理字段 DayOfWeek"
+          "description": "星期几。"
         },
         {
           "name": "monthOfYear",
           "type": "Integer",
-          "description": "物理字段 MonthOfYear"
+          "description": "月份。"
         },
         {
           "name": "startDate",
           "type": "DateTime",
-          "description": "物理字段 StartDate"
+          "description": "开始日期。"
         },
         {
           "name": "startDateGmt",
@@ -75,7 +75,7 @@
         {
           "name": "endDate",
           "type": "DateTime",
-          "description": "物理字段 EndDate"
+          "description": "结束日期。"
         },
         {
           "name": "endDateGmt",
@@ -85,12 +85,12 @@
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "计划业务规则状态：1=待处理 2=处理中 3=挂起。"
         },
         {
           "name": "isSystemDefined",
           "type": "Boolean",
-          "description": "物理字段 IsSystemDefined"
+          "description": "是否为系统定义。"
         },
         {
           "name": "lockGuid",
@@ -100,7 +100,7 @@
         {
           "name": "dayOfMonth",
           "type": "Integer",
-          "description": "物理字段 DayOfMonth"
+          "description": "月中的第几天。"
         },
         {
           "name": "isFrozen",
@@ -110,7 +110,7 @@
         {
           "name": "onExecute",
           "type": "Navigation",
-          "description": "物理字段 OnExecute → BusinessRule"
+          "description": "关联的业务规则。"
         },
         {
           "name": "notes",
@@ -135,37 +135,37 @@
         {
           "name": "executionContextType",
           "type": "Integer",
-          "description": "物理字段 ExecutionContextType"
+          "description": "执行上下文类型。"
         },
         {
           "name": "timeZone",
           "type": "String",
-          "description": "物理字段 TimeZone"
+          "description": "时区。"
         },
         {
           "name": "isAdvancedMode",
           "type": "Boolean",
-          "description": "物理字段 IsAdvancedMode"
+          "description": "指定计划业务规则使用基本选项还是高级选项。"
         },
         {
           "name": "scheduleDaysOfMonth",
           "type": "String",
-          "description": "物理字段 ScheduleDaysOfMonth"
+          "description": "刷新此摘要的每月天数，例如1,10,15,20。"
         },
         {
           "name": "scheduleDaysOfWeek",
           "type": "String",
-          "description": "物理字段 ScheduleDaysOfWeek"
+          "description": "刷新此摘要的每周天数，例如1,3,5,7。"
         },
         {
           "name": "scheduleMonths",
           "type": "String",
-          "description": "物理字段 ScheduleMonths"
+          "description": "刷新此摘要的每年月份，例如1,4,8。"
         },
         {
           "name": "scheduleHours",
           "type": "String",
-          "description": "物理字段 ScheduleHours"
+          "description": "刷新此摘要的每天小时，例如0,12,23。"
         },
         {
           "name": "filterTags",

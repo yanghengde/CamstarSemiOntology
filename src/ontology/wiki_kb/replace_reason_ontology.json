@@ -40,7 +40,7 @@
         {
           "name": "isScrapRemoved",
           "type": "Boolean",
-          "description": "物理字段 IsScrapRemoved"
+          "description": "若所选替换原因勾选了报废但组件无需报废，操作员可取消勾选。"
         },
         {
           "name": "description",

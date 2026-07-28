@@ -14,7 +14,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "inspectionLevel",
@@ -59,7 +59,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "revision",
@@ -89,7 +89,7 @@
         {
           "name": "sampleSizeBasedOnStartQty",
           "type": "Boolean",
-          "description": "物理字段 SampleSizeBasedOnStartQty"
+          "description": "样本量基于开始数量还是当前容器数量。"
         },
         {
           "name": "sampleRate",
@@ -263,7 +263,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "revision",
@@ -298,7 +298,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "status",
@@ -368,7 +368,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         }
       ]
     },
@@ -385,7 +385,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "description",
@@ -415,7 +415,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "showLimits",
@@ -465,7 +465,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         }
       ]
     },
@@ -477,7 +477,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "description",

@@ -14,7 +14,7 @@
         {
           "name": "isImage",
           "type": "Navigation",
-          "description": "物理字段 isImageId → isImage"
+          "description": "关联的映像版本对象。"
         },
         {
           "name": "executionMode",
@@ -25,7 +25,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         },
         {
           "name": "notes",
@@ -61,22 +61,22 @@
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "instruction",
           "type": "String",
-          "description": "物理字段 Instruction"
+          "description": "用户执行任务列表中任务的说明。"
         },
         {
           "name": "prerequisiteTaskList",
           "type": "Navigation",
-          "description": "物理字段 PrerequisiteTaskListId → MfgOrderTaskList"
+          "description": "关联的先决任务列表。"
         },
         {
           "name": "reportInstruction",
           "type": "String",
-          "description": "物理字段 ReportInstruction"
+          "description": "用户执行任务列表中任务的说明（无显示格式），主要用于报告。"
         },
         {
           "name": "workstation",

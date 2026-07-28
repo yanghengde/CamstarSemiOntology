@@ -36,43 +36,43 @@
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 PhysicalPositionName",
+          "description": "此实例的唯一名称。",
           "required": true
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "是否已冻结；冻结后不允许修改该实例或其修订。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "实体说明；未指定时默认使用实体名称。"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         }
       ]
     },
@@ -89,62 +89,62 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "当前状态：1=激活，2=停用。"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "物理字段 Revision"
+          "description": "修订版（在基础实体上下文中唯一）。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "是否已冻结；冻结后不允许修改该实例或其修订。"
         },
         {
           "name": "billType",
           "type": "Navigation",
-          "description": "物理字段 BillTypeId → BillType"
+          "description": "关联的清单类型。"
         },
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "物理字段 ECO"
+          "description": "工程变更单（ECO）。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "实体说明；未指定时默认使用实体名称。"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         }
       ]
     },

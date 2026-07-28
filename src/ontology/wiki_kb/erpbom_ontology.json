@@ -14,7 +14,7 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "erpbomBase",
@@ -29,7 +29,7 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "isFrozen",
@@ -54,7 +54,7 @@
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "确定实例当前状态（Active/In-Active），有效值：1=Active，2=Inactive。"
         },
         {
           "name": "externallyControlled",

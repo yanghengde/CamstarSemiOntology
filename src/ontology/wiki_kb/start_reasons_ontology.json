@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "changeStatus",
@@ -19,7 +19,7 @@
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "iconId",

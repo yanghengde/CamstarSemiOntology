@@ -14,7 +14,7 @@
         {
           "name": "jobNotificationEmailGroup",
           "type": "Navigation",
-          "description": "物理字段 JobNotificationEmailGroupId → A_EmailGroup"
+          "description": "关联的作业通知邮件组。"
         },
         {
           "name": "uom",
@@ -34,7 +34,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "noOfSlots",
@@ -95,7 +95,7 @@
         {
           "name": "resourceStatusModel",
           "type": "Navigation",
-          "description": "物理字段 ResourceStatusModelId → ResourceStatusModel"
+          "description": "关联的资源状态模型。"
         },
         {
           "name": "carrierPositionalMethod",
@@ -125,7 +125,7 @@
         {
           "name": "uiPreference",
           "type": "Navigation",
-          "description": "物理字段 UIPreferenceId → UIPreference"
+          "description": "关联的UI偏好。"
         },
         {
           "name": "filterTags",

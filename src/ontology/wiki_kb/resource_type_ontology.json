@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "description",
@@ -29,7 +29,7 @@
         {
           "name": "resourceStatusModel",
           "type": "Navigation",
-          "description": "物理字段 ResourceStatusModelId → ResourceStatusModel"
+          "description": "关联的资源状态模型。"
         },
         {
           "name": "changeHistory",
@@ -50,7 +50,7 @@
         {
           "name": "uiPreference",
           "type": "Navigation",
-          "description": "物理字段 UIPreferenceId → UIPreference"
+          "description": "关联的UI偏好设置。"
         },
         {
           "name": "filterTags",

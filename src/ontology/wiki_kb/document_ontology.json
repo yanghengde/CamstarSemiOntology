@@ -104,17 +104,17 @@
         {
           "name": "xShareContainerName",
           "type": "String",
-          "description": "物理字段 XShareContainerName"
+          "description": "XShare容器名称。"
         },
         {
           "name": "xShareParentFolder",
           "type": "String",
-          "description": "物理字段 XShareParentFolder"
+          "description": "文件夹路径。"
         },
         {
           "name": "xShareContainerType",
           "type": "String",
-          "description": "物理字段 XShareContainerType"
+          "description": "容器类型。"
         },
         {
           "name": "browseMode",
@@ -247,7 +247,7 @@
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "是否已冻结；冻结后不允许修改该实例或其修订。"
         },
         {
           "name": "documentSet",

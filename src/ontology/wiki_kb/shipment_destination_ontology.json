@@ -9,12 +9,12 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "customer",
           "type": "Navigation",
-          "description": "物理字段 CustomerId → Customer"
+          "description": "关联的Customer。"
         },
         {
           "name": "changeHistory",
@@ -45,27 +45,27 @@
         {
           "name": "location",
           "type": "Navigation",
-          "description": "物理字段 LocationId → Location"
+          "description": "关联的Location。"
         },
         {
           "name": "remoteContainerStatus",
           "type": "Integer",
-          "description": "物理字段 RemoteContainerStatus"
+          "description": "容器在远程站点状态，接收时设置：0=已删除 1=活动 2=已关闭 3=在途 4=已发出。"
         },
         {
           "name": "factory",
           "type": "Navigation",
-          "description": "物理字段 FactoryId → Factory"
+          "description": "关联的Factory。"
         },
         {
           "name": "remoteSite",
           "type": "Navigation",
-          "description": "物理字段 RemoteSiteId → Site"
+          "description": "关联的Site。"
         },
         {
           "name": "localContainerStatus",
           "type": "Integer",
-          "description": "物理字段 LocalContainerStatus"
+          "description": "容器在本地站点状态，发送时设置：0=已删除 1=活动 2=已关闭 3=在途 4=已发出。"
         },
         {
           "name": "notes",

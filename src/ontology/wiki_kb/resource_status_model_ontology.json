@@ -35,7 +35,7 @@
         {
           "name": "initStatusCodes",
           "type": "Navigation",
-          "description": "物理字段 InitStatusCodesId → ResourceStatusCodeGroup"
+          "description": "关联的初始状态代码组。"
         },
         {
           "name": "changeHistory",

@@ -29,7 +29,7 @@
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "实例的当前状态 (Active=1, Inactive=2)。"
         },
         {
           "name": "wipMsgDefMgr",
@@ -49,17 +49,17 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "物理字段 ECO"
+          "description": "工程变更单（ECO）。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "checklistInstructions",

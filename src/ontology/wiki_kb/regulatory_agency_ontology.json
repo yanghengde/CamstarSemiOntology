@@ -9,12 +9,12 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "decisionTreePageFlow",
           "type": "Navigation",
-          "description": "物理字段 DecisionTreePageFlowId → UIPageFlow"
+          "description": "关联的决策树页面流。"
         },
         {
           "name": "notes",

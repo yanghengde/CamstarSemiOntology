@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "uiPreference",
@@ -92,7 +92,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "objectCategory",
@@ -258,7 +258,7 @@
         {
           "name": "autoAdjustReason",
           "type": "Integer",
-          "description": "物理字段 AutoAdjustReasonId"
+          "description": "关联的自动调整原因。"
         },
         {
           "name": "autoAdjustLimit",

@@ -9,7 +9,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "changeHistory",
@@ -24,7 +24,7 @@
         {
           "name": "stdSetupLaborTime",
           "type": "Float",
-          "description": "物理字段 StdSetupLaborTime"
+          "description": "执行此设置所需的总工时，用于绩效对标报告。"
         },
         {
           "name": "resourceGroup",
@@ -34,12 +34,12 @@
         {
           "name": "status",
           "type": "Integer",
-          "description": "物理字段 Status"
+          "description": "当前状态：1=活动，2=非活动。"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "物理字段 SetupRevision"
+          "description": "修订版（基础实体上下文内唯一）。"
         },
         {
           "name": "isFrozen",
@@ -64,12 +64,12 @@
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "物理字段 WIPMsgDefMgrId → WIPMsgDefMgr"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
         },
         {
           "name": "stdSetupTime",
           "type": "Float",
-          "description": "物理字段 StdSetupTime"
+          "description": "执行此设置的经过时间，用于周期时间计算。"
         },
         {
           "name": "notes",
@@ -79,7 +79,7 @@
         {
           "name": "eco",
           "type": "String",
-          "description": "物理字段 ECO"
+          "description": "工程变更单（ECO）。"
         },
         {
           "name": "filterTags",

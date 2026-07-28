@@ -34,7 +34,7 @@
         {
           "name": "processTimerMinTimeDtl",
           "type": "Navigation",
-          "description": "物理字段 ProcessTimerMinTimeDtlId → ProcessTimerDtl"
+          "description": "关联的最小时间明细(ProcessTimerDtl)。"
         },
         {
           "name": "description",
@@ -44,12 +44,12 @@
         {
           "name": "processTimerMaxTimeDtl",
           "type": "Navigation",
-          "description": "物理字段 ProcessTimerMaxTimeDtlId → ProcessTimerDtl"
+          "description": "关联的最大时间明细(ProcessTimerDtl)。"
         },
         {
           "name": "timerType",
           "type": "Integer",
-          "description": "物理字段 TimerType"
+          "description": "计时器类型（1=仅最小，2=仅最大，3=最小和最大）。"
         },
         {
           "name": "minTimeColor",
@@ -75,12 +75,12 @@
         {
           "name": "processTimerType",
           "type": "Navigation",
-          "description": "物理字段 ProcessTimerTypeId → ProcessTimerType"
+          "description": "关联的计时器类型。"
         },
         {
           "name": "minWarningTime",
           "type": "Float",
-          "description": "物理字段 MinWarningTime"
+          "description": "持续时间格式的最小警告时间。"
         },
         {
           "name": "minTime",
@@ -95,7 +95,7 @@
         {
           "name": "minWarningTimeColor",
           "type": "String",
-          "description": "物理字段 MinWarningTimeColor"
+          "description": "通用字符串（最小警告时间颜色）。"
         },
         {
           "name": "maxWarningTimeColor",

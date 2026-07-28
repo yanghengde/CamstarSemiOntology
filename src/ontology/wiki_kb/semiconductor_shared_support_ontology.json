@@ -1218,48 +1218,48 @@
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 PhysicalLocationName",
+          "description": "此实例的唯一名称。",
           "required": true
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "是否已冻结；冻结后不允许修改该实例或其修订。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "关联图标的标识符。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "实体说明；未指定时默认使用实体名称。"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "关联的变更历史记录（ChangeStatus）。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "与该对象相关的备注和注释。"
         },
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "关联的建模访问权限（A_SetupAccess）。"
         },
         {
           "name": "scsStorageType",
           "type": "Integer",
-          "description": "物理字段 scsStorageType"
+          "description": "存储类型枚举：1=掩模、2=工具，用于标识存储库。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "以逗号分隔的筛选标签列表。"
         }
       ]
     },
