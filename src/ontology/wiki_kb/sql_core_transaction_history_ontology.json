@@ -450,6 +450,11 @@
           "name": "workstation",
           "type": "Navigation",
           "description": "物理字段 WorkstationId → ResourceDef"
+        },
+        {
+          "name": "ldIsCarrierContainer",
+          "type": "Boolean",
+          "description": "物理字段 ldIsCarrierContainer"
         }
       ]
     },

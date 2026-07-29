@@ -120,6 +120,16 @@
           "name": "workflow",
           "type": "Navigation",
           "description": "关联的工艺路线/工作流 → Workflow"
+        },
+        {
+          "name": "keepCompletedTasks",
+          "type": "Boolean",
+          "description": "物理字段 KeepCompletedTasks"
+        },
+        {
+          "name": "keepCompletedTasksOnOpen",
+          "type": "Boolean",
+          "description": "物理字段 KeepCompletedTasksOnOpen"
         }
       ]
     },

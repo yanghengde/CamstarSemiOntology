@@ -150,6 +150,11 @@
           "name": "workflowBase",
           "type": "Integer",
           "description": "物理字段 WorkflowBaseId"
+        },
+        {
+          "name": "ldCsamValidation",
+          "type": "Navigation",
+          "description": "物理字段 ldCSAMValidationId → A_ldCSAMValidation"
         }
       ]
     },
@@ -1074,6 +1079,13 @@
       "relationName": "HAS_PRODUCT",
       "cardinality": "MANY_TO_ONE",
       "description": "A_TestProgramSetup.ProductId"
+    },
+    {
+      "fromClass": "A_ProcessSpec",
+      "toClass": "A_ldCSAMValidation",
+      "relationName": "HAS_LD_CSAM_VALIDATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_ProcessSpec.ldCSAMValidationId"
     }
   ]
 }

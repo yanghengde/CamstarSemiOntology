@@ -51,6 +51,11 @@
           "name": "filterTags",
           "type": "String",
           "description": "分类筛选标签"
+        },
+        {
+          "name": "ldRequireRework",
+          "type": "Boolean",
+          "description": "物理字段 ldRequireRework"
         }
       ]
     },

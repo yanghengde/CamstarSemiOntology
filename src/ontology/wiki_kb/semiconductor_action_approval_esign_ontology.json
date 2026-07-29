@@ -898,7 +898,7 @@
         {
           "name": "parent",
           "type": "Navigation",
-          "description": "物理字段 ParentId → Event"
+          "description": "物理字段 ParentId → CAPA"
         },
         {
           "name": "status",
@@ -1305,7 +1305,7 @@
     },
     {
       "fromClass": "ApprovalSheet",
-      "toClass": "Event",
+      "toClass": "CAPA",
       "relationName": "HAS_PARENT",
       "cardinality": "MANY_TO_ONE",
       "description": "ApprovalSheet.ParentId"

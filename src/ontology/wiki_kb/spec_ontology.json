@@ -545,6 +545,36 @@
           "name": "electronicProcedure",
           "type": "Navigation",
           "description": "绑定的电子操作规程流程 → ElectronicProcedure 【Swagger】引用 Schema: RevisionedObjectRef。"
+        },
+        {
+          "name": "ldIsStorageLocRequired",
+          "type": "Boolean",
+          "description": "物理字段 ldIsStorageLocRequired"
+        },
+        {
+          "name": "ldN2Cabinet",
+          "type": "Boolean",
+          "description": "物理字段 ldN2Cabinet"
+        },
+        {
+          "name": "ldIsInspectionSpec",
+          "type": "Boolean",
+          "description": "物理字段 ldIsInspectionSpec"
+        },
+        {
+          "name": "ldIsNgSpec",
+          "type": "Boolean",
+          "description": "物理字段 ldIsNGSpec"
+        },
+        {
+          "name": "ldIsCarrierRequiredForRework",
+          "type": "Boolean",
+          "description": "物理字段 ldIsCarrierRequiredForRework"
+        },
+        {
+          "name": "ldMaxReworkCount",
+          "type": "Integer",
+          "description": "物理字段 ldMaxReworkCount"
         }
       ]
     },

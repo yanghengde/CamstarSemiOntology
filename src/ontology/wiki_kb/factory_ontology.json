@@ -464,6 +464,16 @@
           "name": "filterTags",
           "type": "String",
           "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
+        },
+        {
+          "name": "zifEventDestinationSubject",
+          "type": "String",
+          "description": "物理字段 zifEventDestinationSubject 【Swagger】zif Event Destination Subject"
+        },
+        {
+          "name": "zifDefaultOutboundDestinatio",
+          "type": "Navigation",
+          "description": "物理字段 zifDefaultOutboundDestinatioId → zifOutboundDestination"
         }
       ]
     }
@@ -636,6 +646,13 @@
       "relationName": "HAS_SMART_SCAN_RULE",
       "cardinality": "MANY_TO_ONE",
       "description": "Factory.SmartScanRuleId"
+    },
+    {
+      "fromClass": "Factory",
+      "toClass": "zifOutboundDestination",
+      "relationName": "HAS_ZIF_DEFAULT_OUTBOUND_DESTINATIO",
+      "cardinality": "MANY_TO_ONE",
+      "description": "Factory.zifDefaultOutboundDestinatioId"
     }
   ]
 }

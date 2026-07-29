@@ -80,6 +80,16 @@
           "name": "executionMode",
           "type": "Integer",
           "description": "执行模式：1=Sequential(顺序), 2=Non-Sequential(非顺序)（必填） 【Swagger】Identifies whether the TaskLists in the Electronic Procedure are to be processed in sequence. 1 = Sequential 2 = Non-Sequential"
+        },
+        {
+          "name": "keepCompletedTasks",
+          "type": "Boolean",
+          "description": "物理字段 KeepCompletedTasks 【Swagger】When true will prevent deleting ContainerCompletedTasks data for the container at the current step"
+        },
+        {
+          "name": "keepCompletedTasksOnOpen",
+          "type": "Boolean",
+          "description": "物理字段 KeepCompletedTasksOnOpen 【Swagger】When true will not delete any completed task history"
         }
       ]
     },

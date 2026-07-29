@@ -946,6 +946,11 @@
           "name": "lastCarrier",
           "type": "Navigation",
           "description": "最后使用载具 → Resource"
+        },
+        {
+          "name": "ldIsCarrierContainer",
+          "type": "Boolean",
+          "description": "物理字段 ldIsCarrierContainer"
         }
       ]
     },

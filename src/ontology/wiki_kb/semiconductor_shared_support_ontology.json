@@ -571,6 +571,11 @@
           "name": "ssFeederPlanBase",
           "type": "Integer",
           "description": "物理字段 ss_FeederPlanBaseId"
+        },
+        {
+          "name": "ldInspectionPlan",
+          "type": "Navigation",
+          "description": "物理字段 ldInspectionPlanId → ldInspectionPlan"
         }
       ]
     },
@@ -1664,6 +1669,13 @@
       "relationName": "HAS_FACTORY",
       "cardinality": "MANY_TO_ONE",
       "description": "Location.FactoryId"
+    },
+    {
+      "fromClass": "ResourceDef",
+      "toClass": "ldInspectionPlan",
+      "relationName": "HAS_LD_INSPECTION_PLAN",
+      "cardinality": "MANY_TO_ONE",
+      "description": "ResourceDef.ldInspectionPlanId"
     }
   ]
 }

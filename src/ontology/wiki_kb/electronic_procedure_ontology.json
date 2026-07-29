@@ -75,6 +75,16 @@
           "name": "filterTags",
           "type": "String",
           "description": "分类筛选标签"
+        },
+        {
+          "name": "keepCompletedTasks",
+          "type": "Boolean",
+          "description": "物理字段 KeepCompletedTasks"
+        },
+        {
+          "name": "keepCompletedTasksOnOpen",
+          "type": "Boolean",
+          "description": "物理字段 KeepCompletedTasksOnOpen"
         }
       ]
     },
@@ -209,6 +219,11 @@
           "name": "filterTags",
           "type": "String",
           "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
+        },
+        {
+          "name": "variantExpression",
+          "type": "String",
+          "description": "物理字段 VariantExpression 【Swagger】Variant expression to be resolved to allow for filtering out configurable activities."
         }
       ]
     },
@@ -322,6 +337,26 @@
           "name": "dataCollection",
           "type": "Navigation",
           "description": "关联的数据采集定义(DataCollectionDef)"
+        },
+        {
+          "name": "maxIterationsExpression",
+          "type": "String",
+          "description": "物理字段 MaxIterationsExpression 【Swagger】InSite Unified Expression"
+        },
+        {
+          "name": "minIterationsExpression",
+          "type": "String",
+          "description": "物理字段 MinIterationsExpression 【Swagger】InSite Unified Expression"
+        },
+        {
+          "name": "variantExpression",
+          "type": "String",
+          "description": "物理字段 VariantExpression 【Swagger】Variant expression to be resolved to allow for filtering out configurable activities."
+        },
+        {
+          "name": "requirePassFail",
+          "type": "Boolean",
+          "description": "物理字段 RequirePassFail 【Swagger】Require Pass/Fail"
         }
       ]
     }

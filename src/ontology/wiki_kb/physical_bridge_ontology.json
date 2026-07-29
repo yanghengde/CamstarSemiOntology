@@ -648,6 +648,106 @@
           "name": "assemblyArea",
           "type": "String",
           "description": "物理字段 AssemblyArea"
+        },
+        {
+          "name": "ldErpLotName",
+          "type": "String",
+          "description": "物理字段 ldERPLotName"
+        },
+        {
+          "name": "ldTestLossReason",
+          "type": "Navigation",
+          "description": "物理字段 ldTestLossReasonId → LossReason"
+        },
+        {
+          "name": "ldTestLossReasonEquipment",
+          "type": "Navigation",
+          "description": "物理字段 ldTestLossReasonEquipmentId → ResourceDef"
+        },
+        {
+          "name": "ldTestLossReasonSpec",
+          "type": "Navigation",
+          "description": "物理字段 ldTestLossReasonSpecId → Spec"
+        },
+        {
+          "name": "ldGp12InspResult",
+          "type": "String",
+          "description": "物理字段 ldGP12InspResult"
+        },
+        {
+          "name": "ldLastInspTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 ldLastInspTimestamp"
+        },
+        {
+          "name": "ldReturnFiTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 ldReturnFITimestamp"
+        },
+        {
+          "name": "ldLastGp12InspTimestamp",
+          "type": "DateTime",
+          "description": "物理字段 ldLastGP12InspTimestamp"
+        },
+        {
+          "name": "ldFinalInspResult",
+          "type": "String",
+          "description": "物理字段 ldFinalInspResult"
+        },
+        {
+          "name": "ldStorageLocation",
+          "type": "Navigation",
+          "description": "物理字段 ldStorageLocationId → Spec"
+        },
+        {
+          "name": "ldIsPendingErpReturn",
+          "type": "Boolean",
+          "description": "物理字段 ldIsPendingERPReturn"
+        },
+        {
+          "name": "ldMaterialWithdrawalCount",
+          "type": "Integer",
+          "description": "物理字段 ldMaterialWithdrawalCount"
+        },
+        {
+          "name": "ldMaterialLastN2CabinetTxnTime",
+          "type": "DateTime",
+          "description": "物理字段 ldMaterialLastN2CabinetTxnTime"
+        },
+        {
+          "name": "ldMaterialTotalWipExposedDurat",
+          "type": "Float",
+          "description": "物理字段 ldMaterialTotalWIPExposedDurat"
+        },
+        {
+          "name": "ldReturnedFromGp12Count",
+          "type": "Integer",
+          "description": "物理字段 ldReturnedFromGP12Count"
+        },
+        {
+          "name": "ldDefectRejudge",
+          "type": "Boolean",
+          "description": "物理字段 ldDefectRejudge"
+        },
+        {
+          "name": "ldFrameIdLevel",
+          "type": "String",
+          "description": "物理字段 ldFrameIdLevel"
+        },
+        {
+          "name": "ldFrameOriginalCode",
+          "type": "String",
+          "description": "物理字段 ldFrameOriginalCode"
+        },
+        {
+          "name": "ldDefectReason",
+          "type": "Navigation",
+          "description": "物理字段 ldDefectReasonId → LossReason"
+        },
+        {
+          "name": "ldFinalReInspResult",
+          "type": "String",
+          "description": "物理字段 ldFinalReInspResult"
         }
       ]
     },
@@ -1067,6 +1167,71 @@
           "name": "ssLifeSpanCounter",
           "type": "Integer",
           "description": "物理字段 ss_LifeSpanCounter"
+        },
+        {
+          "name": "ldFrameId",
+          "type": "String",
+          "description": "物理字段 ldFrameID"
+        },
+        {
+          "name": "ldDbcid2",
+          "type": "String",
+          "description": "物理字段 ldDBCID2"
+        },
+        {
+          "name": "ldDbcid3",
+          "type": "String",
+          "description": "物理字段 ldDBCID3"
+        },
+        {
+          "name": "ldDbcid4",
+          "type": "String",
+          "description": "物理字段 ldDBCID4"
+        },
+        {
+          "name": "ldDbcid5",
+          "type": "String",
+          "description": "物理字段 ldDBCID5"
+        },
+        {
+          "name": "ldDbcid6",
+          "type": "String",
+          "description": "物理字段 ldDBCID6"
+        },
+        {
+          "name": "ldMarkingText",
+          "type": "String",
+          "description": "物理字段 ldMarkingText"
+        },
+        {
+          "name": "ldIsRework",
+          "type": "Boolean",
+          "description": "物理字段 ldIsRework"
+        },
+        {
+          "name": "ldDbcid1",
+          "type": "String",
+          "description": "物理字段 ldDBCID1"
+        },
+        {
+          "name": "ldItemCarrier",
+          "type": "Navigation",
+          "description": "物理字段 ldItemCarrierId → ResourceDef"
+        },
+        {
+          "name": "ldItemLocX",
+          "type": "String",
+          "description": "物理字段 ldItemLocX"
+        },
+        {
+          "name": "ldItemLocY",
+          "type": "String",
+          "description": "物理字段 ldItemLocY"
+        },
+        {
+          "name": "ldPlateId",
+          "type": "String",
+          "description": "物理字段 ldPlateID"
         }
       ]
     },
@@ -2965,7 +3130,7 @@
         {
           "name": "namedObjectGroup",
           "type": "Navigation",
-          "description": "物理字段 NamedObjectGroupId → UserCodeGroup"
+          "description": "物理字段 NamedObjectGroupId → LossReasonGroup"
         },
         {
           "name": "fieldId",
@@ -4632,7 +4797,7 @@
     },
     {
       "fromClass": "NamedObjectGroupGroups",
-      "toClass": "UserCodeGroup",
+      "toClass": "LossReasonGroup",
       "relationName": "HAS_NAMED_OBJECT_GROUP",
       "cardinality": "MANY_TO_ONE",
       "description": "NamedObjectGroupGroups.NamedObjectGroupId"
@@ -5049,6 +5214,48 @@
       "relationName": "HAS_SPC_TXN_DATA_DETAILS",
       "cardinality": "MANY_TO_ONE",
       "description": "ss_SPCGPCChartData.SPCTxnDataDetailsId"
+    },
+    {
+      "fromClass": "A_LotAttributes",
+      "toClass": "LossReason",
+      "relationName": "HAS_LD_TEST_LOSS_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_LotAttributes.ldTestLossReasonId"
+    },
+    {
+      "fromClass": "A_LotAttributes",
+      "toClass": "ResourceDef",
+      "relationName": "HAS_LD_TEST_LOSS_REASON_EQUIPMENT",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_LotAttributes.ldTestLossReasonEquipmentId"
+    },
+    {
+      "fromClass": "A_LotAttributes",
+      "toClass": "Spec",
+      "relationName": "HAS_LD_TEST_LOSS_REASON_SPEC",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_LotAttributes.ldTestLossReasonSpecId"
+    },
+    {
+      "fromClass": "A_LotAttributes",
+      "toClass": "Spec",
+      "relationName": "HAS_LD_STORAGE_LOCATION",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_LotAttributes.ldStorageLocationId"
+    },
+    {
+      "fromClass": "A_LotAttributes",
+      "toClass": "LossReason",
+      "relationName": "HAS_LD_DEFECT_REASON",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_LotAttributes.ldDefectReasonId"
+    },
+    {
+      "fromClass": "A_LotWafers",
+      "toClass": "ResourceDef",
+      "relationName": "HAS_LD_ITEM_CARRIER",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_LotWafers.ldItemCarrierId"
     }
   ]
 }

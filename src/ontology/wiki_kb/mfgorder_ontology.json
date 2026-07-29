@@ -376,6 +376,11 @@
           "name": "productBomBase",
           "type": "Integer",
           "description": "物理字段 ProductBOMBaseId"
+        },
+        {
+          "name": "ldDepartment",
+          "type": "String",
+          "description": "物理字段 ldDepartment"
         }
       ]
     },

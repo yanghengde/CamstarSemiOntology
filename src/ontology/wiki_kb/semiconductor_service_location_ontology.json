@@ -626,6 +626,11 @@
           "name": "filterTags",
           "type": "String",
           "description": "物理字段 FilterTags"
+        },
+        {
+          "name": "ldVerifyEmployeeGroup",
+          "type": "Navigation",
+          "description": "物理字段 ldVerifyEmployeeGroupId → A_EmployeeGroup"
         }
       ]
     },
@@ -883,6 +888,13 @@
       "relationName": "HAS_EXTERNAL_INTERFACE",
       "cardinality": "MANY_TO_ONE",
       "description": "A_ServiceSetup.ExternalInterfaceId"
+    },
+    {
+      "fromClass": "A_ServiceSetup",
+      "toClass": "A_EmployeeGroup",
+      "relationName": "HAS_LD_VERIFY_EMPLOYEE_GROUP",
+      "cardinality": "MANY_TO_ONE",
+      "description": "A_ServiceSetup.ldVerifyEmployeeGroupId"
     }
   ]
 }

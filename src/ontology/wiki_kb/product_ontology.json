@@ -705,6 +705,31 @@
           "name": "samplingPlan",
           "type": "Navigation",
           "description": "质量抽样计划 → SamplingPlan 【Swagger】引用 Schema: RevisionedObjectRef。"
+        },
+        {
+          "name": "ldInnerPackingSize",
+          "type": "Integer",
+          "description": "物理字段 ldInnerPackingSize"
+        },
+        {
+          "name": "ldOuterPackingSize",
+          "type": "Integer",
+          "description": "物理字段 ldOuterPackingSize"
+        },
+        {
+          "name": "ldMaxWithdrawals",
+          "type": "Integer",
+          "description": "物理字段 ldMaxWithdrawals"
+        },
+        {
+          "name": "ldUtilizationTime",
+          "type": "Float",
+          "description": "物理字段 ldUtilizationTime"
+        },
+        {
+          "name": "ldProlongedExposureTime",
+          "type": "Float",
+          "description": "物理字段 ldProlongedExposureTime"
         }
       ]
     },

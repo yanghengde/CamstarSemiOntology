@@ -51,6 +51,16 @@
           "name": "filterTags",
           "type": "String",
           "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
+        },
+        {
+          "name": "ldMaxReworkCount",
+          "type": "Integer",
+          "description": "物理字段 ldMaxReworkCount"
+        },
+        {
+          "name": "ldReworkType",
+          "type": "String",
+          "description": "物理字段 ldReworkType"
         }
       ]
     }

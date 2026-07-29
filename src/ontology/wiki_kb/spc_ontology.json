@@ -221,6 +221,16 @@
           "name": "filterTags",
           "type": "String",
           "description": "分类筛选标签"
+        },
+        {
+          "name": "spcChartVisualParams",
+          "type": "Integer",
+          "description": "物理字段 SPCChartVisualParamsId"
+        },
+        {
+          "name": "displayDescriptiveStats",
+          "type": "Boolean",
+          "description": "物理字段 DisplayDescriptiveStats"
         }
       ]
     },

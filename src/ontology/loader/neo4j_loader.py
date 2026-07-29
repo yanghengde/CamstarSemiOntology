@@ -408,6 +408,7 @@ if __name__ == "__main__":
         "erp_route_ontology.json",
         "failure_ontology.json",
         "issue_ontology.json",
+        "ld_extension_ontology.json",
         "local_rework_ontology.json",
         "loss_reason_ontology.json",
         "master_data_catalog_ontology.json",
@@ -417,7 +418,9 @@ if __name__ == "__main__":
         "notification_target_ontology.json",
         "occupation_ontology.json",
         "numbering_ontology.json",
+        "spc_chart_visual_params_ontology.json",
         "spc_ontology.json",
+        "zif_outbound_ontology.json",
         "cross_module_ontology.json"
     ]
     

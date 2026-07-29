@@ -273,6 +273,11 @@
           "name": "booleanTrue",
           "type": "String",
           "description": "物理字段 BooleanTrue"
+        },
+        {
+          "name": "validateResource",
+          "type": "Boolean",
+          "description": "物理字段 ValidateResource"
         }
       ]
     },

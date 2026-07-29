@@ -137,6 +137,11 @@
           "name": "targetContainerProduct",
           "type": "Navigation",
           "description": "指定目标容器关联产品定义 → Product"
+        },
+        {
+          "name": "variantExpression",
+          "type": "String",
+          "description": "物理字段 VariantExpression"
         }
       ]
     }

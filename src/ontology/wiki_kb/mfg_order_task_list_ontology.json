@@ -97,6 +97,11 @@
           "name": "eco",
           "type": "String",
           "description": "工程变更单号 【Swagger】Engineering Change Order"
+        },
+        {
+          "name": "variantExpression",
+          "type": "String",
+          "description": "物理字段 VariantExpression 【Swagger】Variant expression to be resolved to allow for filtering out configurable activities."
         }
       ]
     }
