@@ -3392,52 +3392,52 @@
     {
       "className": "SessionValues",
       "chineseName": "会话值",
-      "description": "记录资源布局与工厂、工序、资源、规格和工作中心。 物理对应 SessionValues (CdoId: 526, Workspace: csi)。",
+      "description": "记录资源布局与工厂、工序、资源、规格和工作中心。 物理对应 SessionValues (CdoId: 526, Workspace: csi)。 【Swagger】Schema: SessionValuesChanges；来源文件: Employees.json；API: /api/Employees。",
       "properties": [
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "serviceTypeId",
           "type": "Integer",
-          "description": "物理字段 ServiceTypeId"
+          "description": "物理字段 ServiceTypeId 【Swagger】CDO Definition Id of Default Service"
         },
         {
           "name": "workCenter",
           "type": "Navigation",
-          "description": "物理字段 WorkCenterId → WorkCenter"
+          "description": "物理字段 WorkCenterId → WorkCenter 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "operation",
           "type": "Navigation",
-          "description": "物理字段 OperationId → Operation"
+          "description": "物理字段 OperationId → Operation 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "locationIconId",
           "type": "Integer",
-          "description": "物理字段 LocationIconId"
+          "description": "物理字段 LocationIconId 【Swagger】Default identifier for the Icon to display with an instance of a Location"
         },
         {
           "name": "workCenterIconId",
           "type": "Integer",
-          "description": "物理字段 WorkCenterIconId"
+          "description": "物理字段 WorkCenterIconId 【Swagger】Default identifier for the Icon to display with an instance of a Work Center"
         },
         {
           "name": "enterpriseIconId",
           "type": "Integer",
-          "description": "物理字段 EnterpriseIconId"
+          "description": "物理字段 EnterpriseIconId 【Swagger】Default identifier for the Icon to display with an instance of an Enterprise"
         },
         {
           "name": "factoryIconId",
           "type": "Integer",
-          "description": "物理字段 FactoryIconId"
+          "description": "物理字段 FactoryIconId 【Swagger】Default identifier for the Icon to display with an instance of a Factory"
         },
         {
           "name": "factory",
           "type": "Navigation",
-          "description": "物理字段 FactoryId → Factory"
+          "description": "物理字段 FactoryId → Factory 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "employee",
@@ -3457,27 +3457,27 @@
         {
           "name": "workstation",
           "type": "Navigation",
-          "description": "物理字段 WorkstationId → ResourceDef"
+          "description": "物理字段 WorkstationId → ResourceDef 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "resource",
           "type": "Navigation",
-          "description": "物理字段 ResourceId → ResourceDef"
+          "description": "物理字段 ResourceId → ResourceDef 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "spec",
           "type": "Navigation",
-          "description": "物理字段 SpecId → Spec"
+          "description": "物理字段 SpecId → Spec 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "layoutImage",
           "type": "Navigation",
-          "description": "物理字段 LayoutImageId → ResourceLayout"
+          "description": "物理字段 LayoutImageId → ResourceLayout 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "accessOnlineChat",
           "type": "Boolean",
-          "description": "物理字段 AccessOnlineChat"
+          "description": "物理字段 AccessOnlineChat 【Swagger】Controls whether the employee can access the Opcenter online chat"
         }
       ]
     },
@@ -3538,7 +3538,7 @@
     {
       "className": "UIAction",
       "chineseName": "UI动作",
-      "description": "连接动作类别和动作定义。 物理对应 UIAction (CdoId: 1368, Workspace: csi)。",
+      "description": "连接动作类别和动作定义。 物理对应 UIAction (CdoId: 1368, Workspace: csi)。 【Swagger】Schema: UIActionChanges；来源文件: Actions.json；API: /api/Actions。",
       "properties": [
         {
           "name": "portalTab",
@@ -3548,7 +3548,7 @@
         {
           "name": "actionCategory",
           "type": "Navigation",
-          "description": "物理字段 ActionCategoryId → ActionCategory"
+          "description": "物理字段 ActionCategoryId → ActionCategory 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "portalTabOption",
@@ -3558,22 +3558,22 @@
         {
           "name": "sequence",
           "type": "Integer",
-          "description": "物理字段 Sequence"
+          "description": "物理字段 Sequence 【Swagger】Relative sequence number"
         },
         {
           "name": "spcEnabled",
           "type": "Integer",
-          "description": "物理字段 SPCEnabled"
+          "description": "物理字段 SPCEnabled 【Swagger】SPC Enabled"
         },
         {
           "name": "displayMode",
           "type": "Integer",
-          "description": "物理字段 DisplayMode"
+          "description": "物理字段 DisplayMode 【Swagger】Indicates the display mode for UI control."
         },
         {
           "name": "permissions",
           "type": "Navigation",
-          "description": "物理字段 PermissionsId → PermissionDefinition"
+          "description": "物理字段 PermissionsId → PermissionDefinition 【Swagger】引用 Schema: PermissionDefinitionChanges。"
         },
         {
           "name": "mapItem",
@@ -3583,7 +3583,7 @@
         {
           "name": "horizontalShift",
           "type": "Navigation",
-          "description": "物理字段 HorizontalShiftId → HorizontalShiftOptions"
+          "description": "物理字段 HorizontalShiftId → HorizontalShiftOptions 【Swagger】引用 Schema: HorizontalShiftOptionsChanges。"
         },
         {
           "name": "queryStringParameters",
@@ -3598,7 +3598,7 @@
         {
           "name": "wipMessagesRequired",
           "type": "Integer",
-          "description": "物理字段 WIPMessagesRequired"
+          "description": "物理字段 WIPMessagesRequired 【Swagger】WIPMessagesRequired"
         },
         {
           "name": "eSigRequired",
@@ -3663,7 +3663,7 @@
         {
           "name": "reloadValues",
           "type": "Boolean",
-          "description": "物理字段 ReloadValues"
+          "description": "物理字段 ReloadValues 【Swagger】Reload Values"
         },
         {
           "name": "customMethodHandler",
@@ -3683,63 +3683,63 @@
         {
           "name": "location",
           "type": "Integer",
-          "description": "物理字段 Location"
+          "description": "物理字段 Location 【Swagger】Location"
         },
         {
           "name": "parent",
           "type": "Navigation",
-          "description": "物理字段 ParentId → ActionDef"
+          "description": "物理字段 ParentId → ActionDef 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 UIActionName",
+          "description": "物理字段 UIActionName 【Swagger】Unique name for the name subentity.",
           "required": true
         },
         {
           "name": "buttonPosition",
           "type": "Integer",
-          "description": "物理字段 ButtonPosition"
+          "description": "物理字段 ButtonPosition 【Swagger】Button Position"
         },
         {
           "name": "labelName",
           "type": "String",
-          "description": "物理字段 LabelName"
+          "description": "物理字段 LabelName 【Swagger】Label Name"
         },
         {
           "name": "isPrimary",
           "type": "Boolean",
-          "description": "物理字段 IsPrimary"
+          "description": "物理字段 IsPrimary 【Swagger】Is Primary"
         },
         {
           "name": "labelText",
           "type": "String",
-          "description": "物理字段 LabelText"
+          "description": "物理字段 LabelText 【Swagger】Label Text"
         },
         {
           "name": "conditionHandler",
           "type": "String",
-          "description": "物理字段 ConditionHandler"
+          "description": "物理字段 ConditionHandler 【Swagger】Condition Handler"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "物理字段 Description 【Swagger】Description"
         },
         {
           "name": "isHidden",
           "type": "Boolean",
-          "description": "物理字段 IsHidden"
+          "description": "物理字段 IsHidden 【Swagger】Is Hidden"
         },
         {
           "name": "isDisabled",
           "type": "Boolean",
-          "description": "物理字段 IsDisabled"
+          "description": "物理字段 IsDisabled 【Swagger】Is Disabled"
         },
         {
           "name": "uiIndex",
@@ -3749,22 +3749,22 @@
         {
           "name": "disableCondition",
           "type": "String",
-          "description": "物理字段 DisableCondition"
+          "description": "物理字段 DisableCondition 【Swagger】Disable Condition"
         },
         {
           "name": "hiddenCondition",
           "type": "String",
-          "description": "物理字段 HiddenCondition"
+          "description": "物理字段 HiddenCondition 【Swagger】Hidden Condition"
         },
         {
           "name": "serviceName",
           "type": "String",
-          "description": "物理字段 ServiceName"
+          "description": "物理字段 ServiceName 【Swagger】Service Name"
         },
         {
           "name": "sidebarCollectible",
           "type": "Boolean",
-          "description": "物理字段 SidebarCollectible"
+          "description": "物理字段 SidebarCollectible 【Swagger】If this parameter is true then this action is displayed in the slideout panel"
         },
         {
           "name": "sidebarCss",

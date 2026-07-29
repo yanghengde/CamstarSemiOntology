@@ -250,91 +250,91 @@
     {
       "className": "ChangePackageReason",
       "chineseName": "变更原因",
-      "description": "ChangePackageReason — 变更原因。用于对启动或创建变更包时的具体原因和业务触发点进行细化和解释（如纠正性措施、预防性维护、工艺优化、ECO工程变更等）。",
+      "description": "ChangePackageReason — 变更原因。用于对启动或创建变更包时的具体原因和业务触发点进行细化和解释（如纠正性措施、预防性维护、工艺优化、ECO工程变更等）。 【Swagger】Schema: ChangePackageReasonEntity；来源文件: ChangePackageReasons.json；API: /api/ChangePackageReasons。",
       "properties": [
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "图标标识"
+          "description": "图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结启用（只读）"
+          "description": "是否已冻结启用（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "原因代码的唯一名称（必填）",
+          "description": "原因代码的唯一名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "详细备注信息"
+          "description": "详细备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "过滤器标签"
+          "description": "过滤器标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "ChangePackagePriority",
       "chineseName": "变更优先级",
-      "description": "ChangePackagePriority — 变更优先级。定义变更包审批 and 发布执行的优先级（如紧急、高、中、低），包含其排序的相对优先级值(relativePriority)。",
+      "description": "ChangePackagePriority — 变更优先级。定义变更包审批 and 发布执行的优先级（如紧急、高、中、低），包含其排序的相对优先级值(relativePriority)。 【Swagger】Schema: ChangePackagePriorityEntity；来源文件: ChangePackagePriorities.json；API: /api/ChangePackagePriorities。",
       "properties": [
         {
           "name": "notes",
           "type": "String",
-          "description": "详细备注信息"
+          "description": "详细备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "图标标识"
+          "description": "图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结启用（只读）"
+          "description": "是否已冻结启用（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "relativePriority",
           "type": "Integer",
-          "description": "相对优先级排序值"
+          "description": "相对优先级排序值 【Swagger】Numeric value to allow user defined sorting. The reason for sorting is to provide a Dispatch List (list what container to work on next)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "优先级的唯一名称（必填）",
+          "description": "优先级的唯一名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "过滤器标签"
+          "description": "过滤器标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },

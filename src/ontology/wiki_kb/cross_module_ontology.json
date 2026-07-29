@@ -3,57 +3,57 @@
     {
       "className": "StepSchedulingDetail",
       "chineseName": "工步排程明细",
-      "description": "工艺路线步骤的生产排程和效率控制明细。物理上对应 StepSchedulingDetail (CdoId: 531)。",
+      "description": "工艺路线步骤的生产排程和效率控制明细。物理上对应 StepSchedulingDetail (CdoId: 531)。 【Swagger】Schema: StepSchedulingDetailChanges；来源文件: AssemblyWorkflows.json；API: /api/AssemblyWorkflows。",
       "properties": [
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结"
+          "description": "是否已冻结 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "durationPerUnit",
           "type": "Float",
-          "description": "物理字段 DurationPerUnit"
+          "description": "物理字段 DurationPerUnit 【Swagger】This value specifies the amount of time needed to process a single unit. This is used in cycle time and Cost Accounting calculations."
         },
         {
           "name": "normalCycleTime",
           "type": "Float",
-          "description": "标准生产周期"
+          "description": "标准生产周期 【Swagger】This is a calculated value that denotes the time required processing a standard size batch of material using this Spec, assuming normal queue time. The calculation for this value uses attributes of other CDOs. This means that changing a Work Center value, for example, can effect this value. This means that this value should be calculated each time that it is needed. The value that is persisted will only be valid as of the point in time that this Spec was saved."
         },
         {
           "name": "fastCycleTime",
           "type": "Float",
-          "description": "快速周期时长"
+          "description": "快速周期时长 【Swagger】This is a calculated value that denotes the time required processing a standard size batch of material using this Spec, assuming fast queue time. This is used to determine, for example, how quickly a job can be expedited through the Factory. The calculation for this value uses attributes of other CDOs. This means that changing a Work Center value, for example, can effect this value. This means that this value should be calculated each time that it is needed. The value that is persisted will only be valid as of the point in time that this Spec was saved."
         },
         {
           "name": "runRateOption",
           "type": "Integer",
-          "description": "物理字段 RunRateOption"
+          "description": "物理字段 RunRateOption 【Swagger】This option determines if run rate is specified as hours per unit or units per hour or time per batch. The values and their meanings are: 1 = Hours per unit (RunRateTime) 2 = Unites per hour (RunRateQuantity) 3 = Time Per Batch (RunRate Time)"
         },
         {
           "name": "stdBatchSize",
           "type": "Float",
-          "description": "标准批次数量"
+          "description": "标准批次数量 【Swagger】This value specifies the standard size of a batch of material processed using this Spec. This is used in cycle time and Cost Accounting calculations."
         },
         {
           "name": "unitsPerHour",
           "type": "Float",
-          "description": "每小时标准产能"
+          "description": "每小时标准产能 【Swagger】This value specifies the number of units processed in an hour. This is used in cycle time and Cost Accounting calculations."
         },
         {
           "name": "yield",
           "type": "Float",
-          "description": "计划良率"
+          "description": "计划良率 【Swagger】Specifies the standard yield expected for processing with this Spec. This value is used in cycle time and Cost Accounting calculations."
         },
         {
           "name": "forwardCycleTime",
           "type": "Float",
-          "description": "物理字段 ForwardCycleTime"
+          "description": "物理字段 ForwardCycleTime 【Swagger】This is the sum of all NormalCycleTime from this step through the end of the Workflow (following defaults Paths from this Step forward). The calculation for this value uses attributes of other CDOs. This means that changing a Work Center value, for example, can effect this value. This means that this value should be calculated each time that it is needed. The value that is persisted will only be valid as of the point in time that this Spec was saved."
         },
         {
           "name": "forwardYield",
           "type": "Float",
-          "description": "物理字段 ForwardYield"
+          "description": "物理字段 ForwardYield 【Swagger】Standard (cumulative) yield from this step through the end of the Workflow (following defaults Paths from this Step forward). The calculation for this value uses attributes of other CDOs. This means that changing a Work Center value, for example, can effect this value. This means that this value should be calculated each time that it is needed. The value that is persisted will only be valid as of the point in time that this Spec was saved."
         },
         {
           "name": "step",
@@ -63,29 +63,29 @@
         {
           "name": "setupTime",
           "type": "Float",
-          "description": "准备换线时间"
+          "description": "准备换线时间 【Swagger】This value specifies the time required for a Setup at this Operation. This is used in cycle time and Cost Accounting calculations."
         },
         {
           "name": "timePerBatch",
           "type": "Float",
-          "description": "物理字段 TimePerBatch"
+          "description": "物理字段 TimePerBatch 【Swagger】This value specified the time needed to process a single Batch."
         },
         {
           "name": "unscheduledTime",
           "type": "Float",
-          "description": "物理字段 UnscheduledTime"
+          "description": "物理字段 UnscheduledTime 【Swagger】Process time that is not contained in the UPH,HPU or Batch Time entries."
         }
       ]
     },
     {
       "className": "TxnDetails",
       "chineseName": "交易属性明细",
-      "description": "定义流程跳转或操作触发时伴随的详细事务字段及逻辑行为。物理上对应 TxnDetails (CdoId: 679477423)。",
+      "description": "定义流程跳转或操作触发时伴随的详细事务字段及逻辑行为。物理上对应 TxnDetails (CdoId: 679477423)。 【Swagger】Schema: TxnDetailsChanges；来源文件: AssemblyWorkflows.json；API: /api/AssemblyWorkflows。",
       "properties": [
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否冻结"
+          "description": "是否冻结 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "path",
@@ -95,32 +95,32 @@
         {
           "name": "txnType",
           "type": "Integer",
-          "description": "事务操作类型编码"
+          "description": "事务操作类型编码 【Swagger】Type of transaction to use: 1 = Move to the To-Step 2 = Rework to the To-Step 3 = Combine to another Container at the To-Step"
         },
         {
           "name": "reworkReason",
           "type": "Navigation",
-          "description": "物理字段 ReworkReasonId → ReworkReason"
+          "description": "物理字段 ReworkReasonId → ReworkReason 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "toContainerOption",
           "type": "Integer",
-          "description": "物理字段 ToContainerOption"
+          "description": "物理字段 ToContainerOption 【Swagger】If the Transaction Type is Combine then this option is used to determine specifics of the Combine: 1 = Create the To-Container (using auto-naming if configured) 2 = Combine to a Specific Container (and create it if it does not exist)"
         },
         {
           "name": "newOwner",
           "type": "Navigation",
-          "description": "物理字段 NewOwnerId → Owner"
+          "description": "物理字段 NewOwnerId → Owner 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "toContainerLevel",
           "type": "Navigation",
-          "description": "物理字段 ToContainerLevelId → ContainerLevel"
+          "description": "物理字段 ToContainerLevelId → ContainerLevel 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "toContainerName",
           "type": "String",
-          "description": "物理字段 ToContainerName"
+          "description": "物理字段 ToContainerName 【Swagger】Unique name for this instance"
         }
       ]
     },

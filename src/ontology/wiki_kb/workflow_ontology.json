@@ -4,7 +4,7 @@
     {
       "className": "Workflow",
       "chineseName": "工作流",
-      "description": "定义生产流程的模型，包含步骤序列、路径、路由和子工作流。一个产品定义可以引用一个默认工作流。",
+      "description": "定义生产流程的模型，包含步骤序列、路径、路由和子工作流。一个产品定义可以引用一个默认工作流。 【Swagger】Schema: WorkflowEntity；来源文件: Workflows.json；API: /api/Workflows。",
       "properties": [
         {
           "name": "workflowBase",
@@ -19,7 +19,7 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "换线设置权限 → SetupAccess"
+          "description": "换线设置权限 → SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "inTransitStepCountOnDefault",
@@ -69,92 +69,92 @@
         {
           "name": "scsSelValResultsetStartRow",
           "type": "Integer",
-          "description": "物理字段 scsSelValResultsetStartRow"
+          "description": "物理字段 scsSelValResultsetStartRow 【Swagger】This field is used by the _GetStepsOrSpecsSelection method to handle pagination from the portal control. Its default value is 1 but the actual value should be set to the CLF::__ResultsetStartRow from whichever CDO that is calling the method."
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述信息（可选）"
+          "description": "描述信息（可选） 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "totalCycleTime",
           "type": "Float",
-          "description": "整个工作流的总正常节拍时间（计算值）"
+          "description": "整个工作流的总正常节拍时间（计算值） 【Swagger】This is the sum of all through the Workflow (following defaults Paths). Note: The calculation for this value uses attributes of other CDOs. This means that changing a Work Center value, for example, can effect this value. This means that this value should be calculated each time that it is needed. The value that is persisted will only be valid as of the point in time that this Spec was saved."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "关联的变更历史记录（ChangeStatus）。"
+          "description": "关联的变更历史记录（ChangeStatus）。 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联图标的标识符。"
+          "description": "关联图标的标识符。 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结；冻结后不允许修改该实例或其修订。"
+          "description": "是否已冻结；冻结后不允许修改该实例或其修订。 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "修订版本标识（必需）"
+          "description": "修订版本标识（必需） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "状态：1=Active (启用), 2=Inactive (禁用)"
+          "description": "状态：1=Active (启用), 2=Inactive (禁用) 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "firstStep",
           "type": "Navigation",
-          "description": "工作流的首个起始步骤 → WorkflowStep"
+          "description": "工作流的首个起始步骤 → WorkflowStep 【Swagger】引用 Schema: NamedSubentityRef。"
         },
         {
           "name": "totalYield",
           "type": "Float",
-          "description": "整个工作流的标准累计产出率（计算值）"
+          "description": "整个工作流的标准累计产出率（计算值） 【Swagger】Standard (cumulative) yield through the Workflow (following defaults Paths). Note: The calculation for this value uses attributes of other CDOs. This means that changing a Work Center value, for example, can effect this value. This means that this value should be calculated each time that it is needed. The value that is persisted will only be valid as of the point in time that this Spec was saved."
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "WIP消息定义管理器 → WIPMsgDefMgr"
+          "description": "WIP消息定义管理器 → WIPMsgDefMgr 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "image",
           "type": "String",
-          "description": "图像。"
+          "description": "图像。 【Swagger】Image"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "与该对象相关的备注和注释。"
+          "description": "与该对象相关的备注和注释。 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号（可选）"
+          "description": "工程变更单号（可选） 【Swagger】Engineering Change Order"
         },
         {
           "name": "remainingProcessTimeEnabled",
           "type": "Boolean",
-          "description": "是否启用剩余处理时间计算（可选）"
+          "description": "是否启用剩余处理时间计算（可选） 【Swagger】A flag that enable RPT calculation."
         },
         {
           "name": "schedulingRoute",
           "type": "Navigation",
-          "description": "关联的排程工艺路线 → SchedulingRoute"
+          "description": "关联的排程工艺路线 → SchedulingRoute 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "以逗号分隔的筛选标签列表。"
+          "description": "以逗号分隔的筛选标签列表。 【Swagger】FilterTags comma seperated list"
         },
         {
           "name": "erpRoute",
           "type": "Navigation",
-          "description": "关联的 ERP 工艺路线 → ERPRoute"
+          "description": "关联的 ERP 工艺路线 → ERPRoute 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "erpRouteBase",

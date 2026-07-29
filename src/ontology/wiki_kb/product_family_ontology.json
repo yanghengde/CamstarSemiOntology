@@ -4,12 +4,12 @@
     {
       "className": "ProductFamily",
       "chineseName": "产品族",
-      "description": "Product Family — 产品族/产品系列定义实体（CdoId: 4760，版本控制对象）。将相似产品按族分组进行统一配置管理，包括编号规则、设置权限、序列号和在制品消息控制。",
+      "description": "Product Family — 产品族/产品系列定义实体（CdoId: 4760，版本控制对象）。将相似产品按族分组进行统一配置管理，包括编号规则、设置权限、序列号和在制品消息控制。 【Swagger】Schema: ProductFamilyEntity；来源文件: ProductFamilies.json；API: /api/ProductFamilies。",
       "properties": [
         {
           "name": "splitNumberingRule",
           "type": "Navigation",
-          "description": "物理字段 SplitNumberingRuleId → NumberingRule"
+          "description": "物理字段 SplitNumberingRuleId → NumberingRule 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "ssContainerNumberingRule",
@@ -19,38 +19,38 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "设置/换线权限配置 → SetupAccess"
+          "description": "设置/换线权限配置 → SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "WIP消息管理器 → WIPMsgDefMgr"
+          "description": "WIP消息管理器 → WIPMsgDefMgr 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "stdStartQty",
           "type": "Float",
-          "description": "标准起产数量"
+          "description": "标准起产数量 【Swagger】Default quantity for a Container Start transaction for Products within this Family"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "产品族唯一名称（必填）",
+          "description": "产品族唯一名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标 ID"
+          "description": "关联的图标 ID 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "changeStatus",
@@ -60,22 +60,22 @@
         {
           "name": "currentCost",
           "type": "Float",
-          "description": "族内产品的当前单位成本"
+          "description": "族内产品的当前单位成本 【Swagger】Current cost per unit for Products within this Family"
         },
         {
           "name": "documentSet",
           "type": "Navigation",
-          "description": "关联的文档集 → DocumentSet"
+          "description": "关联的文档集 → DocumentSet 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "stdCost",
           "type": "Float",
-          "description": "族内产品的标准单位成本"
+          "description": "族内产品的标准单位成本 【Swagger】Standard cost per unit for Products within this Family"
         },
         {
           "name": "stdStartQty2",
           "type": "Float",
-          "description": "标准起产数量（辅助单位）"
+          "description": "标准起产数量（辅助单位） 【Swagger】Default second quantity for a Container Start transaction for Products within this Family. This field is used only for products that use secondary unit of measure tracking."
         },
         {
           "name": "stdStartUom",
@@ -90,32 +90,32 @@
         {
           "name": "plannedCost",
           "type": "Float",
-          "description": "族内产品的计划单位成本"
+          "description": "族内产品的计划单位成本 【Swagger】Planned cost per unit for Products within this Family"
         },
         {
           "name": "trainingReqGroup",
           "type": "Navigation",
-          "description": "培训要求组 → TrainingRequirementGroup"
+          "description": "培训要求组 → TrainingRequirementGroup 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注信息"
+          "description": "备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "samplingPlan",
           "type": "Navigation",
-          "description": "质量抽样计划 → SamplingPlan"
+          "description": "质量抽样计划 → SamplingPlan 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         },
         {
           "name": "containerNumberingRule",
           "type": "Navigation",
-          "description": "产品容器编号规则 → NumberingRule"
+          "description": "产品容器编号规则 → NumberingRule 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "workflowBase",
@@ -125,7 +125,7 @@
         {
           "name": "workflow",
           "type": "Navigation",
-          "description": "关联的工艺路线 → Workflow"
+          "description": "关联的工艺路线 → Workflow 【Swagger】引用 Schema: RevisionedObjectRef。"
         }
       ]
     }

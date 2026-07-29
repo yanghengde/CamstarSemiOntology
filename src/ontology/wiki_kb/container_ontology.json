@@ -1015,60 +1015,60 @@
     {
       "className": "ChangeStatusReason",
       "chineseName": "状态变更原因",
-      "description": "ChangeStatusReason — 状态变更原因。用于记录和解释容器进行状态变更事务（如启用、冻结、释放、分流等）时的具体原因。",
+      "description": "ChangeStatusReason — 状态变更原因。用于记录和解释容器进行状态变更事务（如启用、冻结、释放、分流等）时的具体原因。 【Swagger】Schema: ChangeStatusReasonEntity；来源文件: ChangeStatusReasons.json；API: /api/ChangeStatusReasons。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "设置/换线权限配置 → SetupAccess"
+          "description": "设置/换线权限配置 → SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结启用（只读）"
+          "description": "是否已冻结启用（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "图标标识"
+          "description": "图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "状态变更原因的唯一名称（必填）",
+          "description": "状态变更原因的唯一名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "详细备注信息"
+          "description": "详细备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "过滤器标签"
+          "description": "过滤器标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "ContainerDefectReason",
       "chineseName": "容器缺陷原因",
-      "description": "ContainerDefectReason — 容器缺陷原因代码。用于指定在制品容器(Container)在执行缺陷相关交易（如报废、不合格处置等）时的具体业务原因。",
+      "description": "ContainerDefectReason — 容器缺陷原因代码。用于指定在制品容器(Container)在执行缺陷相关交易（如报废、不合格处置等）时的具体业务原因。 【Swagger】Schema: ContainerDefectReasonEntity；来源文件: ContainerDefectReasons.json；API: /api/ContainerDefectReasons。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "设置/换线权限配置 → SetupAccess"
+          "description": "设置/换线权限配置 → SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "defectReasonName",
@@ -1078,49 +1078,49 @@
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "ContDefectReasonGroup",
       "chineseName": "容器缺陷原因组",
-      "description": "ContDefectReasonGroup — 容器缺陷原因组。对具体的容器缺陷原因代码(ContainerDefectReason)进行分组管理的命名对象，用以在特定操作工位/工序(Operation)限制可选的容器缺陷原因代码列表。支持嵌套子组。",
+      "description": "ContDefectReasonGroup — 容器缺陷原因组。对具体的容器缺陷原因代码(ContainerDefectReason)进行分组管理的命名对象，用以在特定操作工位/工序(Operation)限制可选的容器缺陷原因代码列表。支持嵌套子组。 【Swagger】Schema: ContDefectReasonGroupEntity；来源文件: ContDefectReasonGroups.json；API: /api/ContDefectReasonGroups。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "设置/换线权限配置 → SetupAccess"
+          "description": "设置/换线权限配置 → SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "defectReasonGroupName",
@@ -1130,148 +1130,148 @@
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "entryType",
           "type": "String",
-          "description": "条目类型名称，固定为 ContainerDefectReason"
+          "description": "条目类型名称，固定为 ContainerDefectReason 【Swagger】Name of the type of objects (CDO Definition Name) contained in this ObjectGroup. There is no business logic support for this field and it will be eventually removed."
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "ContainerGroup",
       "chineseName": "容器组",
-      "description": "ContainerGroup — 容器分组。对在制品容器(Container)进行分组管理的命名对象，支持将特定容器归入同一组以便统一管理和筛选。支持嵌套子组。",
+      "description": "ContainerGroup — 容器分组。对在制品容器(Container)进行分组管理的命名对象，支持将特定容器归入同一组以便统一管理和筛选。支持嵌套子组。 【Swagger】Schema: ContainerGroupEntity；来源文件: ContainerGroups.json；API: /api/ContainerGroups。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "设置/换线权限配置 → SetupAccess"
+          "description": "设置/换线权限配置 → SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "容器组名称（必填）",
+          "description": "容器组名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "entryType",
           "type": "String",
-          "description": "条目类型名称，固定为 Container"
+          "description": "条目类型名称，固定为 Container 【Swagger】Name of the type of objects (CDO Definition Name) contained in this ObjectGroup. There is no business logic support for this field and it will be eventually removed."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "ContainerAutoHoldReq",
       "chineseName": "容器自动冻结规则",
-      "description": "ContainerAutoHoldReq — 容器自动冻结需求规则。定义根据容器标识范围、批号列表或自定义表达式自动将符合条件的在制品容器(Container)自动冻结(Hold)的业务规则。可关联特定制造工单(MfgOrder)以限定适用范围。",
+      "description": "ContainerAutoHoldReq — 容器自动冻结需求规则。定义根据容器标识范围、批号列表或自定义表达式自动将符合条件的在制品容器(Container)自动冻结(Hold)的业务规则。可关联特定制造工单(MfgOrder)以限定适用范围。 【Swagger】Schema: ContainerAutoHoldReqEntity；来源文件: ContainerAutoHoldReqs.json；API: /api/ContainerAutoHoldReqs。",
       "properties": [
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "自动冻结规则唯一名称（必填）",
+          "description": "自动冻结规则唯一名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "containerIdentifierRangeEnd",
           "type": "String",
-          "description": "容器标识匹配范围的结束值"
+          "description": "容器标识匹配范围的结束值 【Swagger】End value of range to compare with the Container. The Container will be hold if it is within the range values."
         },
         {
           "name": "containerIdentifierRangeStart",
           "type": "String",
-          "description": "容器标识匹配范围的起始值"
+          "description": "容器标识匹配范围的起始值 【Swagger】Start value of range to compare with the Container. The Container will be hold if it is within the range values."
         },
         {
           "name": "expression",
           "type": "String",
-          "description": "自定义条件表达式，用于定义额外的匹配逻辑"
+          "description": "自定义条件表达式，用于定义额外的匹配逻辑 【Swagger】Conditional Expression that is used to defined any additional custom logic that will be matched to hold the Container."
         },
         {
           "name": "mfgOrder",
           "type": "Navigation",
-          "description": "关联的制造工单(MfgOrder)，限定规则的适用范围"
+          "description": "关联的制造工单(MfgOrder)，限定规则的适用范围 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         }
       ]
     }

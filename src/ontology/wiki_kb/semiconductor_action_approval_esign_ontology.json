@@ -4,63 +4,63 @@
     {
       "className": "ActionCategory",
       "chineseName": "动作类别",
-      "description": "动作定义的分类主数据。 物理对应 ActionCategory (CdoId: 1418, Workspace: csi)。",
+      "description": "动作定义的分类主数据。 物理对应 ActionCategory (CdoId: 1418, Workspace: csi)。 【Swagger】Schema: ActionCategoryEntity；来源文件: ActionCategories.json；API: /api/ActionCategories。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "物理字段 SetupAccessId → A_SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "sequence",
           "type": "Integer",
-          "description": "物理字段 Sequence"
+          "description": "物理字段 Sequence 【Swagger】Relative sequence number"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "物理字段 Notes 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "物理字段 ChangeHistoryId → ChangeStatus 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "物理字段 Description 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "物理字段 IconId 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 ActionCategoryName",
+          "description": "物理字段 ActionCategoryName 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "labelName",
           "type": "String",
-          "description": "物理字段 LabelName"
+          "description": "物理字段 LabelName 【Swagger】LabelName"
         },
         {
           "name": "labelText",
           "type": "String",
-          "description": "物理字段 LabelText"
+          "description": "物理字段 LabelText 【Swagger】Label Text"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "物理字段 FilterTags 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
@@ -125,53 +125,53 @@
     {
       "className": "ActionRule",
       "chineseName": "动作规则",
-      "description": "动作执行条件与规则定义。 物理对应 ActionRule (CdoId: 1356, Workspace: csi)。",
+      "description": "动作执行条件与规则定义。 物理对应 ActionRule (CdoId: 1356, Workspace: csi)。 【Swagger】Schema: ActionRuleEntity；来源文件: ActionRules.json；API: /api/ActionRules。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "物理字段 SetupAccessId → A_SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "物理字段 Notes 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "物理字段 ChangeHistoryId → ChangeStatus 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "物理字段 Description 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "物理字段 IconId 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 ActionRuleName",
+          "description": "物理字段 ActionRuleName 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "expression",
           "type": "String",
-          "description": "物理字段 Expression"
+          "description": "物理字段 Expression 【Swagger】InSite Unified Expression"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "物理字段 FilterTags 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
@@ -791,7 +791,7 @@
     {
       "className": "ApprovalDecision",
       "chineseName": "审批决定",
-      "description": "审批流程可选决定的主数据。 物理对应 ApprovalDecision (CdoId: 1249, Workspace: csi)。",
+      "description": "审批流程可选决定的主数据。 物理对应 ApprovalDecision (CdoId: 1249, Workspace: csi)。 【Swagger】Schema: ApprovalDecisionChanges；来源文件: ApprovalDecisionLists.json；API: /api/ApprovalDecisionLists。",
       "properties": [
         {
           "name": "approvalDecisionList",
@@ -801,71 +801,71 @@
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 ApprovalDecisionName",
+          "description": "物理字段 ApprovalDecisionName 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "decisionType",
           "type": "Integer",
-          "description": "物理字段 DecisionType"
+          "description": "物理字段 DecisionType 【Swagger】The decisions that can be made regarding the approval of an object."
         },
         {
           "name": "includeComments",
           "type": "Boolean",
-          "description": "物理字段 IncludeComments"
+          "description": "物理字段 IncludeComments 【Swagger】Controls whether the comments entry field is made available to the user."
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         }
       ]
     },
     {
       "className": "ApprovalDecisionList",
       "chineseName": "审批决定列表",
-      "description": "审批决定的分组列表配置。 物理对应 ApprovalDecisionList (CdoId: 1234, Workspace: csi)。",
+      "description": "审批决定的分组列表配置。 物理对应 ApprovalDecisionList (CdoId: 1234, Workspace: csi)。 【Swagger】Schema: ApprovalDecisionListEntity；来源文件: ApprovalDecisionLists.json；API: /api/ApprovalDecisionLists。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "物理字段 SetupAccessId → A_SetupAccess"
+          "description": "物理字段 SetupAccessId → A_SetupAccess 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "物理字段 ChangeHistoryId → ChangeStatus"
+          "description": "物理字段 ChangeHistoryId → ChangeStatus 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "物理字段 Description"
+          "description": "物理字段 Description 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "物理字段 IconId"
+          "description": "物理字段 IconId 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "物理字段 ApprovalDecisionListName",
+          "description": "物理字段 ApprovalDecisionListName 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "物理字段 Notes"
+          "description": "物理字段 Notes 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "物理字段 FilterTags"
+          "description": "物理字段 FilterTags 【Swagger】FilterTags comma seperated list"
         }
       ]
     },

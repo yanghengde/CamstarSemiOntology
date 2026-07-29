@@ -4,7 +4,7 @@
     {
       "className": "BusinessProcessWorkflow",
       "chineseName": "业务流程工作流",
-      "description": "Business Process Workflow — 业务流程工作流。定义业务流程（如变更管理审批流）的审批流转工作流及各控制步骤，包含首个控制步骤(firstStep)。",
+      "description": "Business Process Workflow — 业务流程工作流。定义业务流程（如变更管理审批流）的审批流转工作流及各控制步骤，包含首个控制步骤(firstStep)。 【Swagger】Schema: BusinessProcessWorkflowEntity；来源文件: BusinessProcessWorkflows.json；API: /api/BusinessProcessWorkflows。",
       "properties": [
         {
           "name": "businessProcessWorkflowBase",
@@ -14,64 +14,64 @@
         {
           "name": "firstStep",
           "type": "Navigation",
-          "description": "关联的第一步工作流步骤。"
+          "description": "关联的第一步工作流步骤。 【Swagger】引用 Schema: NamedSubentityRef。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "关联的变更历史记录（ChangeStatus）。"
+          "description": "关联的变更历史记录（ChangeStatus）。 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "版本号（必填）"
+          "description": "版本号（必填） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "实例的当前状态 (Active=1, Inactive=2)。"
+          "description": "实例的当前状态 (Active=1, Inactive=2)。 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号"
+          "description": "工程变更单号 【Swagger】Engineering Change Order"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "BusinessProcessSpec",
       "chineseName": "业务流程规范",
-      "description": "Business Process Specification — 业务流程规范。定义具体业务流程（如协作、审批、发布）的控制要求和状态转变机制，包含业务规则映射(bpSpecBizRuleTxnMap)。",
+      "description": "Business Process Specification — 业务流程规范。定义具体业务流程（如协作、审批、发布）的控制要求和状态转变机制，包含业务规则映射(bpSpecBizRuleTxnMap)。 【Swagger】Schema: BusinessProcessSpecEntity；来源文件: BusinessProcessSpecs.json；API: /api/BusinessProcessSpecs。",
       "properties": [
         {
           "name": "businessProcessSpecBase",
@@ -86,47 +86,47 @@
         {
           "name": "status",
           "type": "Integer",
-          "description": "实例的当前状态 (Active=1, Inactive=2)。"
+          "description": "实例的当前状态 (Active=1, Inactive=2)。 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号"
+          "description": "工程变更单号 【Swagger】Engineering Change Order"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "关联的变更历史记录（ChangeStatus）。"
+          "description": "关联的变更历史记录（ChangeStatus）。 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "版本号（必填）"
+          "description": "版本号（必填） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。"
+          "description": "关联的WIP消息定义管理器（WIPMsgDefMgr）。 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "moveStdValidation",
@@ -161,7 +161,7 @@
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     }

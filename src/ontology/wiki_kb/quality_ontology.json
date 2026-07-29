@@ -357,33 +357,33 @@
     {
       "className": "HoldReason",
       "chineseName": "冻结原因",
-      "description": "说明为何阻止容器/批次继续生产（例如质量缺陷、工艺等待等）。",
+      "description": "说明为何阻止容器/批次继续生产（例如质量缺陷、工艺等待等）。 【Swagger】Schema: HoldReasonEntity；来源文件: HoldReasons.json；API: /api/HoldReasons。",
       "properties": [
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "关联的建模访问权限（A_SetupAccess）。"
+          "description": "关联的建模访问权限（A_SetupAccess）。 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "关联的WIP消息定义管理器"
+          "description": "关联的WIP消息定义管理器 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "name",
           "type": "String",
-          "description": "冻结原因唯一名称（必填）",
+          "description": "冻结原因唯一名称（必填） 【Swagger】Unique name for this instance",
           "required": true
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "图标标识"
+          "description": "图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "changeStatus",
@@ -393,17 +393,17 @@
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结启用（只读）"
+          "description": "是否已冻结启用（只读） 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "过滤器标签"
+          "description": "过滤器标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },

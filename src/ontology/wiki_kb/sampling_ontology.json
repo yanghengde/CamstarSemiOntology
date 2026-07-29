@@ -4,7 +4,7 @@
     {
       "className": "SamplingPlan",
       "chineseName": "抽样计划",
-      "description": "Sampling Plan — 定义产品/来料的质量抽样检验策略。包含抽样率、AQL 等级、检验等级、切换规则等配置。可关联到 Spec 和 Resource，支持版本化管理（name+revision）。",
+      "description": "Sampling Plan — 定义产品/来料的质量抽样检验策略。包含抽样率、AQL 等级、检验等级、切换规则等配置。可关联到 Spec 和 Resource，支持版本化管理（name+revision）。 【Swagger】Schema: SamplingPlanEntity；来源文件: SamplingPlans.json；API: /api/SamplingPlans。",
       "properties": [
         {
           "name": "samplingPlanBase",
@@ -14,107 +14,107 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "关联的建模访问权限（A_SetupAccess）。"
+          "description": "关联的建模访问权限（A_SetupAccess）。 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "inspectionLevel",
           "type": "Navigation",
-          "description": "检验等级（I, II, III, S-1） → InspectionLevel (InspectionLevelId)"
+          "description": "检验等级（I, II, III, S-1） → InspectionLevel (InspectionLevelId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "switchingRuleMaxDuration",
           "type": "Integer",
-          "description": "切换规则有效最大天数"
+          "description": "切换规则有效最大天数 【Swagger】Maximum number of days since Product was last run before resetting the consecutive passes counter in the SamplingCurrentStatus"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "状态：1=Active, 2=Inactive"
+          "description": "状态：1=Active, 2=Inactive 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号"
+          "description": "工程变更单号 【Swagger】Engineering Change Order"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注信息"
+          "description": "备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "sampleRateMaxDuration",
           "type": "Integer",
-          "description": "抽样率有效最大天数"
+          "description": "抽样率有效最大天数 【Swagger】Maximum number of days since Product was last run before resetting the counters for Rate"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId)"
+          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId) 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联图标的标识符。"
+          "description": "关联图标的标识符。 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "版本号（必填）"
+          "description": "版本号（必填） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "vendor",
           "type": "Navigation",
-          "description": "关联的供应商（来料检验） → Vendor (VendorId)"
+          "description": "关联的供应商（来料检验） → Vendor (VendorId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "关联的WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId)"
+          "description": "关联的WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId) 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "aqlLevel",
           "type": "Navigation",
-          "description": "AQL 合格质量水平 → AQLLevel (AQLLevelId)"
+          "description": "AQL 合格质量水平 → AQLLevel (AQLLevelId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "resource",
           "type": "Navigation",
-          "description": "关联的检验资源/设备 → Resource (ResourceId)"
+          "description": "关联的检验资源/设备 → Resource (ResourceId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "sampleSizeBasedOnStartQty",
           "type": "Boolean",
-          "description": "样本量基于开始数量还是当前容器数量。"
+          "description": "样本量基于开始数量还是当前容器数量。 【Swagger】Determines if the Sample Size should be based on the Start Quantity or Current Container Qty"
         },
         {
           "name": "sampleRate",
           "type": "Integer",
-          "description": "默认抽样率"
+          "description": "默认抽样率 【Swagger】The default sampling rate for a sampling plan defined for every nth container. ex. If rate =1 then every container is sampled. If rate is 3 then ever 3rd container is sampled."
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "moveContainerOnCompletion",
           "type": "Boolean",
-          "description": "检验完成后是否自动移动容器"
+          "description": "检验完成后是否自动移动容器 【Swagger】Flag to determine whether to move the container when sampling is completed and passed"
         },
         {
           "name": "vendorItem",
           "type": "Navigation",
-          "description": "关联的供应商物料 → VendorItem (VendorItemId)"
+          "description": "关联的供应商物料 → VendorItem (VendorItemId) 【Swagger】引用 Schema: NamedSubentityRef。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         },
         {
           "name": "specBase",
@@ -124,12 +124,12 @@
         {
           "name": "spec",
           "type": "Navigation",
-          "description": "关联的检验规格 → Spec (SpecId)"
+          "description": "关联的检验规格 → Spec (SpecId) 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "switchingRule",
           "type": "Navigation",
-          "description": "切换规则（加严/放宽检验） → SwitchingRule (SwitchingRuleId)"
+          "description": "切换规则（加严/放宽检验） → SwitchingRule (SwitchingRuleId) 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "switchingRuleBase",
@@ -141,7 +141,7 @@
     {
       "className": "SamplingPlanDetails",
       "chineseName": "抽样详情",
-      "description": "Sampling Plan Detail — 抽样计划的具体规则条目，定义特定批次大小范围下的样本量、接收数(Ac)、拒收数(Re)。",
+      "description": "Sampling Plan Detail — 抽样计划的具体规则条目，定义特定批次大小范围下的样本量、接收数(Ac)、拒收数(Re)。 【Swagger】Schema: SamplingPlanDetailsChanges；来源文件: SamplingPlans.json；API: /api/SamplingPlans。",
       "properties": [
         {
           "name": "samplingPlan",
@@ -151,7 +151,7 @@
         {
           "name": "wipDataSetup",
           "type": "Navigation",
-          "description": "物理字段 WIPDataSetupId → A_WIPDataSetup"
+          "description": "物理字段 WIPDataSetupId → A_WIPDataSetup 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "ssWaferAqlLevel",
@@ -166,57 +166,57 @@
         {
           "name": "sequence",
           "type": "Integer",
-          "description": "物理字段 Sequence"
+          "description": "物理字段 Sequence 【Swagger】Sequence of the Sampling Plan Details List"
         },
         {
           "name": "vendor",
           "type": "Navigation",
-          "description": "关联的供应商 → Vendor (VendorId)"
+          "description": "关联的供应商 → Vendor (VendorId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "物理字段 IsFrozen"
+          "description": "物理字段 IsFrozen 【Swagger】Determines if changes are allowed to this instance (or any of its revisions)"
         },
         {
           "name": "aqlLevel",
           "type": "Navigation",
-          "description": "关联的AQL水平 → AQLLevel (AQLLevelId)"
+          "description": "关联的AQL水平 → AQLLevel (AQLLevelId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "inspectAll",
           "type": "Boolean",
-          "description": "物理字段 InspectAll"
+          "description": "物理字段 InspectAll 【Swagger】Boolean Flag indicatin sample size = container.qty"
         },
         {
           "name": "inspectionLevel",
           "type": "Navigation",
-          "description": "关联的检验等级 → InspectionLevel (InspectionLevelId)"
+          "description": "关联的检验等级 → InspectionLevel (InspectionLevelId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "sampleRate",
           "type": "Integer",
-          "description": "物理字段 SampleRate"
+          "description": "物理字段 SampleRate 【Swagger】This value set the sampling rate. Sampling Rate is counted for every nth container. For example if sampling rate is 1 every container is sampled. If Sample rate is 2 every other container is sampled."
         },
         {
           "name": "resource",
           "type": "Navigation",
-          "description": "关联的检验资源 → Resource (ResourceId)"
+          "description": "关联的检验资源 → Resource (ResourceId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "inspectAllContQty",
           "type": "Boolean",
-          "description": "物理字段 InspectAllContQty"
+          "description": "物理字段 InspectAllContQty 【Swagger】Indicates that inspection of all the containers' quantity is required for this product"
         },
         {
           "name": "vendorItem",
           "type": "Navigation",
-          "description": "关联的供应商物料 → VendorItem (VendorItemId)"
+          "description": "关联的供应商物料 → VendorItem (VendorItemId) 【Swagger】引用 Schema: NamedSubentityRef。"
         },
         {
           "name": "inspectAllQtyOnFailure",
           "type": "Boolean",
-          "description": "物理字段 InspectAllQtyOnFailure"
+          "description": "物理字段 InspectAllQtyOnFailure 【Swagger】Indicates that the quantity of all container will be inspected if a test fails"
         },
         {
           "name": "specBase",
@@ -231,7 +231,7 @@
         {
           "name": "spec",
           "type": "Navigation",
-          "description": "关联的规格 → Spec (SpecId)"
+          "description": "关联的规格 → Spec (SpecId) 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "switchingRuleBase",
@@ -241,19 +241,19 @@
         {
           "name": "switchingRule",
           "type": "Navigation",
-          "description": "关联的切换规则 → SwitchingRule (SwitchingRuleId)"
+          "description": "关联的切换规则 → SwitchingRule (SwitchingRuleId) 【Swagger】引用 Schema: RevisionedObjectRef。"
         },
         {
           "name": "sampleTest",
           "type": "Navigation",
-          "description": "关联的检验定义 → SampleTest (SampleTestId)"
+          "description": "关联的检验定义 → SampleTest (SampleTestId) 【Swagger】引用 Schema: RevisionedObjectRef。"
         }
       ]
     },
     {
       "className": "SampleTest",
       "chineseName": "抽样检验定义",
-      "description": "Sample Test — 定义抽样检验的具体执行方式。包括检验类型(sampleType)、操作指导、采集的数据点(sampleDataPoints)、缺陷分类(classification)、失败处理模式和 AQL 拒收原因。",
+      "description": "Sample Test — 定义抽样检验的具体执行方式。包括检验类型(sampleType)、操作指导、采集的数据点(sampleDataPoints)、缺陷分类(classification)、失败处理模式和 AQL 拒收原因。 【Swagger】Schema: SampleTestEntity；来源文件: SampleTests.json；API: /api/SampleTests。",
       "properties": [
         {
           "name": "sampleTestBase",
@@ -263,87 +263,87 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "关联的建模访问权限（A_SetupAccess）。"
+          "description": "关联的建模访问权限（A_SetupAccess）。 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "版本号（必填）"
+          "description": "版本号（必填） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "decreaseBySampleSizeReason",
           "type": "Navigation",
-          "description": "减少原因（按样本量） → LossReason (DecreaseBySampleSizeReasonId)"
+          "description": "减少原因（按样本量） → LossReason (DecreaseBySampleSizeReasonId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId)"
+          "description": "WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId) 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "defaultFailureMode",
           "type": "Navigation",
-          "description": "默认故障模式 → FailureMode (DefaultFailureModeId)"
+          "description": "默认故障模式 → FailureMode (DefaultFailureModeId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "sampleType",
           "type": "Integer",
-          "description": "检验类型（必填，如计量型/计数型）"
+          "description": "检验类型（必填，如计量型/计数型） 【Swagger】Used to identify the Sample Test type associated with a Product Sampling Plan. Counted= 1 Measured = 2"
         },
         {
           "name": "aqlRejectReasons",
           "type": "Navigation",
-          "description": "AQL 拒收原因列表 → LossReasonGroup (AQLRejectReasonsId)"
+          "description": "AQL 拒收原因列表 → LossReasonGroup (AQLRejectReasonsId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联图标的标识符。"
+          "description": "关联图标的标识符。 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "状态：1=Active, 2=Inactive"
+          "description": "状态：1=Active, 2=Inactive 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "instructions",
           "type": "String",
-          "description": "操作员的检验操作指导说明"
+          "description": "操作员的检验操作指导说明 【Swagger】Intructions for the user when performing the Sample Test"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号"
+          "description": "工程变更单号 【Swagger】Engineering Change Order"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注信息"
+          "description": "备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId)"
+          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId) 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "scrapCountedRejectsByReason",
           "type": "Boolean",
-          "description": "是否按原因统计报废拒收数"
+          "description": "是否按原因统计报废拒收数 【Swagger】Scrap Counted Rejects By Reason"
         },
         {
           "name": "decreaseByRejectCountReason",
           "type": "Navigation",
-          "description": "减少原因（按拒收数） → LossReason (DecreaseByRejectCountReasonId)"
+          "description": "减少原因（按拒收数） → LossReason (DecreaseByRejectCountReasonId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "defaultPeDescription",
@@ -353,29 +353,29 @@
         {
           "name": "classification",
           "type": "Navigation",
-          "description": "缺陷分类 → Classification (ClassificationId)"
+          "description": "缺陷分类 → Classification (ClassificationId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "allowMoveOnFailure",
           "type": "Boolean",
-          "description": "检验失败时是否允许移动到下一站"
+          "description": "检验失败时是否允许移动到下一站 【Swagger】Indicates if the container can be moved if a sample test is rejected."
         },
         {
           "name": "subClassification",
           "type": "Navigation",
-          "description": "缺陷子分类 → SubClassification (SubClassificationId)"
+          "description": "缺陷子分类 → SubClassification (SubClassificationId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "以逗号分隔的筛选标签列表。"
+          "description": "以逗号分隔的筛选标签列表。 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
     {
       "className": "SampleDataPoint",
       "chineseName": "抽样数据点",
-      "description": "Sample Data Point — 定义抽样检验中需要采集的单个数据项。每个 SampleTest 可包含多个 SampleDataPoint。",
+      "description": "Sample Data Point — 定义抽样检验中需要采集的单个数据项。每个 SampleTest 可包含多个 SampleDataPoint。 【Swagger】Schema: SampleDataPointEntity；来源文件: SampleDataPoints.json；API: /api/SampleDataPoints。",
       "properties": [
         {
           "name": "sampleDataPointBase",
@@ -385,87 +385,87 @@
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "关联的建模访问权限（A_SetupAccess）。"
+          "description": "关联的建模访问权限（A_SetupAccess）。 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注信息"
+          "description": "备注信息 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId)"
+          "description": "变更历史记录 → ChangeStatus (ChangeHistoryId) 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "状态：1=Active, 2=Inactive"
+          "description": "状态：1=Active, 2=Inactive 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联图标的标识符。"
+          "description": "关联图标的标识符。 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "showLimits",
           "type": "Boolean",
-          "description": "是否向操作员显示上下限"
+          "description": "是否向操作员显示上下限 【Swagger】Indicates if the user should be able to see the upper and lower limits for a data point on the user interface."
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "版本号（必填）"
+          "description": "版本号（必填） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号"
+          "description": "工程变更单号 【Swagger】Engineering Change Order"
         },
         {
           "name": "uom",
           "type": "Navigation",
-          "description": "计量单位 → UOM (UOMId)"
+          "description": "计量单位 → UOM (UOMId) 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "lowerLimit",
           "type": "String",
-          "description": "允许的最小值（下限）"
+          "description": "允许的最小值（下限） 【Swagger】The smallest value allowed for a data point. Values less than this value cause a limit violation"
         },
         {
           "name": "upperLimit",
           "type": "String",
-          "description": "允许的最大值（上限）"
+          "description": "允许的最大值（上限） 【Swagger】The largest value allowed for a data point. Values greater than this value cause a limit violation"
         },
         {
           "name": "dataType",
           "type": "Integer",
-          "description": "数据类型（必填，如数字/文本/日期）"
+          "description": "数据类型（必填，如数字/文本/日期） 【Swagger】The data type for this data point."
         },
         {
           "name": "defaultValue",
           "type": "String",
-          "description": "数据点的默认值"
+          "description": "数据点的默认值 【Swagger】The default value for a sample data point."
         },
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId)"
+          "description": "WIP消息定义管理器 → WIPMsgDefMgr (WIPMsgDefMgrId) 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "以逗号分隔的筛选标签列表。"
+          "description": "以逗号分隔的筛选标签列表。 【Swagger】FilterTags comma seperated list"
         }
       ]
     },

@@ -4,57 +4,57 @@
     {
       "className": "DataCollectionDef",
       "chineseName": "数据采集定义",
-      "description": "DataCollectionDef — 数据采集定义（版本化实体）。定义在特定工步(Spec)需要采集的一组数据点(DataPoint)及其采集布局、上下限控制、SPC统计过程控制、参数化数据类型等配置。由 DataCollectionDefBase 作为基本体，每个版本通过 revision 区分。",
+      "description": "DataCollectionDef — 数据采集定义（版本化实体）。定义在特定工步(Spec)需要采集的一组数据点(DataPoint)及其采集布局、上下限控制、SPC统计过程控制、参数化数据类型等配置。由 DataCollectionDefBase 作为基本体，每个版本通过 revision 区分。 【Swagger】Schema: DataCollectionDefEntity；来源文件: DataCollectionDefs.json；API: /api/DataCollectionDefs。",
       "properties": [
         {
           "name": "spcSetup",
           "type": "Navigation",
-          "description": "物理字段 SPCSetupId → A_SPCSetup"
+          "description": "物理字段 SPCSetupId → A_SPCSetup 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "setupAccess",
           "type": "Navigation",
-          "description": "关联的建模访问权限（A_SetupAccess）。"
+          "description": "关联的建模访问权限（A_SetupAccess）。 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "changeHistory",
           "type": "Navigation",
-          "description": "变更历史记录"
+          "description": "变更历史记录 【Swagger】引用 Schema: ChangeHistoryChanges。"
         },
         {
           "name": "parametricDataControl",
           "type": "String",
-          "description": "参数化数据控件名称"
+          "description": "参数化数据控件名称 【Swagger】Name of the ParametricData Control for the Forms Builder to resolve the parametric data type to the parametric data at run time."
         },
         {
           "name": "parametricDataDefType",
           "type": "Integer",
-          "description": "参数化数据类型 CDO 定义 ID"
+          "description": "参数化数据类型 CDO 定义 ID 【Swagger】Definition Id of the Parametric Data CDO"
         },
         {
           "name": "status",
           "type": "Integer",
-          "description": "状态：1=Active(激活), 2=Inactive(停用)"
+          "description": "状态：1=Active(激活), 2=Inactive(停用) 【Swagger】Determines the current status (Active, In-Active) of this instance. Valid values and their meanings are: 1 = Active 2 = Inactive"
         },
         {
           "name": "revision",
           "type": "String",
-          "description": "修订版本号（必填）"
+          "description": "修订版本号（必填） 【Swagger】Revision (unique within the context of the base entity)"
         },
         {
           "name": "isFrozen",
           "type": "Boolean",
-          "description": "是否已冻结（只读）"
+          "description": "是否已冻结（只读） 【Swagger】Determines if changes are allowed to this instance"
         },
         {
           "name": "iconId",
           "type": "Integer",
-          "description": "关联的图标标识"
+          "description": "关联的图标标识 【Swagger】Identifier for the icon associated with this Base Entity"
         },
         {
           "name": "description",
           "type": "String",
-          "description": "描述说明"
+          "description": "描述说明 【Swagger】Description of this entity. Defaults to the name of this entity if not specified"
         },
         {
           "name": "dataCollectionDefBase",
@@ -64,17 +64,17 @@
         {
           "name": "wipMsgDefMgr",
           "type": "Navigation",
-          "description": "关联的 WIP 消息定义管理器"
+          "description": "关联的 WIP 消息定义管理器 【Swagger】引用 Schema: WIPMsgEntity。"
         },
         {
           "name": "notes",
           "type": "String",
-          "description": "备注说明"
+          "description": "备注说明 【Swagger】Notations and comments associated with this object."
         },
         {
           "name": "eco",
           "type": "String",
-          "description": "工程变更单号(ECO)"
+          "description": "工程变更单号(ECO) 【Swagger】Engineering Change Order"
         },
         {
           "name": "displayLimits",
@@ -94,22 +94,22 @@
         {
           "name": "webPart",
           "type": "Navigation",
-          "description": "关联的 WebPart 界面组件"
+          "description": "关联的 WebPart 界面组件 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "spcChartDefGroup",
           "type": "Navigation",
-          "description": "关联的 SPC 图表定义组"
+          "description": "关联的 SPC 图表定义组 【Swagger】引用 Schema: NamedObjectRef。"
         },
         {
           "name": "isScaleEnabled",
           "type": "Boolean",
-          "description": "是否启用电子秤连接"
+          "description": "是否启用电子秤连接 【Swagger】Scale Enabled"
         },
         {
           "name": "filterTags",
           "type": "String",
-          "description": "分类筛选标签"
+          "description": "分类筛选标签 【Swagger】FilterTags comma seperated list"
         }
       ]
     },
