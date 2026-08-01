@@ -34,12 +34,14 @@ from web.routers.wiki import router as wiki_router
 from web.routers.chat import router as chat_router
 from web.routers.sql_builder import router as sql_builder_router
 from web.routers.i18n import router as i18n_router
+from web.routers.ontology_import import router as ontology_import_router
 
 app.include_router(graph_router)
 app.include_router(wiki_router)
 app.include_router(chat_router)
 app.include_router(sql_builder_router)
 app.include_router(i18n_router)
+app.include_router(ontology_import_router)
 
 
 @app.get("/")

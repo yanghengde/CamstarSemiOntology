@@ -424,13 +424,21 @@ if __name__ == "__main__":
         "cross_module_ontology.json"
     ]
     
+    ontology_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "wiki_kb"))
     json_filepaths = []
     for filename in files_to_load:
-        json_path = os.path.join(os.path.dirname(__file__), "..", "wiki_kb", filename)
+        json_path = os.path.join(ontology_dir, filename)
         if os.path.exists(json_path):
             json_filepaths.append(json_path)
         else:
             raise FileNotFoundError(json_path)
+    # Reviewed imports created from the settings page use the same ontology
+    # filename convention.  Include them automatically after the curated list;
+    # the loader is two-pass, so declaration order does not affect relations.
+    known_paths = {os.path.abspath(path) for path in json_filepaths}
+    for json_path in sorted(glob.glob(os.path.join(ontology_dir, "*_ontology.json"))):
+        if os.path.abspath(json_path) not in known_paths:
+            json_filepaths.append(json_path)
     counts = load_ontologies_to_neo4j(json_filepaths, clear=args.clear)
     print(f"loaded_files={len(json_filepaths)}")
     for key, value in counts.items():

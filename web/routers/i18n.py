@@ -9,7 +9,9 @@ import re
 import tempfile
 import threading
 import time
+import csv
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
@@ -71,6 +73,8 @@ def _empty_store() -> dict:
         "revision": 0,
         "updatedAt": None,
         "translations": {"nodeDescriptions": {}, "propertyDescriptions": {}},
+        "manualEdits": {"nodeDescriptions": {}, "propertyDescriptions": {}},
+        "syncMeta": {},
     }
 
 
@@ -86,9 +90,14 @@ def _load_store() -> dict:
         store = _empty_store()
         store.update(data if isinstance(data, dict) else {})
         configured = store.setdefault("translations", {})
+        manual_edits = store.setdefault("manualEdits", {})
         for bucket in KIND_TO_BUCKET.values():
             if not isinstance(configured.get(bucket), dict):
                 configured[bucket] = {}
+            if not isinstance(manual_edits.get(bucket), dict):
+                manual_edits[bucket] = {}
+        if not isinstance(store.get("syncMeta"), dict):
+            store["syncMeta"] = {}
         return store
 
 
@@ -209,6 +218,10 @@ class TranslationUpdate(BaseModel):
     en: str = Field(default="", max_length=5000)
 
 
+class DescriptionSyncRequest(BaseModel):
+    className: str = Field(min_length=1, max_length=200)
+
+
 @router.get("")
 def get_translations():
     store = _load_store()
@@ -315,8 +328,10 @@ def update_translation(update: TranslationUpdate):
     en = update.en.strip()
     if zh or en:
         bucket[key] = {"zh": zh, "en": en}
+        store["manualEdits"][KIND_TO_BUCKET[update.kind]][key] = int(time.time() * 1000)
     else:
         bucket.pop(key, None)
+        store["manualEdits"][KIND_TO_BUCKET[update.kind]].pop(key, None)
     store["revision"] = int(store.get("revision") or 0) + 1
     store["updatedAt"] = int(time.time() * 1000)
     _save_store(store)
@@ -326,4 +341,206 @@ def update_translation(update: TranslationUpdate):
         "kind": update.kind,
         "key": key,
         "translation": bucket.get(key),
+    }
+
+
+def _source_engine():
+    """Build a source connection using an installed SQL Server driver."""
+    import pyodbc
+    from sqlalchemy import create_engine
+    from sqlalchemy.engine import URL
+
+    installed = pyodbc.drivers()
+    configured = os.getenv("DB_ODBC_DRIVER", "ODBC Driver 18 for SQL Server")
+    driver_name = configured if configured in installed else next(
+        (name for name in reversed(installed) if "SQL Server" in name),
+        configured,
+    )
+    url = URL.create(
+        "mssql+pyodbc",
+        username=os.getenv("SRC_DB_USER"),
+        password=os.getenv("SRC_DB_PASSWORD"),
+        host=os.getenv("SRC_DB_HOST"),
+        port=int(os.getenv("SRC_DB_PORT", "1433")),
+        database=os.getenv("SRC_DB_NAME"),
+        query={"driver": driver_name, "TrustServerCertificate": os.getenv("DB_TRUST_SERVER_CERTIFICATE", "yes")},
+    )
+    return create_engine(url, pool_pre_ping=True)
+
+
+@lru_cache(maxsize=1)
+def _designer_schema() -> str:
+    from sqlalchemy import text
+
+    try:
+        with _source_engine().connect() as connection:
+            row = connection.execute(text("""
+                SELECT TOP 1 TABLE_SCHEMA
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_NAME = 'CDODefinition'
+                ORDER BY CASE WHEN TABLE_SCHEMA = 'dbo' THEN 0 ELSE 1 END, TABLE_SCHEMA
+            """)).first()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"无法连接 Camstar Designer 数据库：{exc}") from exc
+    if not row or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(row[0])):
+        raise HTTPException(status_code=503, detail="Camstar Designer 中未找到 CDODefinition 表")
+    return str(row[0])
+
+
+def _designer_descriptions(class_name: str) -> dict:
+    from sqlalchemy import bindparam, text
+
+    schema = _designer_schema()
+    definition = f"[{schema}].[CDODefinition]"
+    fields_table = f"[{schema}].[CDOFields]"
+    candidates = [class_name]
+    if class_name.startswith("A_"):
+        candidates.append(class_name[2:])
+    engine = _source_engine()
+    try:
+        with engine.connect() as connection:
+            row = connection.execute(
+                text(f"""SELECT TOP 1 CDODefID, ParentCDOID, CDOName, CDODescription
+                           FROM {definition}
+                           WHERE LOWER(CDOName) IN :names
+                           ORDER BY CASE WHEN LOWER(CDOName) = :exact THEN 0 ELSE 1 END""").bindparams(bindparam("names", expanding=True)),
+                {"names": [value.casefold() for value in candidates], "exact": class_name.casefold()},
+            ).mappings().first()
+            if not row:
+                raise HTTPException(status_code=404, detail=f"Camstar Designer 中未找到 CDO：{class_name}")
+            hierarchy = []
+            current = dict(row)
+            for _ in range(40):
+                hierarchy.append(current)
+                parent_id = int(current.get("ParentCDOID") or 0)
+                if not parent_id:
+                    break
+                parent = connection.execute(
+                    text(f"SELECT CDODefID, ParentCDOID, CDOName, CDODescription FROM {definition} WHERE CDODefID=:id"),
+                    {"id": parent_id},
+                ).mappings().first()
+                if not parent:
+                    break
+                current = dict(parent)
+            hierarchy_ids = [int(item["CDODefID"]) for item in hierarchy]
+            field_rows = connection.execute(
+                text(f"""SELECT FieldID, CDODefID, FieldName, FieldDescription
+                           FROM {fields_table}
+                           WHERE CDODefID IN :ids""").bindparams(bindparam("ids", expanding=True)),
+                {"ids": hierarchy_ids},
+            ).mappings().all()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"读取 Camstar Designer 描述失败：{exc}") from exc
+    depth = {cdo_id: index for index, cdo_id in enumerate(hierarchy_ids)}
+    field_map: dict[str, dict] = {}
+    for field in sorted(field_rows, key=lambda item: depth.get(int(item["CDODefID"]), 999)):
+        key = str(field.get("FieldName") or "").casefold()
+        description = " ".join(str(field.get("FieldDescription") or "").replace("\r", " ").replace("\n", " ").split())
+        if key and description and key not in field_map:
+            field_map[key] = {
+                "fieldId": str(field.get("FieldID") or ""),
+                "description": description[:5000],
+            }
+    return {
+        "cdoDefId": str(row.get("CDODefID") or ""),
+        "cdoName": str(row.get("CDOName") or class_name),
+        "description": " ".join(str(row.get("CDODescription") or "").replace("\r", " ").replace("\n", " ").split())[:5000],
+        "fields": field_map,
+    }
+
+
+def _physical_field_names(class_name: str) -> dict[str, str]:
+    from scripts.validate_ontology_vs_csv import canonical_physical_fields, normalize_field_name
+
+    path = Path(PROJECT_ROOT) / "docs" / "Database_Fields.csv"
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        rows = [row for row in csv.DictReader(handle) if row.get("CDOName") == class_name]
+    return {
+        normalize_field_name(row, class_name): str(row.get("FieldName") or "")
+        for row in canonical_physical_fields(rows, class_name)
+    }
+
+
+def _translate_descriptions(values: list[str]) -> dict[str, str]:
+    from dotenv import load_dotenv
+    from openai import OpenAI
+    from scripts.build_designer_display_translations import compact, translate_batch
+
+    unique = list(dict.fromkeys(compact(value) for value in values if compact(value)))
+    if not unique:
+        return {}
+    load_dotenv(Path(PROJECT_ROOT) / ".env", override=False)
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="缺少翻译服务配置 DEEPSEEK_API_KEY")
+    client = OpenAI(
+        api_key=api_key,
+        base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
+        timeout=float(os.getenv("LLM_TIMEOUT", "120")),
+    )
+    model = os.getenv("LLM_MODEL", "deepseek-chat")
+    result: dict[str, str] = {}
+    try:
+        for index in range(0, len(unique), 35):
+            batch = unique[index:index + 35]
+            translated = translate_batch(client, model, "en_to_zh", batch)
+            result.update(zip(batch, translated))
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"中文翻译失败：{exc}") from exc
+    return result
+
+
+@router.post("/sync-descriptions")
+def sync_descriptions(request: DescriptionSyncRequest):
+    class_name = request.className.strip()
+    graph_nodes, graph_details = _graph_catalog_snapshot()
+    node = next((item for item in graph_nodes if item["key"] == class_name), None)
+    if node is None:
+        raise HTTPException(status_code=404, detail="Ontology node not found")
+    designer = _designer_descriptions(class_name)
+    property_names = _physical_field_names(class_name)
+    graph_properties = (graph_details.get(class_name) or {}).get("properties", [])
+    sources: list[tuple[str, str, str]] = []
+    if designer["description"]:
+        sources.append(("nodeDescriptions", class_name, designer["description"]))
+    for prop in graph_properties:
+        property_name = str(prop.get("name") or "")
+        physical_name = property_names.get(property_name, property_name)
+        matched = designer["fields"].get(physical_name.casefold()) or designer["fields"].get(property_name.casefold())
+        if matched and matched["description"]:
+            sources.append(("propertyDescriptions", f"{class_name}.{property_name}", matched["description"]))
+    translations = _translate_descriptions([source for _, _, source in sources])
+    store = _load_store()
+    updated = 0
+    skipped_manual = 0
+    for bucket_name, key, english in sources:
+        if key in store["manualEdits"][bucket_name]:
+            skipped_manual += 1
+            continue
+        store["translations"][bucket_name][key] = {"zh": translations[english], "en": english}
+        updated += 1
+    store["syncMeta"][class_name] = {
+        "source": "Camstar Designer",
+        "sourceCDOName": designer["cdoName"],
+        "sourceCDODefId": designer["cdoDefId"],
+        "syncedAt": int(time.time() * 1000),
+        "matchedDescriptions": len(sources),
+        "updatedDescriptions": updated,
+        "manualDescriptionsPreserved": skipped_manual,
+    }
+    store["revision"] = int(store.get("revision") or 0) + 1
+    store["updatedAt"] = int(time.time() * 1000)
+    _save_store(store)
+    return {
+        "success": True,
+        "className": class_name,
+        "matched": len(sources),
+        "updated": updated,
+        "manualPreserved": skipped_manual,
+        "missing": 1 + len(graph_properties) - len(sources),
+        "revision": store["revision"],
     }

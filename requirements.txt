@@ -6,6 +6,7 @@ python-dotenv>=1.0.0
 fastapi>=0.100.0
 uvicorn>=0.25.0
 pydantic>=2.0.0
+python-multipart>=0.0.9
 
 # ── Database & ETL ──
 pandas>=2.1.0

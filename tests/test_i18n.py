@@ -87,3 +87,40 @@ def test_node_editor_uses_exact_graph_detail_properties(tmp_path, monkeypatch):
     assert editor["properties"][0]["sourceDescription"] == "初始产品"
     assert editor["properties"][0]["descriptionZh"] == "初始产品"
     assert editor["properties"][0]["descriptionEn"] == ""
+
+
+def test_camstar_description_sync_preserves_manual_edits(monkeypatch, tmp_path):
+    translation_file = tmp_path / "display_translations.json"
+    monkeypatch.setattr(i18n, "I18N_DIR", str(tmp_path))
+    monkeypatch.setattr(i18n, "TRANSLATIONS_FILE", str(translation_file))
+    graph_node = {
+        "kind": "node", "key": "Product", "owner": "product", "original": "Product",
+        "chineseName": "产品", "descriptionZh": "", "descriptionEn": "", "propertyCount": 2,
+    }
+    graph_details = {"Product": {"properties": [
+        {"name": "name", "dataType": "String", "description": ""},
+        {"name": "description", "dataType": "String", "description": ""},
+    ]}}
+    monkeypatch.setattr(i18n, "_graph_catalog_snapshot", lambda: ([graph_node], graph_details))
+    monkeypatch.setattr(i18n, "_physical_field_names", lambda _: {"name": "ProductName", "description": "Description"})
+    monkeypatch.setattr(i18n, "_designer_descriptions", lambda _: {
+        "cdoDefId": "10", "cdoName": "Product", "description": "A manufactured product.",
+        "fields": {
+            "productname": {"fieldId": "1", "description": "Name of the product."},
+            "description": {"fieldId": "2", "description": "Description of the product."},
+        },
+    })
+    monkeypatch.setattr(i18n, "_translate_descriptions", lambda values: {value: f"中文：{value}" for value in values})
+    store = i18n._empty_store()
+    store["translations"]["propertyDescriptions"]["Product.description"] = {"zh": "人工中文", "en": "Manual English"}
+    store["manualEdits"]["propertyDescriptions"]["Product.description"] = 1
+    i18n._save_store(store)
+
+    result = i18n.sync_descriptions(i18n.DescriptionSyncRequest(className="Product"))
+    saved = i18n._load_store()
+
+    assert result["matched"] == 3
+    assert result["updated"] == 2
+    assert result["manualPreserved"] == 1
+    assert saved["translations"]["nodeDescriptions"]["Product"]["en"] == "A manufactured product."
+    assert saved["translations"]["propertyDescriptions"]["Product.description"]["zh"] == "人工中文"
