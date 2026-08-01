@@ -9,6 +9,35 @@
 (() => {
     "use strict";
 
+    const i18nText = (key, fallback) => window.CamstarI18n?.t(key) || fallback || key;
+    const ontologyLabel = (kind, key, original, zh = "", context = "inline") =>
+        window.CamstarI18n?.entity(kind, key, { original, zh, context }) || original;
+    const ontologyDescription = (className, fallback = "") =>
+        window.CamstarI18n?.description(className, fallback) || fallback;
+    const ontologyPropertyDescription = (key, fallback = "") =>
+        window.CamstarI18n?.propertyDescription(key, fallback) || fallback;
+    const htmlEscape = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+    })[char]);
+
+    function applyOverviewTranslations(data) {
+        for (const node of data?.nodes || []) {
+            node.data ||= {};
+            node.data.technicalLabel ||= node.id;
+            node.data.displayLabel = ontologyLabel(
+                "node", node.id, node.data.technicalLabel, node.data.chineseName || "", "graph",
+            );
+        }
+        for (const edge of data?.edges || []) {
+            edge.data ||= {};
+            edge.data.technicalLabel ??= edge.data.label || "";
+            edge.data.displayLabel = ontologyLabel(
+                "relationship", edge.data.technicalLabel, edge.data.technicalLabel, "", "graph",
+            );
+        }
+        return data;
+    }
+
     function setIconContent(element, iconName, label, { size = 14, spin = false } = {}) {
         element.innerHTML = AppIcons.svg(iconName, {
             size,
@@ -212,6 +241,12 @@
         other: "Other 其他",
     };
 
+    function localizedComboLabel(key) {
+        const label = COMBO_LABELS[key] || key;
+        if (window.CamstarI18n?.language !== "en-US") return label;
+        return label.replace(/\s*[\u3400-\u9fff].*$/u, "").trim() || key;
+    }
+
     // ── Globals ──
     let graph = null;
     let rawData = null;
@@ -277,15 +312,15 @@
 
         const title = document.createElement("div");
         title.className = "tt-title";
-        title.textContent = context.data.label || context.nodeId;
+        title.textContent = context.data.displayLabel || context.data.label || context.nodeId;
 
         const subtitle = document.createElement("div");
         subtitle.className = "tt-sub";
-        subtitle.textContent = context.data.chineseName || "";
+        subtitle.textContent = context.data.technicalLabel || context.nodeId;
 
         const description = document.createElement("div");
         description.className = "tt-description";
-        description.textContent = context.data.description || "";
+        description.textContent = ontologyDescription(context.nodeId, context.data.description || "");
 
         tooltip.append(title, subtitle, description);
         const tooltipWidth = 300;
@@ -635,7 +670,7 @@
                     haloOpacity: 0,
                     haloPointerEvents: "auto",
                 },
-                labelText: e.data.label || "",
+                labelText: e.data.displayLabel || e.data.label || "",
                 labelCfg: {
                     style: {
                         fill: "rgba(0,255,185,0.6)",
@@ -658,7 +693,7 @@
                 return {
                     id: key,
                     data: {
-                        label: COMBO_LABELS[key],
+                        label: localizedComboLabel(key),
                         type: "rect",
                         style: {
                             fill: c.comboFill,
@@ -713,14 +748,14 @@
                     fill: (d) => (COLORS[d.data?.module] || COLORS.other).fill,
                     stroke: (d) => (COLORS[d.data?.module] || COLORS.other).stroke,
                     lineWidth: 2,
-                    labelText: (d) => d.data?.label || d.id,
+                    labelText: (d) => d.data?.displayLabel || d.data?.label || d.id,
                     labelFill: "#E8F0F2",
                     labelFontSize: 11,
                     labelFontWeight: 500,
                     labelFontFamily: "Inter, sans-serif",
                     labelPlacement: "bottom",
                     labelOffsetY: 8,
-                    iconText: (d) => (d.data?.label || d.id).substring(0, 2),
+                    iconText: (d) => (d.data?.displayLabel || d.data?.label || d.id).substring(0, 2),
                     iconFontSize: (d) => getNodeSize(d.id, d) >= 76 ? 18 : 14,
                     iconFontWeight: 700,
                     iconFill: "#fff",
@@ -948,7 +983,7 @@
                     lineWidth: 1.5,
                     lineDash: [6, 4],
                     radius: 16,
-                    labelText: (d) => COMBO_LABELS[d.id] || d.id,
+                    labelText: (d) => localizedComboLabel(d.id),
                     labelFill: (d) => (COLORS[d.id] || COLORS.other).stroke,
                     labelFontSize: 13,
                     labelFontWeight: 600,
@@ -1210,7 +1245,9 @@
             order.textContent = String(index + 1);
 
             const name = document.createElement("span");
-            name.textContent = nodeId;
+            name.textContent = ontologyLabel(
+                "node", nodeId, nodeId, nodeInfoCache.get(nodeId)?.data?.chineseName || "",
+            );
 
             const remove = document.createElement("button");
             remove.type = "button";
@@ -1495,7 +1532,7 @@
                         return d.data?.selected ? "#00FFB9" : "#4CA6FF";
                     },
                     lineWidth: (d) => d.data?.selected ? 3 : 2,
-                    labelText: (d) => d.id,
+                    labelText: (d) => d.data?.displayLabel || d.data?.label || d.id,
                     labelFill: "#DDEBF0",
                     labelFontSize: 9,
                     labelFontWeight: 600,
@@ -2500,13 +2537,13 @@
         const generateBtn = document.getElementById("edgePopupGenerate");
         const editBtn = document.getElementById("edgePopupEdit");
 
-        titleEl.textContent = relName;
+        titleEl.textContent = ontologyLabel("relationship", relName, relName);
         const sourceNode = graph.getNodeData(source);
         const targetNode = graph.getNodeData(target);
         const sourceChinese = sourceNode?.data?.chineseName || "";
         const targetChinese = targetNode?.data?.chineseName || "";
-        const sourceDisplay = sourceChinese ? `${source} (${sourceChinese})` : source;
-        const targetDisplay = targetChinese ? `${target} (${targetChinese})` : target;
+        const sourceDisplay = ontologyLabel("node", source, source, sourceChinese);
+        const targetDisplay = ontologyLabel("node", target, target, targetChinese);
 
         let metaText = `${sourceDisplay}  →  ${targetDisplay}`;
         if (cardinality) metaText += `  ·  ${cardinality}`;
@@ -2854,7 +2891,10 @@
         const relList = document.getElementById("relList");
         const sectionProperties = document.getElementById("sectionProperties");
 
-        panelTitle.textContent = className;
+        const classNode = nodeInfoCache.get(className);
+        panelTitle.textContent = ontologyLabel(
+            "node", className, className, classNode?.data?.chineseName || "",
+        );
         syncNodePrioritySwitch(className);
         syncChatContextButton(className);
 
@@ -2888,13 +2928,11 @@
             // find node in rawData for extra info
             const nodeInfo = nodeInfoCache.get(className);
             const module = nodeInfo?.data?.module || "other";
-            const chName = nodeInfo?.data?.chineseName || "";
-            const desc = nodeInfo?.data?.description || "";
+            const desc = ontologyDescription(className, nodeInfo?.data?.description || "");
 
             sectionMeta.innerHTML = `
-                <div class="meta-row"><span class="meta-label">中文名</span><span class="meta-value">${chName || "—"}</span></div>
                 <div class="meta-row"><span class="meta-label">模块</span><span class="meta-value" style="color:${(COLORS[module] || COLORS.other).fill}">${module.toUpperCase()}</span></div>
-                <div class="meta-row"><span class="meta-label">描述</span><span class="meta-value">${desc || "—"}</span></div>
+                <div class="meta-row"><span class="meta-label">描述</span><span class="meta-value">${htmlEscape(desc || "—")}</span></div>
                 <div class="meta-row"><span class="meta-label">图上邻居</span><span class="meta-value">${adjacencyIndex?.get(className)?.neighbors?.size || 0}（全部显示）</span></div>
                 <div class="meta-row"><span class="meta-label">完整关系</span><span class="meta-value">${(detail.outgoing || []).length + (detail.incoming || []).length}（见下方清单）</span></div>
             `;
@@ -2907,10 +2945,14 @@
                         : detail.properties.slice(0, INITIAL_PROPERTY_ROWS);
                     let html = `<table class="prop-table"><thead><tr><th>属性名</th><th>类型</th><th>描述</th></tr></thead><tbody>`;
                     for (const p of visibleProperties) {
+                        const propertyDescription = ontologyPropertyDescription(
+                            `${className}.${p.name}`,
+                            p.description || "",
+                        );
                         html += `<tr>
-                            <td style="color:var(--text-primary);font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</td>
+                            <td style="color:var(--text-primary);font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${htmlEscape(p.name)}">${htmlEscape(ontologyLabel("property", `${className}.${p.name}`, p.name))}</td>
                             <td><span class="type-badge">${p.dataType || "String"}</span></td>
-                            <td>${p.description || "—"}</td>
+                            <td>${htmlEscape(propertyDescription || "—")}</td>
                         </tr>`;
                     }
                     html += `</tbody></table>`;
@@ -2938,8 +2980,8 @@
                 for (const r of detail.outgoing) {
                     relHtml += `<div class="rel-item rel-item-out" data-target="${r.targetClass}">
                         <span class="rel-arrow">→</span>
-                        <span class="rel-name">${r.relName}</span>
-                        <span class="rel-target">${r.targetClass}</span>
+                        <span class="rel-name">${htmlEscape(ontologyLabel("relationship", r.relName, r.relName))}</span>
+                        <span class="rel-target">${htmlEscape(ontologyLabel("node", r.targetClass, r.targetClass, nodeInfoCache.get(r.targetClass)?.data?.chineseName || ""))}</span>
                         <span class="rel-card">${r.cardinality || ""}</span>
                     </div>`;
                 }
@@ -2949,8 +2991,8 @@
                 for (const r of detail.incoming) {
                     relHtml += `<div class="rel-item rel-item-in" data-target="${r.sourceClass}">
                         <span class="rel-arrow">←</span>
-                        <span class="rel-name">${r.relName}</span>
-                        <span class="rel-target">${r.sourceClass}</span>
+                        <span class="rel-name">${htmlEscape(ontologyLabel("relationship", r.relName, r.relName))}</span>
+                        <span class="rel-target">${htmlEscape(ontologyLabel("node", r.sourceClass, r.sourceClass, nodeInfoCache.get(r.sourceClass)?.data?.chineseName || ""))}</span>
                         <span class="rel-card">${r.cardinality || ""}</span>
                     </div>`;
                 }
@@ -3106,11 +3148,9 @@
         try {
             const nodeInfo = nodeInfoCache.get(className);
             const module = nodeInfo?.data?.module || "other";
-            const chName = nodeInfo?.data?.chineseName || "";
 
             sectionMeta.innerHTML = `
                 <div class="meta-row"><span class="meta-label">类名</span><span class="meta-value" style="font-weight:600;color:var(--si-green)">${className}</span></div>
-                <div class="meta-row"><span class="meta-label">中文名</span><span class="meta-value">${chName || "—"}</span></div>
                 <div class="meta-row"><span class="meta-label">模块</span><span class="meta-value" style="color:${(COLORS[module] || COLORS.other).fill}">${module.toUpperCase()}</span></div>
                 <div class="meta-row"><span class="meta-label">引用了</span><span class="meta-value" style="color:var(--si-green);font-weight:700">${(detail.outgoing || []).length}</span></div>
                 <div class="meta-row"><span class="meta-label">被引用</span><span class="meta-value" style="color:#FF4081;font-weight:700">${(detail.incoming || []).length}</span></div>
@@ -3580,7 +3620,7 @@
 
         // Generate items dynamically in sorted order
         sortedKeys.forEach((key) => {
-            const label = COMBO_LABELS[key];
+            const label = localizedComboLabel(key);
             const color = (COLORS[key] || COLORS.other).fill;
 
             const item = document.createElement("div");
@@ -3810,7 +3850,7 @@
         const relList = document.getElementById("relList");
         const sectionProperties = document.getElementById("sectionProperties");
 
-        const label = COMBO_LABELS[moduleKey] || moduleKey;
+        const label = localizedComboLabel(moduleKey);
         const color = (COLORS[moduleKey] || COLORS.other).fill;
         syncChatContextButton(null);
 
@@ -3920,8 +3960,9 @@
         const container = document.getElementById("graphContainer");
 
         try {
+            if (window.CamstarI18n) await window.CamstarI18n.init();
             // Fetch overview data (Level 0)
-            rawData = await fetchJSON("/api/graph/overview");
+            rawData = applyOverviewTranslations(await fetchJSON("/api/graph/overview"));
             window.rawData = rawData; // Expose for chat.js
             indexOverviewData(rawData);
             const data = buildGraphData(
@@ -3965,6 +4006,33 @@
             overlay.classList.add("hidden");
         }
     }
+
+    window.addEventListener("camstar:i18n-change", async (event) => {
+        if (!rawData || !graph) return;
+        if (event.detail?.reason === "translation") {
+            if (selectedNodeId) await showClassDetail(selectedNodeId);
+            return;
+        }
+        applyOverviewTranslations(rawData);
+        indexOverviewData(rawData);
+        const data = buildGraphData(
+            { ...rawData, edges: overviewApiEdges },
+            comboEnabled,
+        );
+        graph.setData(data);
+        await graph.render();
+        document.querySelectorAll("#legendList .legend-item").forEach((item) => {
+            const key = item.dataset.key;
+            const label = localizedComboLabel(key);
+            item.dataset.module = label;
+            item.innerHTML = `<span class="legend-dot" style="background:${(COLORS[key] || COLORS.other).fill};"></span>${htmlEscape(label)}`;
+        });
+        if (queryBuilderState.active) {
+            renderQuerySelectedNodes();
+            if (queryBuilderState.plan) await renderQueryPreviewGraph();
+        }
+        if (selectedNodeId) await showClassDetail(selectedNodeId);
+    });
 
     // Go
     document.addEventListener("DOMContentLoaded", main);

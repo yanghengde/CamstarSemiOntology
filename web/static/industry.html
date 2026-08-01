@@ -8,7 +8,7 @@
     <link rel="icon" type="image/svg+xml" href="/static/siemens_logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-home-link" />
+    <link rel="stylesheet" href="/static/style.css?v=20260801-i18n-v5" />
     <style>
         #industry-layout {
             display: flex;
@@ -560,7 +560,7 @@
     </style>
 </head>
 
-<body>
+<body data-page="industry">
     <!-- ── Top Navigation Bar ── -->
     <header id="topbar">
         <div class="topbar-left">
@@ -572,15 +572,22 @@
                             font-family="Inter">S</text>
                     </svg>
                 </span>
-                <h1>Opcenter <span class="accent">Ontology</span> Explorer — 行业设置</h1>
+                <h1>Opcenter <span class="accent">Ontology</span> Explorer — <span data-i18n="industryPage">行业设置</span></h1>
             </a>
         </div>
         <div class="topbar-right">
+            <button type="button" class="icon-btn" id="btnSettings" title="语言与翻译设置"
+                data-i18n-title="graphSettings" aria-label="语言与翻译设置">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 00-1.88-.34 1.7 1.7 0 00-1.03 1.56V21h-4v-.08A1.7 1.7 0 008.96 19.4a1.7 1.7 0 00-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-1.56-1.03H3v-4h.08A1.7 1.7 0 004.6 8.96a1.7 1.7 0 00-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 008.96 4.6 1.7 1.7 0 0010 3.04V3h4v.08a1.7 1.7 0 001.03 1.56 1.7 1.7 0 001.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0019.4 9c.25.61.85 1.01 1.51 1.01H21v4h-.08A1.7 1.7 0 0019.4 15z" />
+                </svg>
+            </button>
             <a href="/" class="nav-back-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
-                返回图谱
+                <span data-i18n="returnGraph">返回图谱</span>
             </a>
         </div>
     </header>
@@ -589,8 +596,8 @@
         <!-- Left panel: Industry List and Form Editor -->
         <section class="left-pane">
             <div class="pane-title">
-                <span>行业列表</span>
-                <button class="btn btn-secondary btn-add" id="btnNew">＋ 新建行业</button>
+                <span data-i18n="industryList">行业列表</span>
+                <button class="btn btn-secondary btn-add" id="btnNew" data-i18n="newIndustry">＋ 新建行业</button>
             </div>
 
             <!-- List of existing industries -->
@@ -601,22 +608,22 @@
             <!-- Editor Form -->
             <div class="editor-section" id="editorSection">
                 <div class="pane-title">
-                    <span id="editorTitle">编辑行业信息</span>
+                    <span id="editorTitle" data-i18n="editIndustry">编辑行业信息</span>
                 </div>
                 
                 <div class="form-group">
-                    <label for="industryId">行业唯一ID (ID)</label>
-                    <input type="text" id="industryId" class="form-control" placeholder="例如: semiconductor, automotive" />
+                    <label for="industryId" data-i18n="industryId">行业唯一ID (ID)</label>
+                    <input type="text" id="industryId" class="form-control" placeholder="例如: semiconductor, automotive" data-i18n-placeholder="industryIdPlaceholder" />
                 </div>
 
                 <div class="form-group">
-                    <label for="industryName">行业名称 (Name)</label>
-                    <input type="text" id="industryName" class="form-control" placeholder="例如: 半导体制造, 汽车零部件" />
+                    <label for="industryName" data-i18n="industryName">行业名称 (Name)</label>
+                    <input type="text" id="industryName" class="form-control" placeholder="例如: 半导体制造, 汽车零部件" data-i18n-placeholder="industryNamePlaceholder" />
                 </div>
 
                 <div class="form-row">
                     <div class="form-group" style="flex: 1;">
-                        <label for="industryIconTrigger">行业图标 (Icon)</label>
+                        <label for="industryIconTrigger" data-i18n="industryIcon">行业图标 (Icon)</label>
                         <div class="icon-select" id="industryIconSelect">
                             <button type="button" class="icon-select-trigger" id="industryIconTrigger"
                                 aria-haspopup="listbox" aria-expanded="false">
@@ -633,7 +640,7 @@
                         </div>
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label for="industryColor">代表色彩 (Color)</label>
+                        <label for="industryColor" data-i18n="industryColor">代表色彩 (Color)</label>
                         <div class="color-picker-wrapper">
                             <input type="color" id="industryColorPicker" class="color-picker-input" value="#999999" />
                             <input type="text" id="industryColor" class="form-control" style="font-family: monospace;" placeholder="#999999" />
@@ -642,15 +649,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="industryDesc">行业建模场景描述 (Description)</label>
-                    <textarea id="industryDesc" class="form-control" placeholder="描述此行业下特定的 MES 建模特征，如：主打WIP跟踪、批次物料追溯、设备配方下发等"></textarea>
+                    <label for="industryDesc" data-i18n="industryDescription">行业建模场景描述 (Description)</label>
+                    <textarea id="industryDesc" class="form-control" placeholder="描述此行业下特定的 MES 建模特征，如：主打WIP跟踪、批次物料追溯、设备配方下发等" data-i18n-placeholder="industryDescriptionPlaceholder"></textarea>
                 </div>
 
                 <div class="form-actions">
-                    <button class="btn btn-secondary" id="btnReset">重置</button>
+                    <button class="btn btn-secondary" id="btnReset" data-i18n="resetForm">重置</button>
                     <button class="btn btn-primary" id="btnSave">
                         <span data-app-icon="save" data-icon-size="14"></span>
-                        <span>保存设置</span>
+                        <span data-i18n="saveSettings">保存设置</span>
                     </button>
                 </div>
             </div>
@@ -662,11 +669,11 @@
                 <div class="prompt-header">
                     <div class="prompt-title">
                         <span data-app-icon="bot" data-icon-size="16"></span>
-                        <span>关系建模 AI 提示词 (Prompt)</span>
+                        <span data-i18n="promptTitle">关系建模 AI 提示词 (Prompt)</span>
                     </div>
                     <button class="btn-copy" id="btnCopyPrompt">
                         <span data-app-icon="copy" data-icon-size="14"></span>
-                        <span>复制当前提示词</span>
+                        <span data-i18n="copyPrompt">复制当前提示词</span>
                     </button>
                 </div>
                 <div class="prompt-body-wrapper">
@@ -681,16 +688,17 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                     </svg>
-                    <span>提示说明</span>
+                    <span data-i18n="tipsTitle">提示说明</span>
                 </div>
-                <p>1. 设置完成后，点击左上角的「保存设置」会写入系统配置文件 `product_lines.json` 中。</p>
-                <p>2. 返回图谱主页后，顶部的「产品线选择下拉框」中将立即展现新添加的行业。在图谱中点击关系边，生成的 Wiki 均会在该行业目录下独立存储。</p>
-                <p>3. 右侧的「AI 提示词」是专为在 MES 建模语境下生成的上下文提示词。将该提示词输入 LLM（例如 DeepSeek 或 Claude），可用来快速生成规范的本体关系 Wiki 文件。</p>
+                <p data-i18n="industryTip1">1. 设置完成后，点击左上角的「保存设置」会写入系统配置文件 `product_lines.json` 中。</p>
+                <p data-i18n="industryTip2">2. 返回图谱主页后，顶部的「产品线选择下拉框」中将立即展现新添加的行业。在图谱中点击关系边，生成的 Wiki 均会在该行业目录下独立存储。</p>
+                <p data-i18n="industryTip3">3. 右侧的「AI 提示词」是专为在 MES 建模语境下生成的上下文提示词。将该提示词输入 LLM（例如 DeepSeek 或 Claude），可用来快速生成规范的本体关系 Wiki 文件。</p>
             </div>
         </section>
     </main>
 
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
+    <script src="/static/i18n.js?v=20260801-i18n-v5"></script>
     <script>
         // Store lines loaded from API
         let productLines = [];
@@ -1111,7 +1119,8 @@ A: (详细解答)`;
         };
 
         // Initial load
-        window.onload = () => {
+        window.onload = async () => {
+            if (window.CamstarI18n) await window.CamstarI18n.init();
             populateIconChoices();
             const urlParams = new URLSearchParams(window.location.search);
             const plParam = urlParams.get("product_line") || urlParams.get("industry") || localStorage.getItem("selected_product_line");

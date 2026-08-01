@@ -11,10 +11,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260728-query-builder-v8" />
+    <link rel="stylesheet" href="/static/style.css?v=20260801-i18n-v5" />
 </head>
 
-<body>
+<body data-page="graph">
     <!-- ── Top Navigation Bar ── -->
     <header id="topbar">
         <div class="topbar-left">
@@ -46,13 +46,13 @@
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
-                <input type="text" id="searchInput" placeholder="搜索类名、属性..." autocomplete="off" />
+                <input type="text" id="searchInput" placeholder="搜索类名、属性..." data-i18n-placeholder="searchPlaceholder" autocomplete="off" />
             </div>
         </div>
         <div class="topbar-right">
-            <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> 类</div>
-            <div class="stat-chip" id="statProps"><span class="stat-num">-</span> 属性</div>
-            <div class="stat-chip" id="statRels"><span class="stat-num">-</span> 关系</div>
+            <div class="stat-chip" id="statClasses"><span class="stat-num">-</span> <span data-i18n="classes">类</span></div>
+            <div class="stat-chip" id="statProps"><span class="stat-num">-</span> <span data-i18n="attributes">属性</span></div>
+            <div class="stat-chip" id="statRels"><span class="stat-num">-</span> <span data-i18n="relations">关系</span></div>
             <button type="button" class="query-mode-toggle" id="btnQueryMode"
                 aria-pressed="false" title="选择多个图谱对象，预览物理关联并生成 SQL 骨架">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -62,7 +62,7 @@
                     <circle cx="12" cy="18" r="2" />
                     <path d="M7 7.5l3.5 8M17 7.5l-3.5 8M7 6h10" />
                 </svg>
-                <span>查询构建</span>
+                <span data-i18n="queryBuilder">查询构建</span>
             </button>
             <a href="/static/industry.html" class="nav-link-btn" title="行业/产品线设置">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -71,7 +71,7 @@
                     <path d="M2 17l10 5 10-5" />
                     <path d="M2 12l10 5 10-5" />
                 </svg>
-                行业设置
+                <span data-i18n="industrySettings">行业设置</span>
             </a>
             <button class="icon-btn" id="btnRelMode" title="关系聚焦模式" style="display: none;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -92,6 +92,13 @@
             <button class="icon-btn" id="btnFitView" title="适配画布">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+            </button>
+            <button class="icon-btn" id="btnSettings" title="语言与翻译设置" data-i18n-title="graphSettings"
+                aria-label="语言与翻译设置">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.7 1.7 0 00.34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 00-1.88-.34 1.7 1.7 0 00-1.03 1.56V21h-4v-.08A1.7 1.7 0 008.96 19.4a1.7 1.7 0 00-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 004.6 15a1.7 1.7 0 00-1.56-1.03H3v-4h.08A1.7 1.7 0 004.6 8.96a1.7 1.7 0 00-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 008.96 4.6 1.7 1.7 0 0010 3.04V3h4v.08a1.7 1.7 0 001.03 1.56 1.7 1.7 0 001.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0019.4 9c.25.61.85 1.01 1.51 1.01H21v4h-.08A1.7 1.7 0 0019.4 15z" />
                 </svg>
             </button>
             <button class="icon-btn" id="btnToggleCombo" title="切换 Combo 聚合" style="display: none;">
@@ -238,7 +245,7 @@
         <!-- Right Side Panel -->
         <aside id="detailPanel" class="panel-hidden">
             <div class="panel-header">
-                <h2 id="panelTitle">节点详情</h2>
+                <h2 id="panelTitle" data-i18n="nodeDetail">节点详情</h2>
                 <div class="panel-header-actions">
                     <button type="button" class="detail-context-btn" id="btnAddChatContext" aria-label="加入SQL上下文"
                         title="将当前对象加入 SQL 助手的已知对象">
@@ -246,11 +253,11 @@
                             stroke-width="2">
                             <path d="M12 5v14M5 12h14" />
                         </svg>
-                        <span>加入上下文</span>
+                        <span data-i18n="addContext">加入上下文</span>
                     </button>
                     <button type="button" class="compact-switch node-priority-switch" id="btnNodePriority"
                         aria-pressed="false" aria-label="关注节点" title="关注并移到中央区域">
-                        <span class="compact-switch-label">关闭</span>
+                        <span class="compact-switch-label" data-i18n="off">关闭</span>
                         <span class="compact-switch-thumb" aria-hidden="true"></span>
                     </button>
                     <button class="icon-btn panel-close" id="btnClosePanel">
@@ -265,11 +272,11 @@
             <div class="panel-body">
                 <div class="panel-section" id="sectionMeta"></div>
                 <div class="panel-section" id="sectionProperties">
-                    <h3>属性列表</h3>
+                    <h3 data-i18n="propertyList">属性列表</h3>
                     <div id="propTable"></div>
                 </div>
                 <div class="panel-section" id="sectionRelations">
-                    <h3>关系</h3>
+                    <h3 data-i18n="relationship">关系</h3>
                     <div id="relList"></div>
                 </div>
             </div>
@@ -349,7 +356,7 @@
     <!-- ── Legend ── -->
     <div id="legend" class="legend-collapsed">
         <div class="legend-header">
-            <div class="legend-title">模块图例 <span id="legendCount" class="legend-count"></span></div>
+            <div class="legend-title"><span data-i18n="moduleLegend">模块图例</span> <span id="legendCount" class="legend-count"></span></div>
             <div class="legend-actions">
                 <button class="legend-toggle-btn" id="btnToggleLegend" title="展开/收起图例">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -361,7 +368,7 @@
 
         <div class="legend-content">
             <div class="legend-search">
-                <input type="text" id="legendSearchInput" placeholder="搜索模块..." autocomplete="off" />
+                <input type="text" id="legendSearchInput" placeholder="搜索模块..." data-i18n-placeholder="searchModule" autocomplete="off" />
             </div>
             <div class="legend-list" id="legendList">
                 <!-- Dynamically populated from COMBO_LABELS in app.js -->
@@ -453,7 +460,7 @@
     <div id="loadingOverlay">
         <div class="loader">
             <div class="loader-ring"></div>
-            <p>正在加载本体图谱...</p>
+            <p data-i18n="loadingGraph">正在加载本体图谱...</p>
         </div>
     </div>
 
@@ -461,8 +468,9 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/app.js?v=20260728-query-builder-v14"></script>
-    <script src="/static/chat.js?v=20260728-query-builder"></script>
+    <script src="/static/i18n.js?v=20260801-i18n-v5"></script>
+    <script src="/static/app.js?v=20260801-i18n-v4"></script>
+    <script src="/static/chat.js?v=20260801-i18n-v2"></script>
 </body>
 
 </html>

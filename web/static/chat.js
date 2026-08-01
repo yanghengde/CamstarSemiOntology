@@ -7,6 +7,15 @@
 (() => {
     "use strict";
 
+    const uiLanguage = () => window.CamstarI18n?.language || "zh-CN";
+    const nodeLabel = (className) => {
+        const node = (window.rawData?.nodes || []).find((item) => item.id === className);
+        return window.CamstarI18n?.entity("node", className, {
+            original: className,
+            zh: node?.data?.chineseName || "",
+        }) || className;
+    };
+
     let sessionId = sessionStorage.getItem("chat_session_id") || null;
     let currentSession = null;
     let sessionReadyPromise = null;
@@ -52,6 +61,13 @@
 
     function getWelcomeHtml() {
         const label = SQL_DIALECTS[selectedSqlDialect].label;
+        if (uiLanguage() === "en-US") {
+            return `<div class="chat-welcome">
+                <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
+                <p>Hello! Describe the business data you need to query.</p>
+                <p class="chat-welcome-sub">Add known objects from the graph or type @table; I will generate read-only ${label} SQL from verified physical fields and relationships.</p>
+            </div>`;
+        }
         return `<div class="chat-welcome">
             <img src="/static/siemens_logo.svg" alt="Opcenter" class="chat-welcome-icon" style="width:48px;height:48px;border-radius:8px;margin:0 auto 12px;display:block;" />
             <p>你好！请描述需要查询的业务数据。</p>
@@ -70,6 +86,10 @@
     applySqlDialect(selectedSqlDialect);
     window.addEventListener("camstar:sql-dialect-change", (event) => {
         applySqlDialect(event.detail?.dialect);
+    });
+    window.addEventListener("camstar:i18n-change", () => {
+        if (!chatHistoryArray.length) chatMessages.innerHTML = getWelcomeHtml();
+        updateContextBar(currentSession?.context);
     });
 
     function stopStreaming() {
@@ -112,14 +132,14 @@
         chatContextClasses.innerHTML = classes.length
             ? classes.map((className) => `
                 <span class="chat-context-chip" data-class="${escapeHtml(className)}">
-                    <span class="chat-context-chip-name" title="在图中定位 ${escapeHtml(className)}">${escapeHtml(className)}</span>
+                    <span class="chat-context-chip-name" title="${uiLanguage() === "en-US" ? "Locate in graph" : "在图中定位"} ${escapeHtml(className)}">${escapeHtml(nodeLabel(className))}</span>
                     <button type="button" class="chat-context-chip-remove"
                         data-remove-class="${escapeHtml(className)}"
                         aria-label="删除 ${escapeHtml(className)}"
                         title="从上下文删除">×</button>
                 </span>
             `).join("")
-            : `<span class="chat-context-empty">尚未添加已知对象</span>`;
+            : `<span class="chat-context-empty">${uiLanguage() === "en-US" ? "No known objects added" : "尚未添加已知对象"}</span>`;
         chatContextClasses.title = classes.join(", ");
         window.dispatchEvent(new CustomEvent("chat-context-change", {
             detail: { classes },
@@ -205,7 +225,7 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                title: "新建 SQL 会话",
+                title: uiLanguage() === "en-US" ? "New SQL Session" : "新建 SQL 会话",
                 assistant_mode: "sql",
                 product_line,
             }),
