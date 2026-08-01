@@ -8,13 +8,26 @@
     <link rel="icon" type="image/svg+xml" href="/static/siemens_logo.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260801-settings-industry-v1" />
+    <link rel="stylesheet" href="/static/style.css?v=20260801-embedded-industry-v1" />
     <style>
         #industry-layout {
             display: flex;
             height: calc(100vh - var(--topbar-h));
             margin-top: var(--topbar-h);
             background: var(--bg-primary);
+        }
+
+        body.industry-embedded {
+            overflow: hidden;
+        }
+
+        body.industry-embedded #topbar {
+            display: none;
+        }
+
+        body.industry-embedded #industry-layout {
+            height: 100vh;
+            margin-top: 0;
         }
 
         .left-pane {
@@ -561,6 +574,11 @@
 </head>
 
 <body data-page="industry">
+    <script>
+        if (new URLSearchParams(window.location.search).get('embedded') === '1') {
+            document.body.classList.add('industry-embedded');
+        }
+    </script>
     <!-- ── Top Navigation Bar ── -->
     <header id="topbar">
         <div class="topbar-left">
@@ -698,7 +716,7 @@
     </main>
 
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/i18n.js?v=20260801-fit-icon-v1"></script>
+    <script src="/static/i18n.js?v=20260801-embedded-industry-v1"></script>
     <script>
         // Store lines loaded from API
         let productLines = [];

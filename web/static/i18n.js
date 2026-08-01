@@ -249,7 +249,7 @@
                     <nav class="i18n-settings-nav">
                         <button type="button" class="active" data-i18n-section="general"></button>
                         <button type="button" data-i18n-section="content"></button>
-                        <button type="button" class="i18n-settings-link" data-settings-link="industry"></button>
+                        <button type="button" data-i18n-section="industry"></button>
                     </nav>
                     <main class="i18n-settings-content">
                         <section class="i18n-general-section">
@@ -276,6 +276,10 @@
                                 </div>
                             </div>
                         </section>
+                        <section class="i18n-industry-section" hidden>
+                            <iframe id="i18nIndustryFrame" class="i18n-industry-frame"
+                                title="行业设置" loading="lazy"></iframe>
+                        </section>
                     </main>
                 </div>
                 <div id="i18nToast" class="i18n-toast" aria-live="polite"></div>
@@ -292,15 +296,6 @@
         modal.querySelectorAll("[data-i18n-section]").forEach((button) => {
             button.addEventListener("click", () => selectSettingsSection(button.dataset.i18nSection));
         });
-        modal.querySelector("[data-settings-link='industry']").addEventListener("click", () => {
-            const query = new URLSearchParams(window.location.search);
-            const productLine = query.get("product_line")
-                || localStorage.getItem("selected_product_line")
-                || "general";
-            const target = new URL("/static/industry.html", window.location.origin);
-            target.searchParams.set("product_line", productLine);
-            window.location.assign(target.href);
-        });
         modal.querySelector("#i18nNodeSearch").addEventListener("input", () => {
             clearTimeout(catalogSearchTimer);
             catalogSearchTimer = setTimeout(() => loadNodeCatalog(true), 250);
@@ -315,9 +310,9 @@
         modal.querySelector("#i18nSettingsTitle").textContent = t("settings");
         modal.querySelector(".i18n-settings-subtitle").textContent = t("catalogHint");
         modal.querySelector(".i18n-settings-close").title = t("close");
-        const labels = { general: "general", content: "nodeContent" };
+        const labels = { general: "general", content: "nodeContent", industry: "industrySettings" };
         modal.querySelectorAll("[data-i18n-section]").forEach((button) => { button.textContent = t(labels[button.dataset.i18nSection]); });
-        modal.querySelector("[data-settings-link='industry']").textContent = t("industrySettings");
+        modal.querySelector("#i18nIndustryFrame").title = t("industrySettings");
         modal.querySelector("label[for='i18nLanguageSelect']").textContent = t("language");
         modal.querySelector(".i18n-language-hint").textContent = t("languageHint");
         modal.querySelector("#i18nNodeSearch").placeholder = t("nodeSearch");
@@ -344,8 +339,23 @@
         const modal = document.getElementById("i18nSettingsModal");
         modal.querySelectorAll("[data-i18n-section]").forEach((button) => button.classList.toggle("active", button.dataset.i18nSection === section));
         modal.querySelector(".i18n-general-section").hidden = section !== "general";
-        modal.querySelector(".i18n-node-section").hidden = section === "general";
+        modal.querySelector(".i18n-node-section").hidden = section !== "content";
+        modal.querySelector(".i18n-industry-section").hidden = section !== "industry";
+        modal.querySelector(".i18n-settings-content").classList.toggle("industry-active", section === "industry");
         if (section === "content") loadNodeCatalog(true);
+        if (section === "industry") {
+            const frame = modal.querySelector("#i18nIndustryFrame");
+            if (!frame.src) {
+                const query = new URLSearchParams(window.location.search);
+                const productLine = query.get("product_line")
+                    || localStorage.getItem("selected_product_line")
+                    || "general";
+                const target = new URL("/static/industry.html", window.location.origin);
+                target.searchParams.set("embedded", "1");
+                target.searchParams.set("product_line", productLine);
+                frame.src = target.href;
+            }
+        }
     }
 
     async function loadNodeCatalog(reset) {
