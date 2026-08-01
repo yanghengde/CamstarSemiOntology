@@ -438,10 +438,18 @@
         }
 
         .btn-add {
+            flex: 0 0 auto;
+            width: auto;
             font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 4px;
-            height: 24px;
+            padding: 3px 9px;
+            border-radius: 5px;
+            height: 26px;
+            white-space: nowrap;
+        }
+
+        .btn-add .app-icon {
+            width: 13px;
+            height: 13px;
         }
 
         /* Right Panel Prompt Box styles */
@@ -615,7 +623,10 @@
         <section class="left-pane">
             <div class="pane-title">
                 <span data-i18n="industryList">行业列表</span>
-                <button class="btn btn-secondary btn-add" id="btnNew" data-i18n="newIndustry">＋ 新建行业</button>
+                <button class="btn btn-secondary btn-add" id="btnNew" type="button">
+                    <span data-app-icon="plus" data-icon-size="13"></span>
+                    <span data-i18n="newIndustry">新建行业</span>
+                </button>
             </div>
 
             <!-- List of existing industries -->
@@ -715,7 +726,7 @@
         </section>
     </main>
 
-    <script src="/static/icons.js?v=20260728-professional-icons"></script>
+    <script src="/static/icons.js?v=20260801-add-industry-v1"></script>
     <script src="/static/i18n.js?v=20260801-embedded-industry-v1"></script>
     <script>
         // Store lines loaded from API
