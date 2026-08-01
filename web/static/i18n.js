@@ -20,6 +20,7 @@
             searchPlaceholder: "搜索类名、属性…", classes: "类", attributes: "属性", relations: "关系",
             queryBuilder: "查询构建", industrySettings: "行业设置", graphSettings: "平台设置",
             graphImport: "图谱导入", importTitle: "导入物理结构", importHelp: "分别选择表定义 CSV 和字段定义 CSV。现有节点作为已审核业务对象；新 CDO 默认不导入，必须人工勾选确认。",
+            databaseType: "描述来源数据库", descriptionColumn: "描述",
             tableCsv: "表定义 CSV", fieldCsv: "字段定义 CSV", analyzeImport: "分析文件", analyzing: "分析中…",
             importSearch: "搜索候选 CDO…", allStatuses: "全部状态", approvedStatus: "已审核", reviewStatus: "待审核", excludedStatus: "建议排除",
             importApply: "导入已选业务对象", importing: "导入中…", importSelected: "已选择", importConfirm: "确定导入已选择的业务对象吗？本次操作只增量合并，不会删除现有节点。",
@@ -52,6 +53,7 @@
             searchPlaceholder: "Search classes or properties…", classes: "Classes", attributes: "Properties", relations: "Relations",
             queryBuilder: "Query Builder", industrySettings: "Industry Settings", graphSettings: "Platform Settings",
             graphImport: "Graph Import", importTitle: "Import Physical Structure", importHelp: "Select the table and field definition CSV files. Existing nodes are reviewed business objects; new CDOs stay unchecked until manually approved.",
+            databaseType: "Description database", descriptionColumn: "Description",
             tableCsv: "Table CSV", fieldCsv: "Field CSV", analyzeImport: "Analyze Files", analyzing: "Analyzing…",
             importSearch: "Search candidate CDOs…", allStatuses: "All statuses", approvedStatus: "Reviewed", reviewStatus: "Review", excludedStatus: "Suggested exclusion",
             importApply: "Import Selected Objects", importing: "Importing…", importSelected: "Selected", importConfirm: "Import the selected business objects? This incrementally merges data and does not delete existing nodes.",
@@ -297,11 +299,13 @@
                                 <h3></h3><p></p>
                             </div>
                             <div class="i18n-import-files">
+                                <label><span data-import-label="database"></span><select id="i18nImportDatabase" class="i18n-form-control"><option value="oracle">Oracle</option><option value="sqlserver">SQL Server</option></select></label>
                                 <label><span data-import-label="tables"></span><input id="i18nTablesCsv" type="file" accept=".csv,text/csv" /></label>
                                 <label><span data-import-label="fields"></span><input id="i18nFieldsCsv" type="file" accept=".csv,text/csv" /></label>
                                 <button type="button" id="i18nAnalyzeImport" class="i18n-primary-action"></button>
                             </div>
                             <div id="i18nImportResult" class="i18n-import-result" hidden>
+                                <div id="i18nImportWarning" class="i18n-import-warning" hidden></div>
                                 <div id="i18nImportSummary" class="i18n-import-summary"></div>
                                 <div class="i18n-import-toolbar">
                                     <input id="i18nImportSearch" type="search" class="i18n-form-control" />
@@ -309,7 +313,7 @@
                                         <option value="all"></option><option value="approved"></option><option value="review"></option><option value="excluded"></option>
                                     </select>
                                 </div>
-                                <div class="i18n-import-list-head"><span></span><span>CDO</span><span>Workspace</span><span>属性 / 关系</span><span>判断</span></div>
+                                <div class="i18n-import-list-head"><span></span><span>CDO</span><span data-import-head="description"></span><span>Workspace</span><span>属性 / 关系</span><span>判断</span></div>
                                 <div id="i18nImportCandidates" class="i18n-import-candidates"></div>
                                 <div class="i18n-import-footer">
                                     <span id="i18nImportSelected"></span>
@@ -342,6 +346,7 @@
         modal.querySelector("#i18nApplyImport").addEventListener("click", applyGraphImport);
         modal.querySelector("#i18nImportSearch").addEventListener("input", renderImportCandidates);
         modal.querySelector("#i18nImportStatus").addEventListener("change", renderImportCandidates);
+        modal.querySelector("#i18nImportDatabase").addEventListener("change", (event) => window._setSqlDialect?.(event.target.value));
         updateSettingsText();
     }
 
@@ -363,6 +368,8 @@
         modal.querySelector(".i18n-import-heading p").textContent = t("importHelp");
         modal.querySelector('[data-import-label="tables"]').textContent = t("tableCsv");
         modal.querySelector('[data-import-label="fields"]').textContent = t("fieldCsv");
+        modal.querySelector('[data-import-label="database"]').textContent = t("databaseType");
+        modal.querySelector('[data-import-head="description"]').textContent = t("descriptionColumn");
         modal.querySelector("#i18nAnalyzeImport").textContent = t("analyzeImport");
         modal.querySelector("#i18nImportSearch").placeholder = t("importSearch");
         const statusOptions = modal.querySelector("#i18nImportStatus").options;
@@ -395,6 +402,10 @@
         modal.querySelector(".i18n-industry-section").hidden = section !== "industry";
         modal.querySelector(".i18n-settings-content").classList.toggle("industry-active", section === "industry");
         if (section === "content") loadNodeCatalog(true);
+        if (section === "import") {
+            modal.querySelector("#i18nImportDatabase").value = window._getSqlDialect?.()
+                || document.getElementById("globalSqlDialect")?.value || "oracle";
+        }
         if (section === "industry") {
             const frame = modal.querySelector("#i18nIndustryFrame");
             if (!frame.src) {
@@ -428,11 +439,15 @@
         const button = document.getElementById("i18nAnalyzeImport");
         button.disabled = true; button.textContent = t("analyzing");
         const form = new FormData(); form.append("tables", tables); form.append("fields", fields);
+        form.append("database", document.getElementById("i18nImportDatabase").value);
         try {
             const response = await fetch("/api/ontology-import/analyze", { method: "POST", body: form });
             if (!response.ok) throw new Error(await responseError(response));
             importAnalysis = await response.json();
             document.getElementById("i18nImportResult").hidden = false;
+            const warning = document.getElementById("i18nImportWarning");
+            warning.textContent = importAnalysis.descriptionWarning || "";
+            warning.hidden = !importAnalysis.descriptionWarning;
             renderImportSummary(); renderImportCandidates();
         } catch (error) { showToast(error.message, true); }
         finally { button.disabled = false; button.textContent = t("analyzeImport"); }
@@ -446,6 +461,7 @@
             [t("classes"), summary.tables], [t("attributes"), summary.fields],
             [t("approvedStatus"), summary.approved], [t("reviewStatus"), summary.review],
             [t("excludedStatus"), summary.excluded],
+            [t("descriptionColumn"), summary.described],
         ];
         target.replaceChildren(...items.map(([label, value]) => {
             const card = document.createElement("div");
@@ -469,12 +485,17 @@
             const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = Boolean(item.selected);
             checkbox.addEventListener("change", () => { item.selected = checkbox.checked; updateImportSelected(); });
             const name = document.createElement("strong"); name.textContent = item.className; name.title = item.className;
+            const description = document.createElement("span"); description.className = "i18n-import-description";
+            description.textContent = state.language === "zh-CN"
+                ? (item.descriptionZh || item.descriptionEn || "—")
+                : (item.descriptionEn || item.descriptionZh || "—");
+            description.title = description.textContent;
             const workspace = document.createElement("span"); workspace.textContent = item.workspace || "—";
             const counts = document.createElement("span"); counts.textContent = `${item.propertyCount} / ${item.relationshipCount}`;
             const decision = document.createElement("span"); decision.className = "i18n-import-decision";
             const badge = document.createElement("em"); badge.textContent = importStatusLabel(item.status);
             const reason = document.createElement("small"); reason.textContent = item.reason; reason.title = item.reason;
-            decision.append(badge, reason); row.append(checkbox, name, workspace, counts, decision); list.appendChild(row);
+            decision.append(badge, reason); row.append(checkbox, name, description, workspace, counts, decision); list.appendChild(row);
         });
         if (!rows.length) list.innerHTML = `<div class="i18n-catalog-empty">${t("empty")}</div>`;
         updateImportSelected();
@@ -602,12 +623,13 @@
         const label = button.querySelector("span"); if (label) label.textContent = t("syncingDescriptions");
         try {
             const response = await fetch("/api/i18n/sync-descriptions", {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ className }),
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ className, database: window._getSqlDialect?.() || "oracle" }),
             });
             if (!response.ok) throw new Error(await responseError(response));
             const result = await response.json();
             await fetchConfig(true); dispatchChange("translation");
-            showToast(`${t("syncDone")}: ${result.updated}/${result.matched}`);
+            showToast(result.warning || `${t("syncDone")}: ${result.updated}/${result.matched}`, Boolean(result.warning));
             await loadNodeEditor(className, document.querySelector(`.i18n-node-result[data-key="${CSS.escape(className)}"]`));
         } catch (error) {
             showToast(error.message, true); button.disabled = false; if (label) label.textContent = t("syncDescriptions");
@@ -660,6 +682,10 @@
             applyDom();
             document.querySelectorAll("#btnSettings, [data-open-i18n-settings]").forEach((button) => button.addEventListener("click", openSettings));
             window.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSettings(); });
+            window.addEventListener("camstar:sql-dialect-change", (event) => {
+                const selector = document.getElementById("i18nImportDatabase");
+                if (selector && event.detail?.dialect) selector.value = event.detail.dialect;
+            });
             const observer = new MutationObserver((mutations) => {
                 for (const mutation of mutations) {
                     mutation.addedNodes.forEach((node) => applyExactText(node));

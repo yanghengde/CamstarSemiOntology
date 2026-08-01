@@ -2,6 +2,8 @@ import json
 import sys
 from pathlib import Path
 
+from fastapi import HTTPException
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from web.routers import i18n
@@ -103,7 +105,7 @@ def test_camstar_description_sync_preserves_manual_edits(monkeypatch, tmp_path):
     ]}}
     monkeypatch.setattr(i18n, "_graph_catalog_snapshot", lambda: ([graph_node], graph_details))
     monkeypatch.setattr(i18n, "_physical_field_names", lambda _: {"name": "ProductName", "description": "Description"})
-    monkeypatch.setattr(i18n, "_designer_descriptions", lambda _: {
+    monkeypatch.setattr(i18n, "_designer_descriptions", lambda _, database: {
         "cdoDefId": "10", "cdoName": "Product", "description": "A manufactured product.",
         "fields": {
             "productname": {"fieldId": "1", "description": "Name of the product."},
@@ -116,11 +118,31 @@ def test_camstar_description_sync_preserves_manual_edits(monkeypatch, tmp_path):
     store["manualEdits"]["propertyDescriptions"]["Product.description"] = 1
     i18n._save_store(store)
 
-    result = i18n.sync_descriptions(i18n.DescriptionSyncRequest(className="Product"))
+    result = i18n.sync_descriptions(i18n.DescriptionSyncRequest(className="Product", database="sqlserver"))
     saved = i18n._load_store()
 
     assert result["matched"] == 3
     assert result["updated"] == 2
     assert result["manualPreserved"] == 1
+    assert result["database"] == "sqlserver"
     assert saved["translations"]["nodeDescriptions"]["Product"]["en"] == "A manufactured product."
     assert saved["translations"]["propertyDescriptions"]["Product.description"]["zh"] == "人工中文"
+
+
+def test_description_sync_keeps_english_when_translation_is_offline(monkeypatch, tmp_path):
+    monkeypatch.setattr(i18n, "I18N_DIR", str(tmp_path))
+    monkeypatch.setattr(i18n, "TRANSLATIONS_FILE", str(tmp_path / "display_translations.json"))
+    graph_node = {"key": "Product", "original": "Product", "owner": "product", "descriptionZh": "", "descriptionEn": "", "propertyCount": 0}
+    monkeypatch.setattr(i18n, "_graph_catalog_snapshot", lambda: ([graph_node], {"Product": {"properties": []}}))
+    monkeypatch.setattr(i18n, "_designer_descriptions", lambda _, database: {
+        "cdoDefId": "10", "cdoName": "Product", "description": "A manufactured product.", "fields": {},
+    })
+    monkeypatch.setattr(i18n, "_physical_field_names", lambda _: {})
+    monkeypatch.setattr(i18n, "_translate_descriptions", lambda _: (_ for _ in ()).throw(HTTPException(503, "offline")))
+
+    result = i18n.sync_descriptions(i18n.DescriptionSyncRequest(className="Product", database="oracle"))
+    saved = i18n._load_store()["translations"]["nodeDescriptions"]["Product"]
+
+    assert result["success"] is True
+    assert "英文原文" in result["warning"]
+    assert saved == {"zh": "A manufactured product.", "en": "A manufactured product."}

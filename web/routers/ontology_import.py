@@ -17,10 +17,11 @@ import threading
 import time
 import uuid
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from scripts.generate_ontology_batch import relation_name
@@ -37,6 +38,7 @@ router = APIRouter(prefix="/api/ontology-import", tags=["ontology-import"])
 ONTOLOGY_DIR = Path(PROJECT_ROOT) / "src" / "ontology" / "wiki_kb"
 IMPORTED_ONTOLOGY = ONTOLOGY_DIR / "csv_business_import_ontology.json"
 IMPORT_MANIFEST = Path(PROJECT_ROOT) / "data" / "ontology_import_manifest.json"
+DESCRIPTION_TRANSLATION_CACHE = Path(PROJECT_ROOT) / "data" / "import_description_translations.json"
 MAX_UPLOAD_BYTES = 40 * 1024 * 1024
 SESSION_TTL_SECONDS = 60 * 60
 
@@ -115,11 +117,89 @@ def _purge_expired_sessions() -> None:
         _sessions.pop(session_id, None)
 
 
+def _designer_description_for(class_name: str, catalog: dict[str, dict[str, str]]) -> str:
+    matched = catalog.get(class_name.casefold())
+    if not matched and class_name.startswith("A_"):
+        matched = catalog.get(class_name[2:].casefold())
+    return str((matched or {}).get("description") or "")
+
+
+def _load_description_cache() -> dict[str, str]:
+    cache: dict[str, str] = {}
+    if DESCRIPTION_TRANSLATION_CACHE.exists():
+        try:
+            payload = json.loads(DESCRIPTION_TRANSLATION_CACHE.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                cache.update({str(key): str(value) for key, value in payload.items() if key and value})
+        except (OSError, json.JSONDecodeError):
+            pass
+    try:
+        from web.routers.i18n import _load_store
+
+        for value in _load_store()["translations"]["nodeDescriptions"].values():
+            english = str(value.get("en") or "").strip()
+            chinese = str(value.get("zh") or "").strip()
+            if english and chinese:
+                cache.setdefault(english, chinese)
+    except Exception:
+        pass
+    return cache
+
+
+def _save_description_cache(cache: dict[str, str]) -> None:
+    DESCRIPTION_TRANSLATION_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    temporary = DESCRIPTION_TRANSLATION_CACHE.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(cache, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(DESCRIPTION_TRANSLATION_CACHE)
+
+
+def _translate_candidate_descriptions(descriptions: list[str]) -> tuple[dict[str, str], str]:
+    """Translate what is not cached; return English unchanged when LLM is unavailable."""
+    unique = list(dict.fromkeys(value.strip() for value in descriptions if value.strip()))
+    cache = _load_description_cache()
+    pending = [value for value in unique if value not in cache]
+    if not pending:
+        return {value: cache[value] for value in unique}, ""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return {value: cache[value] for value in unique if value in cache}, "未配置大模型，中文描述暂时显示数据库英文原文。"
+    try:
+        from openai import OpenAI
+        from scripts.build_designer_display_translations import translate_batch
+
+        client = OpenAI(
+            api_key=api_key,
+            base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
+            timeout=float(os.getenv("LLM_TIMEOUT", "120")),
+        )
+        model = os.getenv("LLM_MODEL", "deepseek-chat")
+        batches = [pending[index:index + 35] for index in range(0, len(pending), 35)]
+        with ThreadPoolExecutor(max_workers=min(4, max(1, len(batches)))) as executor:
+            futures = {executor.submit(translate_batch, client, model, "en_to_zh", batch): batch for batch in batches}
+            for future in as_completed(futures):
+                batch = futures[future]
+                translated = future.result()
+                cache.update(zip(batch, translated))
+        _save_description_cache(cache)
+        return {value: cache[value] for value in unique}, ""
+    except Exception as exc:
+        if cache:
+            _save_description_cache(cache)
+        return (
+            {value: cache[value] for value in unique if value in cache},
+            f"大模型或网络暂时不可用，未翻译的描述显示英文原文：{exc}",
+        )
+
+
 @router.post("/analyze")
 def analyze_import(
     tables: UploadFile = File(...),
     fields: UploadFile = File(...),
+    database: str = Form(...),
 ):
+    database = database.strip().lower()
+    if database not in {"oracle", "sqlserver"}:
+        raise HTTPException(status_code=422, detail="数据库类型必须是 Oracle 或 SQL Server")
     table_rows = _read_csv_upload(tables, {"CDODefId", "CDOName", "Workspace"})
     field_rows = _read_csv_upload(
         fields,
@@ -152,6 +232,24 @@ def analyze_import(
         raise HTTPException(status_code=422, detail=f"字段 CSV 引用了表 CSV 中不存在的 CDO：{sample}")
 
     reviewed = _reviewed_class_names()
+    description_catalog: dict[str, dict[str, str]] = {}
+    description_warning = ""
+    try:
+        from web.designer_metadata import load_cdo_description_catalog
+
+        description_catalog = load_cdo_description_catalog(database)
+    except Exception as exc:
+        label = "Oracle" if database == "oracle" else "SQL Server"
+        description_warning = f"无法连接 {label} 获取 CDO 描述，候选结构仍可审核：{exc}"
+    english_descriptions = {
+        name: _designer_description_for(name, description_catalog)
+        for name in table_by_name
+    }
+    translations: dict[str, str] = {}
+    if description_catalog:
+        translations, translation_warning = _translate_candidate_descriptions(list(english_descriptions.values()))
+        if translation_warning:
+            description_warning = "；".join(value for value in (description_warning, translation_warning) if value)
     candidates = []
     for name, table in sorted(table_by_name.items(), key=lambda item: item[0].casefold()):
         canonical = canonical_physical_fields(fields_by_class.get(name, []), name)
@@ -170,6 +268,8 @@ def analyze_import(
             "status": status,
             "reason": reason,
             "selected": selected,
+            "descriptionEn": english_descriptions.get(name, ""),
+            "descriptionZh": translations.get(english_descriptions.get(name, ""), ""),
         })
 
     session_id = uuid.uuid4().hex
@@ -181,6 +281,7 @@ def analyze_import(
             "fields": dict(fields_by_class),
             "candidates": {item["className"]: item for item in candidates},
             "reviewed": reviewed,
+            "database": database,
         }
     summary = {
         "tables": len(table_by_name),
@@ -189,8 +290,16 @@ def analyze_import(
         "review": sum(item["status"] == "review" for item in candidates),
         "excluded": sum(item["status"] == "excluded" for item in candidates),
         "defaultSelected": sum(item["selected"] for item in candidates),
+        "described": sum(bool(item["descriptionEn"]) for item in candidates),
+        "translated": sum(bool(item["descriptionZh"]) for item in candidates),
     }
-    return {"importId": session_id, "summary": summary, "candidates": candidates}
+    return {
+        "importId": session_id,
+        "database": database,
+        "summary": summary,
+        "descriptionWarning": description_warning,
+        "candidates": candidates,
+    }
 
 
 def _property_definition(field: dict[str, str], class_name: str) -> dict[str, Any]:

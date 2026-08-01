@@ -12,6 +12,7 @@ python-multipart>=0.0.9
 pandas>=2.1.0
 SQLAlchemy>=2.0.20
 pyodbc>=5.0.1
+oracledb>=2.0.0
 
 # ── LLM & RAG ──
 openai>=1.10.0

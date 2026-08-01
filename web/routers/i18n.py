@@ -220,6 +220,7 @@ class TranslationUpdate(BaseModel):
 
 class DescriptionSyncRequest(BaseModel):
     className: str = Field(min_length=1, max_length=200)
+    database: Literal["oracle", "sqlserver"] = "oracle"
 
 
 @router.get("")
@@ -344,111 +345,16 @@ def update_translation(update: TranslationUpdate):
     }
 
 
-def _source_engine():
-    """Build a source connection using an installed SQL Server driver."""
-    import pyodbc
-    from sqlalchemy import create_engine
-    from sqlalchemy.engine import URL
-
-    installed = pyodbc.drivers()
-    configured = os.getenv("DB_ODBC_DRIVER", "ODBC Driver 18 for SQL Server")
-    driver_name = configured if configured in installed else next(
-        (name for name in reversed(installed) if "SQL Server" in name),
-        configured,
-    )
-    url = URL.create(
-        "mssql+pyodbc",
-        username=os.getenv("SRC_DB_USER"),
-        password=os.getenv("SRC_DB_PASSWORD"),
-        host=os.getenv("SRC_DB_HOST"),
-        port=int(os.getenv("SRC_DB_PORT", "1433")),
-        database=os.getenv("SRC_DB_NAME"),
-        query={"driver": driver_name, "TrustServerCertificate": os.getenv("DB_TRUST_SERVER_CERTIFICATE", "yes")},
-    )
-    return create_engine(url, pool_pre_ping=True)
-
-
-@lru_cache(maxsize=1)
-def _designer_schema() -> str:
-    from sqlalchemy import text
+def _designer_descriptions(class_name: str, database: str = "sqlserver") -> dict:
+    from web.designer_metadata import get_cdo_metadata
 
     try:
-        with _source_engine().connect() as connection:
-            row = connection.execute(text("""
-                SELECT TOP 1 TABLE_SCHEMA
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'CDODefinition'
-                ORDER BY CASE WHEN TABLE_SCHEMA = 'dbo' THEN 0 ELSE 1 END, TABLE_SCHEMA
-            """)).first()
+        return get_cdo_metadata(database, class_name)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"无法连接 Camstar Designer 数据库：{exc}") from exc
-    if not row or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(row[0])):
-        raise HTTPException(status_code=503, detail="Camstar Designer 中未找到 CDODefinition 表")
-    return str(row[0])
-
-
-def _designer_descriptions(class_name: str) -> dict:
-    from sqlalchemy import bindparam, text
-
-    schema = _designer_schema()
-    definition = f"[{schema}].[CDODefinition]"
-    fields_table = f"[{schema}].[CDOFields]"
-    candidates = [class_name]
-    if class_name.startswith("A_"):
-        candidates.append(class_name[2:])
-    engine = _source_engine()
-    try:
-        with engine.connect() as connection:
-            row = connection.execute(
-                text(f"""SELECT TOP 1 CDODefID, ParentCDOID, CDOName, CDODescription
-                           FROM {definition}
-                           WHERE LOWER(CDOName) IN :names
-                           ORDER BY CASE WHEN LOWER(CDOName) = :exact THEN 0 ELSE 1 END""").bindparams(bindparam("names", expanding=True)),
-                {"names": [value.casefold() for value in candidates], "exact": class_name.casefold()},
-            ).mappings().first()
-            if not row:
-                raise HTTPException(status_code=404, detail=f"Camstar Designer 中未找到 CDO：{class_name}")
-            hierarchy = []
-            current = dict(row)
-            for _ in range(40):
-                hierarchy.append(current)
-                parent_id = int(current.get("ParentCDOID") or 0)
-                if not parent_id:
-                    break
-                parent = connection.execute(
-                    text(f"SELECT CDODefID, ParentCDOID, CDOName, CDODescription FROM {definition} WHERE CDODefID=:id"),
-                    {"id": parent_id},
-                ).mappings().first()
-                if not parent:
-                    break
-                current = dict(parent)
-            hierarchy_ids = [int(item["CDODefID"]) for item in hierarchy]
-            field_rows = connection.execute(
-                text(f"""SELECT FieldID, CDODefID, FieldName, FieldDescription
-                           FROM {fields_table}
-                           WHERE CDODefID IN :ids""").bindparams(bindparam("ids", expanding=True)),
-                {"ids": hierarchy_ids},
-            ).mappings().all()
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"读取 Camstar Designer 描述失败：{exc}") from exc
-    depth = {cdo_id: index for index, cdo_id in enumerate(hierarchy_ids)}
-    field_map: dict[str, dict] = {}
-    for field in sorted(field_rows, key=lambda item: depth.get(int(item["CDODefID"]), 999)):
-        key = str(field.get("FieldName") or "").casefold()
-        description = " ".join(str(field.get("FieldDescription") or "").replace("\r", " ").replace("\n", " ").split())
-        if key and description and key not in field_map:
-            field_map[key] = {
-                "fieldId": str(field.get("FieldID") or ""),
-                "description": description[:5000],
-            }
-    return {
-        "cdoDefId": str(row.get("CDODefID") or ""),
-        "cdoName": str(row.get("CDOName") or class_name),
-        "description": " ".join(str(row.get("CDODescription") or "").replace("\r", " ").replace("\n", " ").split())[:5000],
-        "fields": field_map,
-    }
+        label = "Oracle" if database == "oracle" else "SQL Server"
+        raise HTTPException(status_code=503, detail=f"无法从 {label} 读取 Camstar Designer 描述：{exc}") from exc
 
 
 def _physical_field_names(class_name: str) -> dict[str, str]:
@@ -501,7 +407,7 @@ def sync_descriptions(request: DescriptionSyncRequest):
     node = next((item for item in graph_nodes if item["key"] == class_name), None)
     if node is None:
         raise HTTPException(status_code=404, detail="Ontology node not found")
-    designer = _designer_descriptions(class_name)
+    designer = _designer_descriptions(class_name, request.database)
     property_names = _physical_field_names(class_name)
     graph_properties = (graph_details.get(class_name) or {}).get("properties", [])
     sources: list[tuple[str, str, str]] = []
@@ -513,7 +419,12 @@ def sync_descriptions(request: DescriptionSyncRequest):
         matched = designer["fields"].get(physical_name.casefold()) or designer["fields"].get(property_name.casefold())
         if matched and matched["description"]:
             sources.append(("propertyDescriptions", f"{class_name}.{property_name}", matched["description"]))
-    translations = _translate_descriptions([source for _, _, source in sources])
+    translation_warning = ""
+    try:
+        translations = _translate_descriptions([source for _, _, source in sources])
+    except HTTPException as exc:
+        translations = {source: source for _, _, source in sources}
+        translation_warning = f"大模型或网络不可用，已保留英文原文：{exc.detail}"
     store = _load_store()
     updated = 0
     skipped_manual = 0
@@ -538,9 +449,11 @@ def sync_descriptions(request: DescriptionSyncRequest):
     return {
         "success": True,
         "className": class_name,
+        "database": request.database,
         "matched": len(sources),
         "updated": updated,
         "manualPreserved": skipped_manual,
         "missing": 1 + len(graph_properties) - len(sources),
+        "warning": translation_warning,
         "revision": store["revision"],
     }
