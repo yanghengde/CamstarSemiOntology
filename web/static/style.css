@@ -2175,6 +2175,10 @@ html[lang="en-US"] body.query-builder-mode #graphContainer::after {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+#legend.legend-disabled {
+    display: none !important;
+}
+
 /* The module navigator remains useful during ontology browsing, but it
    competes with the transient join preview while a SQL query is being built. */
 body.query-builder-mode #legend {

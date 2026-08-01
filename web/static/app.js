@@ -3762,6 +3762,7 @@
     // ══════════════════════════════════════════════════════
     function setupLegend() {
         const legend = document.getElementById("legend");
+        if (!legend || legend.classList.contains("legend-disabled")) return;
         const legendHeader = legend.querySelector(".legend-header");
         const legendSearch = document.getElementById("legendSearchInput");
         const legendList = document.getElementById("legendList");
