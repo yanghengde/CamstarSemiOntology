@@ -1972,6 +1972,65 @@
 
     window._locateNodeWithoutEdges = locateNodeWithoutEdges;
 
+    async function focusRelationshipPair(sourceId, targetId, relationshipName) {
+        if (!graph || !rawData || !nodeInfoCache.has(sourceId) || !nodeInfoCache.has(targetId)) return;
+        const token = ++edgeRenderToken;
+        pendingEdgeNodeId = null;
+        graphMutationBusy = true;
+        try {
+            await clearHighlight();
+            if (token !== edgeRenderToken) return;
+
+            const currentEdgeIds = graph.getEdgeData().map((edge) => edge.id);
+            if (currentEdgeIds.length) {
+                graph.removeEdgeData(currentEdgeIds);
+                await graph.draw();
+            }
+            if (token !== edgeRenderToken) return;
+
+            const pairEdges = [...edgeInfoById.values()].filter((edge) => {
+                const sameDirection = edge.source === sourceId && edge.target === targetId;
+                const reverseDirection = edge.source === targetId && edge.target === sourceId;
+                if (!sameDirection && !reverseDirection) return false;
+                return !relationshipName || edge.data?.label === relationshipName;
+            });
+            const visiblePairEdges = pairEdges.length
+                ? pairEdges
+                : [...edgeInfoById.values()].filter((edge) => (
+                    (edge.source === sourceId && edge.target === targetId)
+                    || (edge.source === targetId && edge.target === sourceId)
+                ));
+            if (visiblePairEdges.length) {
+                graph.addEdgeData(buildGraphData(
+                    { nodes: [], edges: visiblePairEdges },
+                    false,
+                ).edges);
+            }
+            await graph.draw();
+            if (token !== edgeRenderToken) return;
+
+            const focusNodeId = selectedNodeId === targetId ? targetId : sourceId;
+            const counterpartId = focusNodeId === sourceId ? targetId : sourceId;
+            setFocusBackdrop(focusNodeId, new Set([counterpartId]), 0.015);
+            const states = {
+                [focusNodeId]: ["selected"],
+                [counterpartId]: ["active"],
+            };
+            for (const edge of graph.getEdgeData()) {
+                states[edge.id] = edge.source === focusNodeId ? ["activeOut"] : ["activeIn"];
+            }
+            await _applyStates(states, { force: true });
+
+            if (typeof graph.focusElements === "function") {
+                await graph.focusElements([focusNodeId, counterpartId], true);
+            } else {
+                await graph.focusElement(focusNodeId, true);
+            }
+        } finally {
+            if (token === edgeRenderToken) graphMutationBusy = false;
+        }
+    }
+
     function queueIncidentEdgeRender(nodeId) {
         pendingEdgeNodeId = nodeId;
         edgeRenderToken++;
@@ -2173,7 +2232,7 @@
         return stateApplyChain;
     }
 
-    function setFocusBackdrop(focusedNodeId, visibleNeighborIds = new Set()) {
+    function setFocusBackdrop(focusedNodeId, visibleNeighborIds = new Set(), backgroundOpacity = 0.12) {
         if (!graph) return;
         const enabled = Boolean(focusedNodeId);
         graph.updateNodeData(graph.getNodeData().map((node) => {
@@ -2184,9 +2243,9 @@
                 id: node.id,
                 style: {
                     ...(node.style || {}),
-                    opacity: isVisible ? 1 : 0.12,
-                    labelOpacity: isVisible ? 1 : 0.06,
-                    iconOpacity: isVisible ? 1 : 0.16,
+                    opacity: isVisible ? 1 : backgroundOpacity,
+                    labelOpacity: isVisible ? 1 : Math.min(0.06, backgroundOpacity),
+                    iconOpacity: isVisible ? 1 : Math.min(0.16, backgroundOpacity * 2),
                 },
             };
         }));
@@ -3090,10 +3149,13 @@
             if (detail.outgoing && detail.outgoing.length > 0) {
                 relHtml += `<div class="rel-section-label">它引用的对象 →</div>`;
                 for (const r of detail.outgoing) {
-                    relHtml += `<div class="rel-item rel-item-out" data-target="${r.targetClass}">
+                    const relationLabel = ontologyLabel("relationship", r.relName, r.relName);
+                    const targetLabel = ontologyLabel("node", r.targetClass, r.targetClass, nodeInfoCache.get(r.targetClass)?.data?.chineseName || "");
+                    const fullLabel = `→ ${relationLabel} · ${targetLabel}${r.cardinality ? ` · ${r.cardinality}` : ""}`;
+                    relHtml += `<div class="rel-item rel-item-out" data-source="${htmlEscape(className)}" data-target="${htmlEscape(r.targetClass)}" data-rel="${htmlEscape(r.relName)}" title="${htmlEscape(fullLabel)}">
                         <span class="rel-arrow">→</span>
-                        <span class="rel-name">${htmlEscape(ontologyLabel("relationship", r.relName, r.relName))}</span>
-                        <span class="rel-target">${htmlEscape(ontologyLabel("node", r.targetClass, r.targetClass, nodeInfoCache.get(r.targetClass)?.data?.chineseName || ""))}</span>
+                        <span class="rel-name">${htmlEscape(relationLabel)}</span>
+                        <span class="rel-target">${htmlEscape(targetLabel)}</span>
                         <span class="rel-card">${r.cardinality || ""}</span>
                     </div>`;
                 }
@@ -3101,21 +3163,25 @@
             if (detail.incoming && detail.incoming.length > 0) {
                 relHtml += `<div class="rel-section-label rel-section-label-in" style="margin-top:12px">被何处引用 ←</div>`;
                 for (const r of detail.incoming) {
-                    relHtml += `<div class="rel-item rel-item-in" data-target="${r.sourceClass}">
+                    const relationLabel = ontologyLabel("relationship", r.relName, r.relName);
+                    const sourceLabel = ontologyLabel("node", r.sourceClass, r.sourceClass, nodeInfoCache.get(r.sourceClass)?.data?.chineseName || "");
+                    const fullLabel = `← ${relationLabel} · ${sourceLabel}${r.cardinality ? ` · ${r.cardinality}` : ""}`;
+                    relHtml += `<div class="rel-item rel-item-in" data-source="${htmlEscape(r.sourceClass)}" data-target="${htmlEscape(className)}" data-rel="${htmlEscape(r.relName)}" title="${htmlEscape(fullLabel)}">
                         <span class="rel-arrow">←</span>
-                        <span class="rel-name">${htmlEscape(ontologyLabel("relationship", r.relName, r.relName))}</span>
-                        <span class="rel-target">${htmlEscape(ontologyLabel("node", r.sourceClass, r.sourceClass, nodeInfoCache.get(r.sourceClass)?.data?.chineseName || ""))}</span>
+                        <span class="rel-name">${htmlEscape(relationLabel)}</span>
+                        <span class="rel-target">${htmlEscape(sourceLabel)}</span>
                         <span class="rel-card">${r.cardinality || ""}</span>
                     </div>`;
                 }
             }
             relList.innerHTML = relHtml || `<div style="color:var(--text-muted);font-size:12px;">暂无关系</div>`;
 
-            // ── Click relation chip → navigate ──
+            // ── Click relation chip → focus only the two endpoints ──
             relList.querySelectorAll(".rel-item").forEach((el) => {
                 el.addEventListener("click", () => {
-                    const target = el.dataset.target;
-                    if (target) locateNodeWithoutEdges(target, true);
+                    relList.querySelectorAll(".rel-item.pair-focused").forEach((item) => item.classList.remove("pair-focused"));
+                    el.classList.add("pair-focused");
+                    focusRelationshipPair(el.dataset.source, el.dataset.target, el.dataset.rel);
                 });
             });
         } catch (err) {
@@ -3273,10 +3339,11 @@
             if (detail.outgoing && detail.outgoing.length > 0) {
                 relHtml += `<div class="rel-section-label">它引用的对象 →</div>`;
                 for (const r of detail.outgoing) {
-                    relHtml += `<div class="rel-item rel-item-out" data-target="${r.targetClass}">
+                    const fullLabel = `→ ${r.relName} · ${r.targetClass}${r.cardinality ? ` · ${r.cardinality}` : ""}`;
+                    relHtml += `<div class="rel-item rel-item-out" data-source="${htmlEscape(className)}" data-target="${htmlEscape(r.targetClass)}" data-rel="${htmlEscape(r.relName)}" title="${htmlEscape(fullLabel)}">
                         <span class="rel-arrow">→</span>
-                        <span class="rel-name">${r.relName}</span>
-                        <span class="rel-target">${r.targetClass}</span>
+                        <span class="rel-name">${htmlEscape(r.relName)}</span>
+                        <span class="rel-target">${htmlEscape(r.targetClass)}</span>
                         <span class="rel-card">${r.cardinality || ""}</span>
                     </div>`;
                 }
@@ -3284,21 +3351,23 @@
             if (detail.incoming && detail.incoming.length > 0) {
                 relHtml += `<div class="rel-section-label rel-section-label-in" style="margin-top:12px">被何处引用 ←</div>`;
                 for (const r of detail.incoming) {
-                    relHtml += `<div class="rel-item rel-item-in" data-target="${r.sourceClass}">
+                    const fullLabel = `← ${r.relName} · ${r.sourceClass}${r.cardinality ? ` · ${r.cardinality}` : ""}`;
+                    relHtml += `<div class="rel-item rel-item-in" data-source="${htmlEscape(r.sourceClass)}" data-target="${htmlEscape(className)}" data-rel="${htmlEscape(r.relName)}" title="${htmlEscape(fullLabel)}">
                         <span class="rel-arrow">←</span>
-                        <span class="rel-name">${r.relName}</span>
-                        <span class="rel-target">${r.sourceClass}</span>
+                        <span class="rel-name">${htmlEscape(r.relName)}</span>
+                        <span class="rel-target">${htmlEscape(r.sourceClass)}</span>
                         <span class="rel-card">${r.cardinality || ""}</span>
                     </div>`;
                 }
             }
             relList.innerHTML = relHtml || `<div style="color:var(--text-muted);font-size:12px;">暂无关系</div>`;
 
-            // Click to navigate
+            // Keep the current detail context and focus only the selected pair.
             relList.querySelectorAll(".rel-item").forEach(el => {
                 el.addEventListener("click", () => {
-                    const target = el.dataset.target;
-                    if (target) showRelOnly(target);
+                    relList.querySelectorAll(".rel-item.pair-focused").forEach((item) => item.classList.remove("pair-focused"));
+                    el.classList.add("pair-focused");
+                    focusRelationshipPair(el.dataset.source, el.dataset.target, el.dataset.rel);
                 });
             });
         } catch (err) {
