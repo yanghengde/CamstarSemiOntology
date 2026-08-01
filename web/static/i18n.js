@@ -68,7 +68,7 @@
         "请从右侧主图选择对象": "Select objects from the graph", "选择对象后，将在这里展示经过物理外键验证的 Join 路径": "Verified physical foreign-key join paths appear here after selecting objects",
         "查询关系预览": "Relationship Preview", "等待选择": "Waiting", "查看关系": "View Relationship", "适应": "Fit",
         "已选对象": "Selected", "中间对象": "Bridge", "未连接": "Disconnected", "SQL 骨架": "SQL Skeleton",
-        "复制": "Copy", "在助手中继续": "Continue in Assistant", "节点详情": "Node Details", "属性列表": "Properties",
+        "复制": "Copy", "已复制": "Copied", "在助手中继续": "Continue in Assistant", "节点详情": "Node Details", "属性列表": "Properties",
         "点击关系线选中并查看物理 JOIN 条件": "Click a relationship to inspect its physical JOIN condition",
         "-- 请选择至少一个查询对象": "-- Select at least one query object",
         "关系": "Relationships", "加入上下文": "Add Context", "关注": "Follow", "关闭": "Close", "中文名": "Chinese Name",

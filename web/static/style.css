@@ -836,11 +836,12 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
 .edge-popup {
     position: fixed;
     z-index: 1000;
-    width: min(560px, calc(100vw - 32px));
-    min-width: 0;
-    max-width: none;
-    max-height: 88vh;
-    padding: 16px 18px;
+    width: min(585px, calc(100vw - 32px));
+    height: min(900px, calc(100vh - 32px));
+    min-width: min(440px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    max-height: none;
+    padding: 18px 20px;
     box-sizing: border-box;
     background: rgba(10, 20, 40, 0.97);
     border: 1px solid rgba(0, 255, 185, 0.3);
@@ -854,6 +855,41 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
     flex-direction: column;
     overflow: hidden;
     resize: none;
+}
+
+.edge-popup-resize-handle {
+    position: absolute;
+    z-index: 4;
+    top: 38px;
+    right: 0;
+    bottom: 38px;
+    width: 10px;
+    cursor: ew-resize;
+    touch-action: none;
+}
+
+.edge-popup-resize-handle::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 2px;
+    width: 3px;
+    height: 52px;
+    border-radius: 999px;
+    background: rgba(0, 255, 185, 0.16);
+    transform: translateY(-50%);
+    transition: background-color .2s ease, box-shadow .2s ease;
+}
+
+.edge-popup-resize-handle:hover::after,
+.edge-popup.resizing .edge-popup-resize-handle::after {
+    background: rgba(0, 255, 185, 0.7);
+    box-shadow: 0 0 8px rgba(0, 255, 185, 0.35);
+}
+
+.edge-popup.resizing,
+.edge-popup.resizing * {
+    user-select: none !important;
 }
 
 .edge-popup-hidden {
@@ -940,6 +976,82 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
     letter-spacing: 0.2px;
 }
 
+.edge-section-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: -4px -6px;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 6px;
+    color: var(--text-primary);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.edge-section-toggle:hover,
+.edge-section-toggle:focus-visible {
+    color: var(--si-green);
+    background: rgba(0, 255, 185, 0.08);
+    outline: none;
+}
+
+.edge-section-toggle:hover .edge-section-label,
+.edge-section-toggle:focus-visible .edge-section-label {
+    color: inherit;
+}
+
+.edge-section-chevron {
+    flex: 0 0 auto;
+    transition: transform .22s ease;
+}
+
+.edge-section-toggle[aria-expanded="true"] .edge-section-chevron {
+    transform: rotate(180deg);
+}
+
+.edge-section-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.edge-sql-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 24px;
+    padding: 3px 9px;
+    border: 1px solid rgba(0, 255, 185, 0.24);
+    border-radius: 7px;
+    color: var(--si-green);
+    background: rgba(0, 255, 185, 0.06);
+    font: 600 10px/1 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.edge-sql-copy:hover:not(:disabled),
+.edge-sql-copy:focus-visible {
+    border-color: var(--si-green);
+    background: rgba(0, 255, 185, 0.14);
+    outline: none;
+}
+
+.edge-sql-copy.success {
+    color: #9fffdc;
+    border-color: rgba(159, 255, 220, 0.5);
+    background: rgba(0, 255, 185, 0.14);
+}
+
+.edge-sql-copy:disabled {
+    opacity: .42;
+    cursor: not-allowed;
+}
+
 .edge-popup > .edge-section-label {
     margin: 0 2px 6px;
 }
@@ -960,13 +1072,17 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
 
 .edge-sql-area {
     flex: 0 0 auto;
+    max-height: 30vh;
     margin-bottom: 14px;
     padding: 12px 14px;
     border-radius: 10px;
     background: rgba(3, 13, 30, 0.8);
     border: 1px solid rgba(0, 188, 212, 0.24);
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: auto;
+}
+
+.edge-sql-area.edge-sql-collapsed {
+    display: none;
 }
 
 .edge-sql-content {
@@ -1008,13 +1124,13 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
 /* ── Wiki Content Area inside Edge Popup ── */
 .edge-wiki-area {
     margin-bottom: 10px;
-    padding: 10px 12px;
+    padding: 16px 18px;
     border-radius: 10px;
     background: rgba(0, 0, 20, 0.5);
     border: 1px solid rgba(0, 153, 153, 0.15);
-    flex: 1 1 180px;
-    min-height: 150px;
-    max-height: 38vh;
+    flex: 1 1 0;
+    min-height: 220px;
+    max-height: none;
     overflow-y: auto;
     resize: none;
 }
@@ -1048,8 +1164,8 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
 
 .edge-wiki-content {
     display: none;  /* hidden by default, shown only when wiki exists */
-    font-size: 12px;
-    line-height: 1.7;
+    font-size: 13px;
+    line-height: 1.78;
     color: var(--text-secondary);
     user-select: text !important;
     -webkit-user-select: text !important;

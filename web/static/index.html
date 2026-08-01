@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style.css?v=20260801-i18n-v5" />
+    <link rel="stylesheet" href="/static/style.css?v=20260801-edge-reader-v4" />
 </head>
 
 <body data-page="graph">
@@ -288,14 +288,29 @@
 
     <!-- ── Edge Action Popup (with Wiki Panel) ── -->
     <div id="edgePopup" class="edge-popup edge-popup-hidden">
+        <div class="edge-popup-resize-handle" id="edgePopupResizeHandle"
+            title="拖动调整宽度" aria-hidden="true"></div>
         <button class="edge-popup-close" id="edgePopupClose" title="关闭">×</button>
         <div class="edge-popup-title" id="edgePopupTitle">RELATIONSHIP</div>
         <div class="edge-popup-meta" id="edgePopupMeta">Source → Target</div>
         <div class="edge-popup-product-line" id="edgePopupPL"></div>
         <!-- Physical SQL is separate from the authored relationship Wiki. -->
         <div class="edge-section-heading">
-            <span class="edge-section-label">SQL 关联示例</span>
-            <span class="edge-sql-dialect-badge" id="edgeSqlDialectBadge">Oracle</span>
+            <button class="edge-section-toggle" id="edgeSqlToggle" type="button"
+                aria-expanded="true" aria-controls="edgeSqlArea" title="折叠 SQL 关联示例">
+                <span class="edge-section-label">SQL 关联示例</span>
+                <svg class="edge-section-chevron" width="15" height="15" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" />
+                </svg>
+            </button>
+            <div class="edge-section-tools">
+                <button class="edge-sql-copy" id="edgeSqlCopy" type="button" title="复制 SQL" disabled>
+                    <span data-app-icon="copy" data-icon-size="12"></span>
+                    <span>复制</span>
+                </button>
+                <span class="edge-sql-dialect-badge" id="edgeSqlDialectBadge">Oracle</span>
+            </div>
         </div>
         <div class="edge-sql-area" id="edgeSqlArea">
             <div class="edge-sql-content" id="edgeSqlContent"></div>
@@ -468,8 +483,8 @@
     <script src="/static/lib/g6.js"></script>
     <script src="/static/lib/marked.js"></script>
     <script src="/static/icons.js?v=20260728-professional-icons"></script>
-    <script src="/static/i18n.js?v=20260801-i18n-v5"></script>
-    <script src="/static/app.js?v=20260801-i18n-v4"></script>
+    <script src="/static/i18n.js?v=20260801-edge-reader-v3"></script>
+    <script src="/static/app.js?v=20260801-edge-reader-v4"></script>
     <script src="/static/chat.js?v=20260801-i18n-v2"></script>
 </body>
 

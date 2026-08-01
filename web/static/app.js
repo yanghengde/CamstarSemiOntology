@@ -2466,6 +2466,8 @@
     let currentWikiContent = null;  // raw markdown content for editing
     let edgeWikiLoadToken = 0;
     let edgeSqlLoadToken = 0;
+    let edgeSqlCopyFeedbackTimer = null;
+    let edgePopupWidth = 585;
 
     function renderRelationshipWiki(container, markdown) {
         container.style.whiteSpace = "";
@@ -2490,12 +2492,59 @@
         if (badge) badge.textContent = SQL_DIALECTS[normalizeSqlDialect(dialect)].label;
     }
 
+    function setEdgeSqlExpanded(expanded) {
+        const toggle = document.getElementById("edgeSqlToggle");
+        const sqlArea = document.getElementById("edgeSqlArea");
+        if (!toggle || !sqlArea) return;
+        toggle.setAttribute("aria-expanded", String(expanded));
+        toggle.title = expanded ? "折叠 SQL 关联示例" : "展开 SQL 关联示例";
+        sqlArea.classList.toggle("edge-sql-collapsed", !expanded);
+    }
+
+    function setEdgeSqlCopyReady(ready) {
+        const copyButton = document.getElementById("edgeSqlCopy");
+        if (!copyButton) return;
+        copyButton.disabled = !ready;
+        if (!copyButton.classList.contains("success")) {
+            setIconContent(copyButton, "copy", "复制", { size: 12 });
+        }
+    }
+
+    async function copyRelationshipSql() {
+        const sqlContent = document.getElementById("edgeSqlContent");
+        const code = sqlContent.querySelector("pre code")?.textContent?.trim()
+            || sqlContent.querySelector("code")?.textContent?.trim()
+            || "";
+        if (!code) return;
+        try {
+            await navigator.clipboard.writeText(code);
+        } catch (_) {
+            const textarea = document.createElement("textarea");
+            textarea.value = code;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+        }
+        const copyButton = document.getElementById("edgeSqlCopy");
+        clearTimeout(edgeSqlCopyFeedbackTimer);
+        setIconContent(copyButton, "check", "已复制", { size: 12 });
+        copyButton.classList.add("success");
+        edgeSqlCopyFeedbackTimer = setTimeout(() => {
+            setIconContent(copyButton, "copy", "复制", { size: 12 });
+            copyButton.classList.remove("success");
+        }, 1600);
+    }
+
     async function refreshCurrentEdgeSql() {
         if (!currentEdgeInfo) return;
         const sqlToken = ++edgeSqlLoadToken;
         const edgeInfoAtRequest = currentEdgeInfo;
         const dialectAtRequest = currentSqlDialect;
         const sqlContent = document.getElementById("edgeSqlContent");
+        setEdgeSqlCopyReady(false);
         setEdgeSqlDialectBadge(dialectAtRequest);
         sqlContent.textContent = `正在读取 ${SQL_DIALECTS[dialectAtRequest].label} 物理关联…`;
         sqlContent.style.whiteSpace = "";
@@ -2512,9 +2561,11 @@
                 sqlContent,
                 wikiData.sql_content || `当前物理 Schema 无法生成 ${SQL_DIALECTS[dialectAtRequest].label} SQL 关联示例。`,
             );
+            setEdgeSqlCopyReady(Boolean(sqlContent.querySelector("code")));
         } catch (error) {
             if (sqlToken !== edgeSqlLoadToken || currentEdgeInfo !== edgeInfoAtRequest) return;
             sqlContent.textContent = `SQL 读取失败：${String(error.message || error)}`;
+            setEdgeSqlCopyReady(false);
         }
     }
 
@@ -2530,6 +2581,7 @@
         const metaEl = document.getElementById("edgePopupMeta");
         const plEl = document.getElementById("edgePopupPL");
         const sqlContent = document.getElementById("edgeSqlContent");
+        const sqlCopyButton = document.getElementById("edgeSqlCopy");
         const wikiArea = document.getElementById("edgeWikiArea");
         const wikiLoading = document.getElementById("edgeWikiLoading");
         const wikiContent = document.getElementById("edgeWikiContent");
@@ -2560,6 +2612,10 @@
 
         // SQL and relationship usage are two independent fields.
         const dialectAtOpen = currentSqlDialect;
+        setEdgeSqlExpanded(true);
+        clearTimeout(edgeSqlCopyFeedbackTimer);
+        sqlCopyButton.classList.remove("success");
+        setEdgeSqlCopyReady(false);
         setEdgeSqlDialectBadge(dialectAtOpen);
         sqlContent.textContent = `正在读取 ${SQL_DIALECTS[dialectAtOpen].label} 物理关联…`;
         sqlContent.style.whiteSpace = "";
@@ -2579,12 +2635,12 @@
         editBtn.style.display = "none";
 
         // Position popup near click, but keep within viewport
-        const popupW = 560;
-        const popupH = 590;
-        let left = Math.min(x + 12, window.innerWidth - popupW - 16);
-        let top = Math.min(y - 60, window.innerHeight - popupH - 16);
-        top = Math.max(60, top);
+        const popupW = Math.min(edgePopupWidth, window.innerWidth - 32);
+        const popupH = Math.min(900, window.innerHeight - 32);
+        let left = Math.max(16, Math.min(x - popupW * 0.65, window.innerWidth - popupW - 16));
+        let top = Math.max(16, Math.min(y - 60, window.innerHeight - popupH - 16));
 
+        popup.style.width = popupW + "px";
         popup.style.left = left + "px";
         popup.style.top = top + "px";
         popup.classList.remove("edge-popup-hidden");
@@ -2601,6 +2657,7 @@
                     sqlContent,
                     wikiData.sql_content || `当前物理 Schema 无法生成 ${SQL_DIALECTS[dialectAtOpen].label} SQL 关联示例。`,
                 );
+                setEdgeSqlCopyReady(Boolean(sqlContent.querySelector("code")));
             }
             wikiLoading.style.display = "none";
             if (wikiData.found && wikiData.content) {
@@ -2617,6 +2674,7 @@
         } catch (e) {
             if (loadToken !== edgeWikiLoadToken) return;
             sqlContent.textContent = `SQL 读取失败：${String(e.message || e)}`;
+            setEdgeSqlCopyReady(false);
             wikiLoading.style.display = "none";
             wikiEmpty.innerHTML = `
                 <span class="wiki-empty-icon">${AppIcons.svg("alert", { size: 26 })}</span>
@@ -2752,6 +2810,60 @@
         hideEdgePopup();
     });
 
+    document.getElementById("edgeSqlToggle").addEventListener("click", () => {
+        const toggle = document.getElementById("edgeSqlToggle");
+        setEdgeSqlExpanded(toggle.getAttribute("aria-expanded") !== "true");
+    });
+
+    document.getElementById("edgeSqlCopy").addEventListener("click", copyRelationshipSql);
+
+    // Resize only the popup width from its right edge; height stays fixed.
+    (function setupPopupWidthResize() {
+        const popup = document.getElementById("edgePopup");
+        const handle = document.getElementById("edgePopupResizeHandle");
+        let resizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        let popupLeft = 0;
+
+        function onStart(e) {
+            resizing = true;
+            const point = e.touches ? e.touches[0] : e;
+            const rect = popup.getBoundingClientRect();
+            startX = point.clientX;
+            startWidth = rect.width;
+            popupLeft = rect.left;
+            popup.classList.add("resizing");
+            e.stopPropagation();
+            e.preventDefault();
+        }
+
+        function onMove(e) {
+            if (!resizing) return;
+            const point = e.touches ? e.touches[0] : e;
+            const viewportLimit = Math.max(0, window.innerWidth - 32);
+            const minWidth = Math.min(440, viewportLimit);
+            const maxWidth = Math.max(minWidth, window.innerWidth - popupLeft - 16);
+            const nextWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + point.clientX - startX));
+            edgePopupWidth = nextWidth;
+            popup.style.width = nextWidth + "px";
+            e.preventDefault();
+        }
+
+        function onEnd() {
+            if (!resizing) return;
+            resizing = false;
+            popup.classList.remove("resizing");
+        }
+
+        handle.addEventListener("mousedown", onStart);
+        handle.addEventListener("touchstart", onStart, { passive: false });
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("touchmove", onMove, { passive: false });
+        document.addEventListener("mouseup", onEnd);
+        document.addEventListener("touchend", onEnd);
+    })();
+
     // ── Make the popup draggable (Edge compat + user repositioning) ──
     (function setupPopupDrag() {
         const popup = document.getElementById("edgePopup");
@@ -2761,7 +2873,7 @@
         function onStart(e) {
             // Only start drag from title/meta area, not from buttons or wiki area
             const target = e.target;
-            if (target.closest("button") || target.closest("textarea") || target.closest(".edge-popup-actions") || target.closest(".edge-wiki-area") || target.closest(".edge-sql-area")) return;
+            if (target.closest("button") || target.closest("textarea") || target.closest(".edge-popup-resize-handle") || target.closest(".edge-popup-actions") || target.closest(".edge-wiki-area") || target.closest(".edge-sql-area")) return;
 
             dragging = true;
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
