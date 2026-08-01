@@ -7,7 +7,7 @@
     const BUCKETS = { property_description: "propertyDescriptions", node_description: "nodeDescriptions" };
     const UI = {
         "zh-CN": {
-            settings: "语言与翻译设置", close: "关闭", language: "界面语言", languageHint: "切换后当前页面立即生效。",
+            settings: "平台设置", close: "关闭", language: "界面语言", languageHint: "切换后当前页面立即生效。",
             chinese: "简体中文", english: "English", displayMode: "属性显示方式", displayHint: "节点名和关系名始终显示技术原名；此设置仅控制属性显示。",
             translated: "仅显示当前语言", bilingual: "双语 + 技术原名", original: "仅显示技术原名",
             general: "语言与显示", nodeContent: "节点与属性描述", selectNode: "搜索并选择节点", nodeSearch: "搜索节点名称或描述…",
@@ -16,9 +16,9 @@
             search: "搜索名称、所属类或翻译…", originalName: "技术原名", chineseTranslation: "中文描述",
             englishTranslation: "英文描述", save: "保存", saved: "已保存并即时更新", saving: "保存中…",
             reset: "恢复默认", empty: "没有匹配的内容", loadMore: "加载更多", customized: "已自定义",
-            catalogHint: "翻译保存在平台配置中；保存后所有打开的页面会自动更新，无需重启服务。",
+            catalogHint: "统一管理界面语言、节点与属性描述翻译及行业配置；修改后即时生效。",
             searchPlaceholder: "搜索类名、属性…", classes: "类", attributes: "属性", relations: "关系",
-            queryBuilder: "查询构建", industrySettings: "行业设置", graphSettings: "语言与翻译设置",
+            queryBuilder: "查询构建", industrySettings: "行业设置", graphSettings: "平台设置",
             moduleLegend: "模块图例", searchModule: "搜索模块…", nodeDetail: "节点详情",
             propertyList: "属性列表", relationship: "关系", addContext: "加入上下文", off: "关闭",
             exportGraph: "导出图谱", fitCanvas: "适配画布", sqlAssistant: "SQL 助手",
@@ -34,7 +34,7 @@
             industryTip3: "3. 右侧 AI 提示词提供 MES 行业上下文，可用于快速生成规范的本体关系 Wiki。",
         },
         "en-US": {
-            settings: "Language & Translation Settings", close: "Close", language: "Interface language", languageHint: "Changes take effect on this page immediately.",
+            settings: "Platform Settings", close: "Close", language: "Interface language", languageHint: "Changes take effect on this page immediately.",
             chinese: "简体中文", english: "English", displayMode: "Property display", displayHint: "Node and relationship names always use technical names. This setting only controls properties.",
             translated: "Current language only", bilingual: "Bilingual + technical name", original: "Technical name only",
             general: "Language & Display", nodeContent: "Node & Property Descriptions", selectNode: "Search and select a node", nodeSearch: "Search node name or description…",
@@ -43,9 +43,9 @@
             search: "Search name, owner, or translation…", originalName: "Technical name", chineseTranslation: "Chinese description",
             englishTranslation: "English description", save: "Save", saved: "Saved and updated instantly", saving: "Saving…",
             reset: "Restore default", empty: "No matching content", loadMore: "Load more", customized: "Customized",
-            catalogHint: "Translations are stored in the platform configuration. Open pages update automatically after saving; no service restart is required.",
+            catalogHint: "Manage interface language, node and property descriptions, and industry configuration in one place. Changes take effect immediately.",
             searchPlaceholder: "Search classes or properties…", classes: "Classes", attributes: "Properties", relations: "Relations",
-            queryBuilder: "Query Builder", industrySettings: "Industry Settings", graphSettings: "Language & Translation Settings",
+            queryBuilder: "Query Builder", industrySettings: "Industry Settings", graphSettings: "Platform Settings",
             moduleLegend: "Module Legend", searchModule: "Search modules…", nodeDetail: "Node Details",
             propertyList: "Properties", relationship: "Relationships", addContext: "Add Context", off: "Off",
             exportGraph: "Export Graph", fitCanvas: "Fit Canvas", sqlAssistant: "SQL Assistant",
@@ -249,6 +249,7 @@
                     <nav class="i18n-settings-nav">
                         <button type="button" class="active" data-i18n-section="general"></button>
                         <button type="button" data-i18n-section="content"></button>
+                        <button type="button" class="i18n-settings-link" data-settings-link="industry"></button>
                     </nav>
                     <main class="i18n-settings-content">
                         <section class="i18n-general-section">
@@ -291,6 +292,15 @@
         modal.querySelectorAll("[data-i18n-section]").forEach((button) => {
             button.addEventListener("click", () => selectSettingsSection(button.dataset.i18nSection));
         });
+        modal.querySelector("[data-settings-link='industry']").addEventListener("click", () => {
+            const query = new URLSearchParams(window.location.search);
+            const productLine = query.get("product_line")
+                || localStorage.getItem("selected_product_line")
+                || "general";
+            const target = new URL("/static/industry.html", window.location.origin);
+            target.searchParams.set("product_line", productLine);
+            window.location.assign(target.href);
+        });
         modal.querySelector("#i18nNodeSearch").addEventListener("input", () => {
             clearTimeout(catalogSearchTimer);
             catalogSearchTimer = setTimeout(() => loadNodeCatalog(true), 250);
@@ -307,6 +317,7 @@
         modal.querySelector(".i18n-settings-close").title = t("close");
         const labels = { general: "general", content: "nodeContent" };
         modal.querySelectorAll("[data-i18n-section]").forEach((button) => { button.textContent = t(labels[button.dataset.i18nSection]); });
+        modal.querySelector("[data-settings-link='industry']").textContent = t("industrySettings");
         modal.querySelector("label[for='i18nLanguageSelect']").textContent = t("language");
         modal.querySelector(".i18n-language-hint").textContent = t("languageHint");
         modal.querySelector("#i18nNodeSearch").placeholder = t("nodeSearch");

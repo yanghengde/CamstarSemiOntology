@@ -123,6 +123,21 @@ html, body {
 .i18n-settings-nav button:hover { color: var(--text-primary); background: rgba(0, 255, 185, .045); }
 .i18n-settings-nav button.active { color: var(--si-green); border-color: rgba(0, 255, 185, .25); background: rgba(0, 255, 185, .09); }
 
+.i18n-settings-nav .i18n-settings-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    border-top-color: rgba(255, 255, 255, .08);
+}
+
+.i18n-settings-nav .i18n-settings-link::after {
+    content: "›";
+    color: var(--text-muted);
+    font-size: 17px;
+    line-height: 1;
+}
+
 .i18n-settings-content { min-width: 0; flex: 1; overflow: hidden; padding: 22px; }
 .i18n-general-section { max-width: 660px; }
 .i18n-setting-card {
