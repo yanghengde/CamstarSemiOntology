@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import re
+import threading
+import time
 from functools import lru_cache
 from pathlib import Path
 
@@ -15,6 +17,8 @@ from sqlalchemy.engine import URL
 DATABASES = {"oracle", "sqlserver"}
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env", override=False)
+_catalog_cache: dict[str, tuple[float, dict[str, dict[str, str]]]] = {}
+_catalog_cache_lock = threading.RLock()
 
 
 def _normalize_database(database: str) -> str:
@@ -93,23 +97,29 @@ def _table(database: str, schema: str, name: str) -> str:
 def load_cdo_description_catalog(database: str) -> dict[str, dict[str, str]]:
     """Return all CDO English descriptions keyed by case-insensitive CDOName."""
     database = _normalize_database(database)
-    schema = designer_schema(database)
-    definition = _table(database, schema, "CDODefinition")
-    query = text(f'''SELECT CDODefID AS "CDODefID", CDOName AS "CDOName", CDODescription AS "CDODescription"
-                     FROM {definition}''')
-    with source_engine(database).connect() as connection:
-        rows = connection.execute(query).mappings().all()
-    result = {}
-    for row in rows:
-        name = str(row.get("CDOName") or "").strip()
-        description = " ".join(str(row.get("CDODescription") or "").replace("\r", " ").replace("\n", " ").split())
-        if name:
-            result[name.casefold()] = {
-                "cdoDefId": str(row.get("CDODefID") or ""),
-                "cdoName": name,
-                "description": description[:5000],
-            }
-    return result
+    ttl = max(0, int(os.getenv("DESIGNER_CATALOG_CACHE_SECONDS", "300")))
+    with _catalog_cache_lock:
+        cached = _catalog_cache.get(database)
+        if cached and time.monotonic() - cached[0] < ttl:
+            return cached[1]
+        schema = designer_schema(database)
+        definition = _table(database, schema, "CDODefinition")
+        query = text(f'''SELECT CDODefID AS "CDODefID", CDOName AS "CDOName", CDODescription AS "CDODescription"
+                         FROM {definition}''')
+        with source_engine(database).connect() as connection:
+            rows = connection.execute(query).mappings().all()
+        result = {}
+        for row in rows:
+            name = str(row.get("CDOName") or "").strip()
+            description = " ".join(str(row.get("CDODescription") or "").replace("\r", " ").replace("\n", " ").split())
+            if name:
+                result[name.casefold()] = {
+                    "cdoDefId": str(row.get("CDODefID") or ""),
+                    "cdoName": name,
+                    "description": description[:5000],
+                }
+        _catalog_cache[database] = (time.monotonic(), result)
+        return result
 
 
 def get_cdo_metadata(database: str, class_name: str) -> dict:

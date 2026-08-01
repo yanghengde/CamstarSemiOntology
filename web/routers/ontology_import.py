@@ -15,9 +15,10 @@ import re
 import tempfile
 import threading
 import time
+import urllib.error
+import urllib.request
 import uuid
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,7 @@ SESSION_TTL_SECONDS = 60 * 60
 
 _sessions: dict[str, dict[str, Any]] = {}
 _session_lock = threading.RLock()
+_cache_lock = threading.RLock()
 
 _TECHNICAL_PATTERNS = (
     (re.compile(r"(?:Changes|Maint|Inquiry|Service)$", re.I), "维护、查询或服务型 CDO"),
@@ -126,13 +128,14 @@ def _designer_description_for(class_name: str, catalog: dict[str, dict[str, str]
 
 def _load_description_cache() -> dict[str, str]:
     cache: dict[str, str] = {}
-    if DESCRIPTION_TRANSLATION_CACHE.exists():
-        try:
-            payload = json.loads(DESCRIPTION_TRANSLATION_CACHE.read_text(encoding="utf-8"))
-            if isinstance(payload, dict):
-                cache.update({str(key): str(value) for key, value in payload.items() if key and value})
-        except (OSError, json.JSONDecodeError):
-            pass
+    with _cache_lock:
+        if DESCRIPTION_TRANSLATION_CACHE.exists():
+            try:
+                payload = json.loads(DESCRIPTION_TRANSLATION_CACHE.read_text(encoding="utf-8"))
+                if isinstance(payload, dict):
+                    cache.update({str(key): str(value) for key, value in payload.items() if key and value})
+            except (OSError, json.JSONDecodeError):
+                pass
     try:
         from web.routers.i18n import _load_store
 
@@ -147,48 +150,221 @@ def _load_description_cache() -> dict[str, str]:
 
 
 def _save_description_cache(cache: dict[str, str]) -> None:
-    DESCRIPTION_TRANSLATION_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    temporary = DESCRIPTION_TRANSLATION_CACHE.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(cache, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(DESCRIPTION_TRANSLATION_CACHE)
+    with _cache_lock:
+        DESCRIPTION_TRANSLATION_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        current: dict[str, str] = {}
+        if DESCRIPTION_TRANSLATION_CACHE.exists():
+            try:
+                payload = json.loads(DESCRIPTION_TRANSLATION_CACHE.read_text(encoding="utf-8"))
+                if isinstance(payload, dict):
+                    current.update({str(key): str(value) for key, value in payload.items() if key and value})
+            except (OSError, json.JSONDecodeError):
+                pass
+        current.update(cache)
+        temporary = DESCRIPTION_TRANSLATION_CACHE.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(DESCRIPTION_TRANSLATION_CACHE)
 
 
-def _translate_candidate_descriptions(descriptions: list[str]) -> tuple[dict[str, str], str]:
-    """Translate what is not cached; return English unchanged when LLM is unavailable."""
-    unique = list(dict.fromkeys(value.strip() for value in descriptions if value.strip()))
-    cache = _load_description_cache()
-    pending = [value for value in unique if value not in cache]
-    if not pending:
-        return {value: cache[value] for value in unique}, ""
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        return {value: cache[value] for value in unique if value in cache}, "未配置大模型，中文描述暂时显示数据库英文原文。"
-    try:
+def _configured_translation_provider() -> str:
+    """Choose a fast translation service first and keep the LLM as fallback."""
+    requested = os.getenv("IMPORT_TRANSLATION_PROVIDER", "auto").strip().lower()
+    if requested in {"none", "disabled", "off"}:
+        return "none"
+    if requested in {"api", "translation_api"}:
+        return "api" if os.getenv("TRANSLATION_API_URL", "").strip() else "none"
+    if requested in {"llm", "deepseek"}:
+        return "llm" if os.getenv("DEEPSEEK_API_KEY", "").strip() else "none"
+    if os.getenv("TRANSLATION_API_URL", "").strip():
+        return "api"
+    if os.getenv("DEEPSEEK_API_KEY", "").strip():
+        return "llm"
+    return "none"
+
+
+def _build_batch_translator(provider: str):
+    if provider == "api":
+        endpoint = os.getenv("TRANSLATION_API_URL", "").strip()
+        api_key = os.getenv("TRANSLATION_API_KEY", "").strip()
+
+        def translate_with_api(batch: list[str]) -> list[str]:
+            body: dict[str, Any] = {"q": batch, "source": "en", "target": "zh", "format": "text"}
+            if api_key:
+                body["api_key"] = api_key
+            request = urllib.request.Request(
+                endpoint,
+                data=json.dumps(body).encode("utf-8"),
+                headers={"Content-Type": "application/json", "Accept": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=float(os.getenv("TRANSLATION_API_TIMEOUT", "30"))) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            translated = payload.get("translatedText") if isinstance(payload, dict) else None
+            if isinstance(translated, str):
+                translated = [translated]
+            if not isinstance(translated, list) or len(translated) != len(batch):
+                raise RuntimeError("专用翻译服务返回格式不正确")
+            return [str(value).strip() for value in translated]
+
+        return translate_with_api, 80
+
+    if provider == "llm":
         from openai import OpenAI
         from scripts.build_designer_display_translations import translate_batch
 
         client = OpenAI(
-            api_key=api_key,
+            api_key=os.getenv("DEEPSEEK_API_KEY"),
             base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
             timeout=float(os.getenv("LLM_TIMEOUT", "120")),
         )
         model = os.getenv("LLM_MODEL", "deepseek-chat")
-        batches = [pending[index:index + 35] for index in range(0, len(pending), 35)]
-        with ThreadPoolExecutor(max_workers=min(4, max(1, len(batches)))) as executor:
-            futures = {executor.submit(translate_batch, client, model, "en_to_zh", batch): batch for batch in batches}
-            for future in as_completed(futures):
-                batch = futures[future]
-                translated = future.result()
-                cache.update(zip(batch, translated))
-        _save_description_cache(cache)
-        return {value: cache[value] for value in unique}, ""
+
+        def translate_with_llm(batch: list[str]) -> list[str]:
+            return translate_batch(client, model, "en_to_zh", batch)
+
+        return translate_with_llm, 35
+
+    raise RuntimeError("未配置可用的翻译服务")
+
+
+def _translation_public_state(session: dict[str, Any]) -> dict[str, Any]:
+    state = session["translation"]
+    return {
+        "status": state["status"],
+        "metadataStatus": state["metadataStatus"],
+        "provider": state["provider"],
+        "total": state["total"],
+        "completed": state["completed"],
+        "warning": state.get("warning", ""),
+    }
+
+
+def _run_description_job(session_id: str) -> None:
+    with _session_lock:
+        session = _sessions.get(session_id)
+        if not session:
+            return
+        state = session["translation"]
+        if state["metadataStatus"] == "loading":
+            return
+        state["metadataStatus"] = "loading"
+        state["warning"] = ""
+        database = session["database"]
+    try:
+        from web.designer_metadata import load_cdo_description_catalog
+
+        catalog = load_cdo_description_catalog(database)
+        cache = _load_description_cache()
+        with _session_lock:
+            session = _sessions.get(session_id)
+            if not session:
+                return
+            descriptions: list[str] = []
+            for class_name, candidate in session["candidates"].items():
+                english = _designer_description_for(class_name, catalog)
+                candidate["descriptionEn"] = english
+                candidate["descriptionZh"] = cache.get(english, "") if english else ""
+                if english:
+                    descriptions.append(english)
+            unique = list(dict.fromkeys(descriptions))
+            pending = [value for value in unique if value not in cache]
+            provider = _configured_translation_provider()
+            job = session["translation"]
+            job.update({
+                "metadataStatus": "completed",
+                "provider": provider,
+                "total": len(unique),
+                "completed": len(unique) - len(pending),
+                "pending": pending,
+                "status": (
+                    "completed" if not pending
+                    else "unavailable" if provider == "none"
+                    else "pending"
+                ),
+                "warning": (
+                    "未配置可用的翻译服务，中文界面暂时显示数据库英文原文。"
+                    if pending and provider == "none" else ""
+                ),
+            })
+        if pending and provider != "none":
+            _run_translation_job(session_id)
     except Exception as exc:
-        if cache:
-            _save_description_cache(cache)
-        return (
-            {value: cache[value] for value in unique if value in cache},
-            f"大模型或网络暂时不可用，未翻译的描述显示英文原文：{exc}",
-        )
+        label = "Oracle" if database == "oracle" else "SQL Server"
+        with _session_lock:
+            session = _sessions.get(session_id)
+            if session:
+                session["translation"].update({
+                    "metadataStatus": "failed",
+                    "status": "unavailable",
+                    "warning": f"无法连接 {label} 获取 CDO 描述，候选结构仍可审核：{exc}",
+                })
+
+
+def _start_description_job(session_id: str) -> None:
+    threading.Thread(
+        target=_run_description_job,
+        args=(session_id,),
+        name=f"ontology-descriptions-{session_id[:8]}",
+        daemon=True,
+    ).start()
+
+
+def _run_translation_job(session_id: str) -> None:
+    with _session_lock:
+        session = _sessions.get(session_id)
+        if not session:
+            return
+        state = session["translation"]
+        if state["status"] == "running":
+            return
+        provider = state["provider"]
+        pending = list(state["pending"])
+        state["status"] = "running"
+        state["warning"] = ""
+    try:
+        translator, batch_size = _build_batch_translator(provider)
+        cache = _load_description_cache()
+        for index in range(0, len(pending), batch_size):
+            batch = pending[index:index + batch_size]
+            translated = translator(batch)
+            if len(translated) != len(batch):
+                raise RuntimeError("翻译结果数量与原文不一致")
+            updates = {source: target for source, target in zip(batch, translated) if target}
+            cache.update(updates)
+            _save_description_cache(updates)
+            with _session_lock:
+                session = _sessions.get(session_id)
+                if not session:
+                    continue
+                for candidate in session["candidates"].values():
+                    source = candidate.get("descriptionEn", "")
+                    if source in updates:
+                        candidate["descriptionZh"] = updates[source]
+                job = session["translation"]
+                job["completed"] += len(updates)
+                job["pending"] = [value for value in job["pending"] if value not in updates]
+        with _session_lock:
+            session = _sessions.get(session_id)
+            if session:
+                job = session["translation"]
+                job["status"] = "completed" if not job["pending"] else "failed"
+                if job["pending"]:
+                    job["warning"] = "部分描述未能翻译，暂时显示数据库英文原文。"
+    except Exception as exc:
+        with _session_lock:
+            session = _sessions.get(session_id)
+            if session:
+                session["translation"]["status"] = "failed"
+                session["translation"]["warning"] = f"翻译服务暂时不可用，未完成内容显示英文原文：{exc}"
+
+
+def _start_translation_job(session_id: str) -> None:
+    threading.Thread(
+        target=_run_translation_job,
+        args=(session_id,),
+        name=f"ontology-translation-{session_id[:8]}",
+        daemon=True,
+    ).start()
 
 
 @router.post("/analyze")
@@ -232,24 +408,6 @@ def analyze_import(
         raise HTTPException(status_code=422, detail=f"字段 CSV 引用了表 CSV 中不存在的 CDO：{sample}")
 
     reviewed = _reviewed_class_names()
-    description_catalog: dict[str, dict[str, str]] = {}
-    description_warning = ""
-    try:
-        from web.designer_metadata import load_cdo_description_catalog
-
-        description_catalog = load_cdo_description_catalog(database)
-    except Exception as exc:
-        label = "Oracle" if database == "oracle" else "SQL Server"
-        description_warning = f"无法连接 {label} 获取 CDO 描述，候选结构仍可审核：{exc}"
-    english_descriptions = {
-        name: _designer_description_for(name, description_catalog)
-        for name in table_by_name
-    }
-    translations: dict[str, str] = {}
-    if description_catalog:
-        translations, translation_warning = _translate_candidate_descriptions(list(english_descriptions.values()))
-        if translation_warning:
-            description_warning = "；".join(value for value in (description_warning, translation_warning) if value)
     candidates = []
     for name, table in sorted(table_by_name.items(), key=lambda item: item[0].casefold()):
         canonical = canonical_physical_fields(fields_by_class.get(name, []), name)
@@ -268,11 +426,20 @@ def analyze_import(
             "status": status,
             "reason": reason,
             "selected": selected,
-            "descriptionEn": english_descriptions.get(name, ""),
-            "descriptionZh": translations.get(english_descriptions.get(name, ""), ""),
+            "descriptionEn": "",
+            "descriptionZh": "",
         })
 
     session_id = uuid.uuid4().hex
+    translation_state = {
+        "status": "waiting",
+        "metadataStatus": "pending",
+        "provider": _configured_translation_provider(),
+        "total": 0,
+        "completed": 0,
+        "pending": [],
+        "warning": "",
+    }
     with _session_lock:
         _purge_expired_sessions()
         _sessions[session_id] = {
@@ -282,6 +449,7 @@ def analyze_import(
             "candidates": {item["className"]: item for item in candidates},
             "reviewed": reviewed,
             "database": database,
+            "translation": translation_state,
         }
     summary = {
         "tables": len(table_by_name),
@@ -293,13 +461,82 @@ def analyze_import(
         "described": sum(bool(item["descriptionEn"]) for item in candidates),
         "translated": sum(bool(item["descriptionZh"]) for item in candidates),
     }
-    return {
+    result = {
         "importId": session_id,
         "database": database,
         "summary": summary,
-        "descriptionWarning": description_warning,
+        "descriptionWarning": "",
+        "translation": _translation_public_state(_sessions[session_id]),
         "candidates": candidates,
     }
+    _start_description_job(session_id)
+    return result
+
+
+@router.get("/translation/{import_id}")
+def translation_status(import_id: str):
+    with _session_lock:
+        _purge_expired_sessions()
+        session = _sessions.get(import_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="导入分析已过期，请重新选择 CSV")
+        translations = {
+            class_name: candidate.get("descriptionZh", "")
+            for class_name, candidate in session["candidates"].items()
+            if candidate.get("descriptionZh")
+        }
+        descriptions = {
+            class_name: candidate.get("descriptionEn", "")
+            for class_name, candidate in session["candidates"].items()
+            if candidate.get("descriptionEn")
+        }
+        described_count = sum(bool(item.get("descriptionEn")) for item in session["candidates"].values())
+        translated_count = sum(bool(item.get("descriptionZh")) for item in session["candidates"].values())
+        state = _translation_public_state(session)
+    return {
+        "translation": state,
+        "described": described_count,
+        "translated": translated_count,
+        "descriptions": descriptions,
+        "translations": translations,
+    }
+
+
+@router.post("/translation/{import_id}/retry")
+def retry_translation(import_id: str):
+    with _session_lock:
+        _purge_expired_sessions()
+        session = _sessions.get(import_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="导入分析已过期，请重新选择 CSV")
+        job = session["translation"]
+        if job["status"] == "running" or job["metadataStatus"] in {"pending", "loading"}:
+            return {"translation": _translation_public_state(session)}
+        retry_descriptions = job["metadataStatus"] == "failed"
+        if retry_descriptions:
+            job.update({"metadataStatus": "pending", "status": "waiting", "warning": ""})
+            state = _translation_public_state(session)
+        else:
+            cache = _load_description_cache()
+            descriptions = list(dict.fromkeys(
+                item.get("descriptionEn", "") for item in session["candidates"].values() if item.get("descriptionEn")
+            ))
+            pending = [value for value in descriptions if value not in cache]
+            provider = _configured_translation_provider()
+            job.update({
+                "status": "completed" if not pending else "unavailable" if provider == "none" else "pending",
+                "provider": provider,
+                "total": len(descriptions),
+                "completed": len(descriptions) - len(pending),
+                "pending": pending,
+                "warning": "" if provider != "none" or not pending else "未配置可用的翻译服务，中文界面暂时显示数据库英文原文。",
+            })
+            state = _translation_public_state(session)
+    if retry_descriptions:
+        _start_description_job(import_id)
+    elif state["status"] == "pending":
+        _start_translation_job(import_id)
+    return {"translation": state}
 
 
 def _property_definition(field: dict[str, str], class_name: str) -> dict[str, Any]:

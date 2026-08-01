@@ -28,9 +28,11 @@ def test_csv_analysis_never_auto_selects_new_cdos(monkeypatch):
         "product": {"description": "A product."},
         "newbusinessobject": {"description": "A new business object."},
     })
-    monkeypatch.setattr(ontology_import, "_translate_candidate_descriptions", lambda values: (
-        {value: f"中文：{value}" for value in values if value}, "",
-    ))
+    monkeypatch.setattr(ontology_import, "_load_description_cache", lambda: {
+        "A product.": "中文：A product.",
+        "A new business object.": "中文：A new business object.",
+    })
+    monkeypatch.setattr(ontology_import, "_start_description_job", lambda import_id: None)
     ontology_import._sessions.clear()
 
     result = ontology_import.analyze_import(upload("tables.csv", TABLES), upload("fields.csv", FIELDS), "sqlserver")
@@ -42,8 +44,8 @@ def test_csv_analysis_never_auto_selects_new_cdos(monkeypatch):
     assert candidates["NewBusinessObject"]["selected"] is False
     assert candidates["AuditHistoryDetail"]["status"] == "excluded"
     assert candidates["AuditHistoryDetail"]["selected"] is False
-    assert candidates["Product"]["descriptionEn"] == "A product."
-    assert candidates["Product"]["descriptionZh"] == "中文：A product."
+    assert candidates["Product"]["descriptionEn"] == ""
+    assert candidates["Product"]["descriptionZh"] == ""
     assert result["database"] == "sqlserver"
     assert result["summary"] == {
         "tables": 3,
@@ -52,14 +54,20 @@ def test_csv_analysis_never_auto_selects_new_cdos(monkeypatch):
         "review": 1,
         "excluded": 1,
         "defaultSelected": 1,
-        "described": 2,
-        "translated": 2,
+        "described": 0,
+        "translated": 0,
     }
+    ontology_import._run_description_job(result["importId"])
+    descriptions = ontology_import.translation_status(result["importId"])
+    assert descriptions["descriptions"]["Product"] == "A product."
+    assert descriptions["translations"]["Product"] == "中文：A product."
+    assert descriptions["translation"]["status"] == "completed"
 
 
 def test_apply_import_writes_only_explicitly_selected_objects(monkeypatch):
     monkeypatch.setattr(ontology_import, "_reviewed_class_names", lambda: {"Product"})
     monkeypatch.setattr("web.designer_metadata.load_cdo_description_catalog", lambda database: {})
+    monkeypatch.setattr(ontology_import, "_start_description_job", lambda import_id: None)
     ontology_import._sessions.clear()
     analysis = ontology_import.analyze_import(upload("tables.csv", TABLES), upload("fields.csv", FIELDS), "sqlserver")
     calls = []
@@ -96,14 +104,12 @@ def test_apply_import_writes_only_explicitly_selected_objects(monkeypatch):
     assert calls[2][0]["toClass"] == "Product"
 
 
-def test_description_translation_falls_back_to_english_without_llm(monkeypatch, tmp_path):
-    monkeypatch.setattr(ontology_import, "DESCRIPTION_TRANSLATION_CACHE", tmp_path / "cache.json")
+def test_description_translation_falls_back_to_english_without_provider(monkeypatch):
+    monkeypatch.setenv("IMPORT_TRANSLATION_PROVIDER", "auto")
+    monkeypatch.delenv("TRANSLATION_API_URL", raising=False)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
 
-    translations, warning = ontology_import._translate_candidate_descriptions(["English CDO description."])
-
-    assert translations == {}
-    assert "英文原文" in warning
+    assert ontology_import._configured_translation_provider() == "none"
 
 
 def test_a_prefix_uses_designer_base_description():
@@ -114,10 +120,62 @@ def test_a_prefix_uses_designer_base_description():
 def test_database_description_failure_does_not_block_csv_review(monkeypatch):
     monkeypatch.setattr(ontology_import, "_reviewed_class_names", lambda: {"Product"})
     monkeypatch.setattr("web.designer_metadata.load_cdo_description_catalog", lambda database: (_ for _ in ()).throw(RuntimeError("offline")))
+    monkeypatch.setattr(ontology_import, "_start_description_job", lambda import_id: None)
 
     result = ontology_import.analyze_import(upload("tables.csv", TABLES), upload("fields.csv", FIELDS), "oracle")
+    ontology_import._run_description_job(result["importId"])
+    status = ontology_import.translation_status(result["importId"])
 
     assert result["database"] == "oracle"
     assert result["summary"]["tables"] == 3
-    assert "Oracle" in result["descriptionWarning"]
+    assert "Oracle" in status["translation"]["warning"]
+    assert status["translation"]["metadataStatus"] == "failed"
     assert all(not item["descriptionEn"] for item in result["candidates"])
+
+
+def test_analysis_returns_before_uncached_translation(monkeypatch):
+    monkeypatch.setattr(ontology_import, "_reviewed_class_names", lambda: {"Product"})
+    monkeypatch.setattr("web.designer_metadata.load_cdo_description_catalog", lambda database: {
+        "product": {"description": "A product."},
+    })
+    monkeypatch.setattr(ontology_import, "_configured_translation_provider", lambda: "api")
+    started = []
+    monkeypatch.setattr(ontology_import, "_start_description_job", lambda import_id: started.append(import_id))
+    ontology_import._sessions.clear()
+
+    result = ontology_import.analyze_import(upload("tables.csv", TABLES), upload("fields.csv", FIELDS), "sqlserver")
+
+    assert result["translation"] == {
+        "status": "waiting", "metadataStatus": "pending", "provider": "api", "total": 0, "completed": 0, "warning": "",
+    }
+    product = next(item for item in result["candidates"] if item["className"] == "Product")
+    assert product["descriptionZh"] == ""
+    assert started == [result["importId"]]
+
+
+def test_background_translation_updates_progress_and_candidates(monkeypatch):
+    session_id = "background-job"
+    ontology_import._sessions.clear()
+    ontology_import._sessions[session_id] = {
+        "createdAt": 1e20,
+        "candidates": {
+            "Product": {"descriptionEn": "A product.", "descriptionZh": ""},
+            "Factory": {"descriptionEn": "A factory.", "descriptionZh": ""},
+        },
+        "translation": {
+            "status": "pending", "metadataStatus": "completed", "provider": "api", "total": 2, "completed": 0,
+            "pending": ["A product.", "A factory."], "warning": "",
+        },
+    }
+    monkeypatch.setattr(ontology_import, "_build_batch_translator", lambda provider: (
+        lambda batch: [f"中文：{value}" for value in batch], 1,
+    ))
+    monkeypatch.setattr(ontology_import, "_load_description_cache", lambda: {})
+    monkeypatch.setattr(ontology_import, "_save_description_cache", lambda cache: None)
+
+    ontology_import._run_translation_job(session_id)
+    result = ontology_import.translation_status(session_id)
+
+    assert result["translation"]["status"] == "completed"
+    assert result["translation"]["completed"] == 2
+    assert result["translations"] == {"Product": "中文：A product.", "Factory": "中文：A factory."}

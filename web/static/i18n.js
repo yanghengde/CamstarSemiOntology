@@ -22,6 +22,10 @@
             graphImport: "图谱导入", importTitle: "导入物理结构", importHelp: "分别选择表定义 CSV 和字段定义 CSV。现有节点作为已审核业务对象；新 CDO 默认不导入，必须人工勾选确认。",
             databaseType: "描述来源数据库", descriptionColumn: "描述",
             tableCsv: "表定义 CSV", fieldCsv: "字段定义 CSV", analyzeImport: "分析文件", analyzing: "分析中…",
+            translationPending: "中文翻译等待处理", translationRunning: "中文翻译正在后台处理", translationCompleted: "中文翻译已完成",
+            translationUnavailable: "中文翻译暂不可用，当前显示英文原文", translationFailed: "部分翻译未完成，当前显示英文原文",
+            translationProgress: "已完成", retryTranslation: "重试未完成翻译", retryingTranslation: "正在重试…",
+            descriptionLoading: "正在后台读取数据库描述，候选结构已可审核", descriptionFailed: "数据库描述读取失败，候选结构仍可审核",
             importSearch: "搜索候选 CDO…", allStatuses: "全部状态", approvedStatus: "已审核", reviewStatus: "待审核", excludedStatus: "建议排除",
             importApply: "导入已选业务对象", importing: "导入中…", importSelected: "已选择", importConfirm: "确定导入已选择的业务对象吗？本次操作只增量合并，不会删除现有节点。",
             syncDescriptions: "同步当前节点", syncingDescriptions: "同步中…", syncDone: "描述同步完成",
@@ -55,6 +59,10 @@
             graphImport: "Graph Import", importTitle: "Import Physical Structure", importHelp: "Select the table and field definition CSV files. Existing nodes are reviewed business objects; new CDOs stay unchecked until manually approved.",
             databaseType: "Description database", descriptionColumn: "Description",
             tableCsv: "Table CSV", fieldCsv: "Field CSV", analyzeImport: "Analyze Files", analyzing: "Analyzing…",
+            translationPending: "Chinese translation is queued", translationRunning: "Chinese translation is running in the background", translationCompleted: "Chinese translation completed",
+            translationUnavailable: "Chinese translation is unavailable; showing English", translationFailed: "Some translations are incomplete; showing English",
+            translationProgress: "Completed", retryTranslation: "Retry Incomplete Translations", retryingTranslation: "Retrying…",
+            descriptionLoading: "Loading database descriptions in the background; candidates are ready for review", descriptionFailed: "Database descriptions could not be loaded; candidates remain available",
             importSearch: "Search candidate CDOs…", allStatuses: "All statuses", approvedStatus: "Reviewed", reviewStatus: "Review", excludedStatus: "Suggested exclusion",
             importApply: "Import Selected Objects", importing: "Importing…", importSelected: "Selected", importConfirm: "Import the selected business objects? This incrementally merges data and does not delete existing nodes.",
             syncDescriptions: "Sync Current Node", syncingDescriptions: "Syncing…", syncDone: "Descriptions synchronized",
@@ -128,6 +136,7 @@
     let catalogTotal = 0;
     let catalogSearchTimer = null;
     let importAnalysis = null;
+    let importTranslationTimer = null;
     const exactTextSources = new WeakMap();
 
     function t(key) {
@@ -306,6 +315,10 @@
                             </div>
                             <div id="i18nImportResult" class="i18n-import-result" hidden>
                                 <div id="i18nImportWarning" class="i18n-import-warning" hidden></div>
+                                <div id="i18nImportTranslation" class="i18n-import-translation" hidden>
+                                    <div><span id="i18nImportTranslationText"></span><strong id="i18nImportTranslationProgress"></strong></div>
+                                    <button type="button" id="i18nRetryTranslation" class="i18n-secondary-action"></button>
+                                </div>
                                 <div id="i18nImportSummary" class="i18n-import-summary"></div>
                                 <div class="i18n-import-toolbar">
                                     <input id="i18nImportSearch" type="search" class="i18n-form-control" />
@@ -344,6 +357,7 @@
         modal.querySelector("#i18nLoadMore").addEventListener("click", () => loadNodeCatalog(false));
         modal.querySelector("#i18nAnalyzeImport").addEventListener("click", analyzeGraphImport);
         modal.querySelector("#i18nApplyImport").addEventListener("click", applyGraphImport);
+        modal.querySelector("#i18nRetryTranslation").addEventListener("click", retryImportTranslation);
         modal.querySelector("#i18nImportSearch").addEventListener("input", renderImportCandidates);
         modal.querySelector("#i18nImportStatus").addEventListener("change", renderImportCandidates);
         modal.querySelector("#i18nImportDatabase").addEventListener("change", (event) => window._setSqlDialect?.(event.target.value));
@@ -375,7 +389,8 @@
         const statusOptions = modal.querySelector("#i18nImportStatus").options;
         ["allStatuses", "approvedStatus", "reviewStatus", "excludedStatus"].forEach((key, index) => { statusOptions[index].textContent = t(key); });
         modal.querySelector("#i18nApplyImport").textContent = t("importApply");
-        if (importAnalysis) { renderImportSummary(); renderImportCandidates(); }
+        modal.querySelector("#i18nRetryTranslation").textContent = t("retryTranslation");
+        if (importAnalysis) { renderImportSummary(); renderImportCandidates(); renderTranslationState(); }
         const emptyEditor = modal.querySelector(".i18n-node-editor-empty");
         if (emptyEditor) emptyEditor.textContent = t("selectNodeHint");
     }
@@ -390,6 +405,7 @@
     function closeSettings() {
         document.getElementById("i18nSettingsModal")?.classList.add("i18n-settings-hidden");
         document.body.classList.remove("i18n-settings-open");
+        stopImportTranslationPolling();
     }
 
     function selectSettingsSection(section) {
@@ -405,6 +421,9 @@
         if (section === "import") {
             modal.querySelector("#i18nImportDatabase").value = window._getSqlDialect?.()
                 || document.getElementById("globalSqlDialect")?.value || "oracle";
+            if (importAnalysis) startImportTranslationPolling();
+        } else {
+            stopImportTranslationPolling();
         }
         if (section === "industry") {
             const frame = modal.querySelector("#i18nIndustryFrame");
@@ -448,9 +467,118 @@
             const warning = document.getElementById("i18nImportWarning");
             warning.textContent = importAnalysis.descriptionWarning || "";
             warning.hidden = !importAnalysis.descriptionWarning;
-            renderImportSummary(); renderImportCandidates();
+            renderImportSummary(); renderImportCandidates(); renderTranslationState();
+            startImportTranslationPolling();
         } catch (error) { showToast(error.message, true); }
         finally { button.disabled = false; button.textContent = t("analyzeImport"); }
+    }
+
+    function stopImportTranslationPolling() {
+        if (importTranslationTimer) clearTimeout(importTranslationTimer);
+        importTranslationTimer = null;
+    }
+
+    function renderTranslationState() {
+        const panel = document.getElementById("i18nImportTranslation");
+        if (!panel || !importAnalysis?.translation) {
+            if (panel) panel.hidden = true;
+            return;
+        }
+        const stateValue = importAnalysis.translation;
+        const labelKey = stateValue.metadataStatus === "failed" ? "descriptionFailed"
+            : stateValue.metadataStatus !== "completed" ? "descriptionLoading" : ({
+            pending: "translationPending", running: "translationRunning", completed: "translationCompleted",
+            unavailable: "translationUnavailable", failed: "translationFailed",
+        }[stateValue.status] || "translationPending");
+        panel.hidden = false;
+        panel.dataset.status = stateValue.metadataStatus === "failed" ? "failed" : stateValue.status;
+        document.getElementById("i18nImportTranslationText").textContent = t(labelKey);
+        document.getElementById("i18nImportTranslationProgress").textContent = stateValue.metadataStatus === "completed"
+            ? `${t("translationProgress")} ${stateValue.completed} / ${stateValue.total}` : "";
+        const retry = document.getElementById("i18nRetryTranslation");
+        retry.hidden = stateValue.metadataStatus !== "failed"
+            && (!["failed", "unavailable"].includes(stateValue.status) || stateValue.completed >= stateValue.total);
+        retry.disabled = false;
+        retry.textContent = t("retryTranslation");
+        const warning = document.getElementById("i18nImportWarning");
+        const messages = [importAnalysis.descriptionWarning, stateValue.warning].filter(Boolean);
+        warning.textContent = messages.join("；");
+        warning.hidden = messages.length === 0;
+    }
+
+    function mergeTranslationUpdates(payload) {
+        if (!importAnalysis) return;
+        importAnalysis.translation = payload.translation;
+        importAnalysis.summary.described = payload.described ?? importAnalysis.summary.described;
+        importAnalysis.summary.translated = payload.translated ?? importAnalysis.summary.translated;
+        const descriptions = payload.descriptions || {};
+        const updates = payload.translations || {};
+        importAnalysis.candidates.forEach((item) => {
+            if (descriptions[item.className]) item.descriptionEn = descriptions[item.className];
+            if (updates[item.className]) item.descriptionZh = updates[item.className];
+        });
+        document.querySelectorAll(".i18n-import-candidate[data-class-name]").forEach((row) => {
+            const item = importAnalysis.candidates.find((candidate) => candidate.className === row.dataset.className);
+            const description = row.querySelector(".i18n-import-description");
+            if (!item || !description) return;
+            description.textContent = state.language === "zh-CN"
+                ? (item.descriptionZh || item.descriptionEn || "—")
+                : (item.descriptionEn || item.descriptionZh || "—");
+            description.title = description.textContent;
+        });
+        renderImportSummary();
+        renderTranslationState();
+    }
+
+    async function pollImportTranslation() {
+        if (!importAnalysis || !isImportTranslationActive()) {
+            stopImportTranslationPolling();
+            return;
+        }
+        const importId = importAnalysis.importId;
+        try {
+            const response = await fetch(`/api/ontology-import/translation/${encodeURIComponent(importId)}`, { cache: "no-store" });
+            if (!response.ok) throw new Error(await responseError(response));
+            if (!importAnalysis || importAnalysis.importId !== importId) return;
+            mergeTranslationUpdates(await response.json());
+        } catch (error) {
+            stopImportTranslationPolling();
+            showToast(error.message, true);
+            return;
+        }
+        if (isImportTranslationActive()) {
+            importTranslationTimer = setTimeout(pollImportTranslation, 1200);
+        }
+    }
+
+    function isImportTranslationActive() {
+        const value = importAnalysis?.translation;
+        return Boolean(value && (value.metadataStatus !== "completed" || ["waiting", "pending", "running"].includes(value.status))
+            && value.metadataStatus !== "failed");
+    }
+
+    function startImportTranslationPolling() {
+        stopImportTranslationPolling();
+        if (isImportTranslationActive()) {
+            importTranslationTimer = setTimeout(pollImportTranslation, 350);
+        }
+    }
+
+    async function retryImportTranslation() {
+        if (!importAnalysis) return;
+        const button = document.getElementById("i18nRetryTranslation");
+        button.disabled = true; button.textContent = t("retryingTranslation");
+        try {
+            const response = await fetch(`/api/ontology-import/translation/${encodeURIComponent(importAnalysis.importId)}/retry`, { method: "POST" });
+            if (!response.ok) throw new Error(await responseError(response));
+            const payload = await response.json();
+            importAnalysis.translation = payload.translation;
+            renderTranslationState();
+            startImportTranslationPolling();
+        } catch (error) {
+            showToast(error.message, true);
+            button.disabled = false; button.textContent = t("retryTranslation");
+        }
     }
 
     function renderImportSummary() {
@@ -481,7 +609,7 @@
         );
         const list = document.getElementById("i18nImportCandidates"); list.replaceChildren();
         rows.forEach((item) => {
-            const row = document.createElement("label"); row.className = `i18n-import-candidate status-${item.status}`;
+            const row = document.createElement("label"); row.className = `i18n-import-candidate status-${item.status}`; row.dataset.className = item.className;
             const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = Boolean(item.selected);
             checkbox.addEventListener("change", () => { item.selected = checkbox.checked; updateImportSelected(); });
             const name = document.createElement("strong"); name.textContent = item.className; name.title = item.className;
@@ -510,6 +638,7 @@
 
     async function applyGraphImport() {
         if (!importAnalysis || !window.confirm(t("importConfirm"))) return;
+        stopImportTranslationPolling();
         const selected = importAnalysis.candidates.filter((item) => item.selected).map((item) => item.className);
         const button = document.getElementById("i18nApplyImport");
         button.disabled = true; button.textContent = t("importing");
@@ -522,7 +651,10 @@
             const result = await response.json();
             showToast(`${t("saved")}: ${result.classes} ${t("classes")}, ${result.relationships} ${t("relations")}`);
             setTimeout(() => window.location.reload(), 900);
-        } catch (error) { showToast(error.message, true); button.disabled = false; button.textContent = t("importApply"); }
+        } catch (error) {
+            showToast(error.message, true); button.disabled = false; button.textContent = t("importApply");
+            startImportTranslationPolling();
+        }
     }
 
     async function loadNodeCatalog(reset) {
