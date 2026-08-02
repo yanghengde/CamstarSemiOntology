@@ -19,7 +19,8 @@
             catalogHint: "统一管理界面语言、节点与属性描述翻译及行业配置；修改后即时生效。",
             searchPlaceholder: "搜索类名、属性…", classes: "类", attributes: "属性", relations: "关系",
             queryBuilder: "查询构建", industrySettings: "行业设置", graphSettings: "平台设置",
-            graphImport: "图谱导入", importTitle: "导入物理结构", importHelp: "分别选择表定义 CSV 和字段定义 CSV。现有节点作为已审核业务对象；新 CDO 默认不导入，必须人工勾选确认。",
+            graphImport: "图谱导入", graphMaintenance: "图谱维护", maintenanceTitle: "图谱维护", maintenanceHelp: "集中管理会影响整个图谱的维护操作，请在执行前确认当前环境与数据范围。",
+            importTitle: "导入物理结构", importHelp: "分别选择表定义 CSV 和字段定义 CSV。现有节点作为已审核业务对象；新 CDO 默认不导入，必须人工勾选确认。",
             databaseType: "描述来源数据库", descriptionColumn: "描述",
             tableCsv: "表定义 CSV", fieldCsv: "字段定义 CSV", analyzeImport: "分析文件", analyzing: "分析中…",
             translationPending: "中文翻译等待处理", translationRunning: "中文翻译正在后台处理", translationCompleted: "中文翻译已完成",
@@ -66,7 +67,8 @@
             catalogHint: "Manage interface language, node and property descriptions, and industry configuration in one place. Changes take effect immediately.",
             searchPlaceholder: "Search classes or properties…", classes: "Classes", attributes: "Properties", relations: "Relations",
             queryBuilder: "Query Builder", industrySettings: "Industry Settings", graphSettings: "Platform Settings",
-            graphImport: "Graph Import", importTitle: "Import Physical Structure", importHelp: "Select the table and field definition CSV files. Existing nodes are reviewed business objects; new CDOs stay unchecked until manually approved.",
+            graphImport: "Graph Import", graphMaintenance: "Graph Maintenance", maintenanceTitle: "Graph Maintenance", maintenanceHelp: "Manage operations that affect the entire graph. Verify the current environment and data scope before proceeding.",
+            importTitle: "Import Physical Structure", importHelp: "Select the table and field definition CSV files. Existing nodes are reviewed business objects; new CDOs stay unchecked until manually approved.",
             databaseType: "Description database", descriptionColumn: "Description",
             tableCsv: "Table CSV", fieldCsv: "Field CSV", analyzeImport: "Analyze Files", analyzing: "Analyzing…",
             translationPending: "Chinese translation is queued", translationRunning: "Chinese translation is running in the background", translationCompleted: "Chinese translation completed",
@@ -292,6 +294,7 @@
                         <button type="button" class="active" data-i18n-section="general"></button>
                         <button type="button" data-i18n-section="content"></button>
                         <button type="button" data-i18n-section="import"></button>
+                        <button type="button" data-i18n-section="maintenance"></button>
                         <button type="button" data-i18n-section="industry"></button>
                     </nav>
                     <main class="i18n-settings-content">
@@ -352,6 +355,11 @@
                                     <span id="i18nImportSelected"></span>
                                     <button type="button" id="i18nApplyImport" class="i18n-primary-action"></button>
                                 </div>
+                            </div>
+                        </section>
+                        <section class="i18n-maintenance-section" hidden>
+                            <div class="i18n-import-heading i18n-maintenance-heading">
+                                <h3></h3><p></p>
                             </div>
                             <section class="i18n-danger-zone">
                                 <div>
@@ -429,7 +437,7 @@
         modal.querySelector("#i18nSettingsTitle").textContent = t("settings");
         modal.querySelector(".i18n-settings-subtitle").textContent = t("catalogHint");
         modal.querySelector(".i18n-settings-close").title = t("close");
-        const labels = { general: "general", content: "nodeContent", import: "graphImport", industry: "industrySettings" };
+        const labels = { general: "general", content: "nodeContent", import: "graphImport", maintenance: "graphMaintenance", industry: "industrySettings" };
         modal.querySelectorAll("[data-i18n-section]").forEach((button) => { button.textContent = t(labels[button.dataset.i18nSection]); });
         modal.querySelector("#i18nIndustryFrame").title = t("industrySettings");
         modal.querySelector("label[for='i18nLanguageSelect']").textContent = t("language");
@@ -439,6 +447,8 @@
         modal.querySelector("#i18nLanguageSelect").value = state.language;
         modal.querySelector(".i18n-import-heading h3").textContent = t("importTitle");
         modal.querySelector(".i18n-import-heading p").textContent = t("importHelp");
+        modal.querySelector(".i18n-maintenance-heading h3").textContent = t("maintenanceTitle");
+        modal.querySelector(".i18n-maintenance-heading p").textContent = t("maintenanceHelp");
         modal.querySelector('[data-import-label="tables"]').textContent = t("tableCsv");
         modal.querySelector('[data-import-label="fields"]').textContent = t("fieldCsv");
         modal.querySelector('[data-import-label="database"]').textContent = t("databaseType");
@@ -489,6 +499,7 @@
         modal.querySelector(".i18n-general-section").hidden = section !== "general";
         modal.querySelector(".i18n-node-section").hidden = section !== "content";
         modal.querySelector(".i18n-import-section").hidden = section !== "import";
+        modal.querySelector(".i18n-maintenance-section").hidden = section !== "maintenance";
         modal.querySelector(".i18n-industry-section").hidden = section !== "industry";
         modal.querySelector(".i18n-settings-content").classList.toggle("industry-active", section === "industry");
         if (section === "content") loadNodeCatalog(true);

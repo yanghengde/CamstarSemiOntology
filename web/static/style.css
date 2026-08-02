@@ -173,6 +173,8 @@ html, body {
 .i18n-node-section[hidden] { display: none; }
 .i18n-import-section { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 14px; }
 .i18n-import-section[hidden] { display: none; }
+.i18n-maintenance-section { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 18px; }
+.i18n-maintenance-section[hidden] { display: none; }
 .i18n-import-heading h3 { margin: 0 0 5px; color: var(--si-green); font-size: 16px; }
 .i18n-import-heading p { margin: 0; max-width: 760px; color: var(--text-secondary); font-size: 10px; line-height: 1.55; }
 .i18n-import-files { display: grid; grid-template-columns: 145px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
