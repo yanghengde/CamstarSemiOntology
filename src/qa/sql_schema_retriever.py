@@ -178,28 +178,46 @@ def build_physical_join_plan(
         if anchor in connected:
             continue
         candidates = []
-        for start in sorted(connected):
+        # Keep the user's selection order as the semantic tie-breaker.  In
+        # particular, the first selected object is the query root, so when
+        # two verified physical paths are equally short we should keep a
+        # direct branch from that root instead of silently rewiring the new
+        # object through another selected table.
+        connected_in_priority_order = [
+            table for table in selected if table in connected
+        ]
+        for start_priority, start in enumerate(connected_in_priority_order):
             path = find_physical_join_path(
                 start,
                 anchor,
                 max_hops=max_hops,
             )
             if path:
-                candidates.append(path)
+                candidates.append((path, start_priority))
         if not candidates:
             if len(selected) < max_tables:
                 selected.append(anchor)
             unconnected.append(anchor)
             continue
 
-        path = min(
+        path, _ = min(
             candidates,
             key=lambda candidate: (
-                len(candidate),
+                len(candidate[0]),
+                candidate[1],
                 sum(
                     edge["from_table"] in _INFRASTRUCTURE_TABLES
                     or edge["to_table"] in _INFRASTRUCTURE_TABLES
-                    for edge in candidate
+                    for edge in candidate[0]
+                ),
+                tuple(
+                    (
+                        edge["from_table"],
+                        edge["from_field"],
+                        edge["to_table"],
+                        edge["to_field"],
+                    )
+                    for edge in candidate[0]
                 ),
             ),
         )

@@ -58,6 +58,34 @@ class SqlQueryBuilderTests(unittest.TestCase):
         )
         self.assertEqual(plan["unconnected"], [])
 
+    def test_equal_length_join_paths_prefer_direct_branch_from_query_root(self):
+        plan = build_query_builder_plan(
+            ["HistoryMainline", "Container", "Product"]
+        )
+
+        joins = {
+            (
+                item["from_table"],
+                item["from_field"],
+                item["to_table"],
+                item["to_field"],
+            )
+            for item in plan["joins"]
+        }
+        self.assertIn(
+            ("HistoryMainline", "ContainerId", "Container", "ContainerId"),
+            joins,
+        )
+        self.assertIn(
+            ("HistoryMainline", "ProductId", "Product", "ProductId"),
+            joins,
+        )
+        self.assertNotIn(
+            ("Container", "ProductId", "Product", "ProductId"),
+            joins,
+        )
+        self.assertIn("hm.ProductId = p.ProductId", plan["sql"])
+
     def test_sqlserver_identifiers_and_aliases(self):
         plan = build_query_builder_plan(
             ["Container", "CurrentStatus"],
