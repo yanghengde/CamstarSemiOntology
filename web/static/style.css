@@ -1549,11 +1549,16 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
     order: -1;
     flex: 0 0 var(--panel-w);
     width: var(--panel-w);
+    min-width: min(320px, 50%);
+    max-width: 50%;
     height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
     background: linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 12, 20, 0.95) 100%);
     border-right: 1px solid var(--border-subtle);
     backdrop-filter: blur(16px);
-    overflow-y: auto;
+    overflow: visible;
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
                 opacity 0.3s;
     z-index: 100;
@@ -1570,6 +1575,41 @@ html[lang="en-US"] .rel-mode #graphContainer::after {
 #detailPanel:not(.panel-hidden) {
     transform: translateX(0);
     opacity: 1;
+}
+
+.detail-panel-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -6px;
+    z-index: 8;
+    width: 12px;
+    height: 100%;
+    cursor: col-resize;
+    touch-action: none;
+    outline: none;
+}
+
+.detail-panel-resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5px;
+    width: 2px;
+    background: transparent;
+    transition: background .15s, box-shadow .15s;
+}
+
+.detail-panel-resize-handle:hover::after,
+.detail-panel-resize-handle:focus-visible::after,
+body.detail-panel-resizing .detail-panel-resize-handle::after {
+    background: var(--si-green);
+    box-shadow: 0 0 8px rgba(0, 255, 185, .65);
+}
+
+body.detail-panel-resizing {
+    cursor: col-resize;
+    user-select: none;
 }
 
 .panel-header {
@@ -2043,6 +2083,9 @@ html[lang="en-US"] body.query-builder-mode #graphContainer::after {
 }
 
 .panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     padding: 16px 20px;
 }
 

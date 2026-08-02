@@ -4108,6 +4108,90 @@
     }
 
     // ══════════════════════════════════════════════════════
+    //  Resizable detail panel
+    // ══════════════════════════════════════════════════════
+    function setupDetailPanelResize() {
+        const app = document.getElementById("app");
+        const panel = document.getElementById("detailPanel");
+        const handle = document.getElementById("detailPanelResizeHandle");
+        if (!app || !panel || !handle) return;
+
+        const storageKey = "camstar_detail_panel_width_v1";
+        const defaultWidth = 380;
+        const minimumWidth = 320;
+        let dragStartX = 0;
+        let dragStartWidth = defaultWidth;
+
+        const widthLimits = () => {
+            const maximum = Math.max(1, Math.floor(app.getBoundingClientRect().width / 2));
+            return { minimum: Math.min(minimumWidth, maximum), maximum };
+        };
+
+        const applyWidth = (requested, persist = false) => {
+            const { minimum, maximum } = widthLimits();
+            const width = Math.round(Math.min(maximum, Math.max(minimum, Number(requested) || defaultWidth)));
+            document.documentElement.style.setProperty("--panel-w", `${width}px`);
+            handle.setAttribute("aria-valuemin", String(minimum));
+            handle.setAttribute("aria-valuemax", String(maximum));
+            handle.setAttribute("aria-valuenow", String(width));
+            if (persist) {
+                try { localStorage.setItem(storageKey, String(width)); } catch (_) { /* storage is optional */ }
+            }
+            return width;
+        };
+
+        let savedWidth = defaultWidth;
+        try { savedWidth = Number(localStorage.getItem(storageKey)) || defaultWidth; } catch (_) { /* storage is optional */ }
+        applyWidth(savedWidth);
+
+        const finishDrag = (event) => {
+            if (!document.body.classList.contains("detail-panel-resizing")) return;
+            document.body.classList.remove("detail-panel-resizing");
+            if (handle.hasPointerCapture?.(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+            applyWidth(panel.getBoundingClientRect().width, true);
+        };
+
+        handle.addEventListener("pointerdown", (event) => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            event.stopPropagation();
+            dragStartX = event.clientX;
+            dragStartWidth = panel.getBoundingClientRect().width;
+            document.body.classList.add("detail-panel-resizing");
+            handle.setPointerCapture?.(event.pointerId);
+        });
+
+        handle.addEventListener("pointermove", (event) => {
+            if (!document.body.classList.contains("detail-panel-resizing")) return;
+            event.preventDefault();
+            applyWidth(dragStartWidth + event.clientX - dragStartX);
+        });
+        handle.addEventListener("pointerup", finishDrag);
+        handle.addEventListener("pointercancel", finishDrag);
+        window.addEventListener("pointerup", finishDrag);
+        window.addEventListener("pointercancel", finishDrag);
+
+        handle.addEventListener("dblclick", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            applyWidth(defaultWidth, true);
+        });
+
+        handle.addEventListener("keydown", (event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            const current = panel.getBoundingClientRect().width;
+            const { minimum, maximum } = widthLimits();
+            const requested = event.key === 'Home' ? minimum
+                : event.key === 'End' ? maximum
+                : current + (event.key === 'ArrowRight' ? 16 : -16);
+            applyWidth(requested, true);
+        });
+
+        window.addEventListener("resize", () => applyWidth(panel.getBoundingClientRect().width));
+    }
+
+    // ══════════════════════════════════════════════════════
     //  Window resize
     // ══════════════════════════════════════════════════════
     function setupResize() {
@@ -4177,6 +4261,7 @@
             setupChatContextControl();
             setupToolbar();
             setupLegend();
+            setupDetailPanelResize();
             setupResize();
             await loadProductLines();
         } catch (err) {
