@@ -10,7 +10,10 @@ load_dotenv()
 
 # Ensure scripts dir is in path for rebuild_indexes import
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "scripts"))
+
+from src.ontology.runtime_state import enable_curated_baseline, is_empty_baseline_mode
 
 
 def load_ontology_to_neo4j(json_filepath: str):
@@ -230,7 +233,18 @@ if __name__ == "__main__":
         action="store_true",
         help="Delete all Neo4j nodes before loading the ontology.",
     )
+    parser.add_argument(
+        "--force-baseline",
+        action="store_true",
+        help="Restore and load the curated JSON baseline even when empty-graph mode is active.",
+    )
     args = parser.parse_args()
+    if args.clear or args.force_baseline:
+        enable_curated_baseline()
+    elif is_empty_baseline_mode():
+        print("ontology_load_skipped=empty-baseline-mode")
+        print("Run with --force-baseline to restore the curated JSON ontology.")
+        raise SystemExit(0)
     files_to_load = [
         "workflow_ontology.json",
         "operation_ontology.json",

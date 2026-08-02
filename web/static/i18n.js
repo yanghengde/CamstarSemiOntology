@@ -28,6 +28,15 @@
             descriptionLoading: "正在后台读取数据库描述，候选结构已可审核", descriptionFailed: "数据库描述读取失败，候选结构仍可审核",
             importSearch: "搜索候选 CDO…", allStatuses: "全部状态", approvedStatus: "已审核", reviewStatus: "待审核", excludedStatus: "建议排除",
             importApply: "导入已选业务对象", importing: "导入中…", importSelected: "已选择", importConfirm: "确定导入已选择的业务对象吗？本次操作只增量合并，不会删除现有节点。",
+            clearGraphTitle: "危险操作", clearGraphHelp: "需要从零开始或导入结果异常时，可清空当前 Neo4j 图谱。此操作不可撤销。",
+            clearGraphButton: "一键清空图谱", clearGraphDialogTitle: "确认清空全部图谱？", clearGraphIrreversible: "这是不可撤销的破坏性操作",
+            clearGraphScope: "将删除当前 Neo4j 数据库中的全部节点、属性节点和关系。",
+            clearGraphRestart: "清空后进入空图谱模式，重启服务也不会自动恢复内置图谱。",
+            clearGraphKeeps: "不会删除 CSV 源文件、描述翻译、行业配置和仓库中的本体 JSON。",
+            clearGraphAcknowledge: "我了解该操作不可撤销，并已确认当前数据库可以被清空。",
+            clearGraphTypePrefix: "请输入确认词", clearGraphPhrase: "清空全部图谱", clearGraphCancel: "取消",
+            clearGraphLoadingCounts: "正在读取当前图谱规模…", clearGraphCounts: "即将删除：{classes} 个类、{properties} 个属性、{relations} 个关系（Neo4j 共 {nodes} 个节点）",
+            clearingGraph: "正在清空…", clearGraphDone: "图谱已清空，已进入空图谱模式",
             syncDescriptions: "同步当前节点", syncingDescriptions: "同步中…", syncDone: "描述同步完成",
             moduleLegend: "模块图例", searchModule: "搜索模块…", nodeDetail: "节点详情",
             propertyList: "属性列表", relationship: "关系", addContext: "加入上下文", off: "关闭",
@@ -66,6 +75,15 @@
             descriptionLoading: "Loading database descriptions in the background; candidates are ready for review", descriptionFailed: "Database descriptions could not be loaded; candidates remain available",
             importSearch: "Search candidate CDOs…", allStatuses: "All statuses", approvedStatus: "Reviewed", reviewStatus: "Review", excludedStatus: "Suggested exclusion",
             importApply: "Import Selected Objects", importing: "Importing…", importSelected: "Selected", importConfirm: "Import the selected business objects? This incrementally merges data and does not delete existing nodes.",
+            clearGraphTitle: "Danger Zone", clearGraphHelp: "Clear the current Neo4j graph when you need to restart from zero or discard a bad import. This cannot be undone.",
+            clearGraphButton: "Clear Entire Graph", clearGraphDialogTitle: "Clear the entire graph?", clearGraphIrreversible: "This destructive action cannot be undone",
+            clearGraphScope: "All nodes, property nodes, and relationships in the current Neo4j database will be deleted.",
+            clearGraphRestart: "Empty-graph mode remains active after restart; the built-in graph will not be restored automatically.",
+            clearGraphKeeps: "CSV source files, description translations, industry settings, and ontology JSON files are retained.",
+            clearGraphAcknowledge: "I understand this cannot be undone and have verified that the current database may be cleared.",
+            clearGraphTypePrefix: "Type the confirmation phrase", clearGraphPhrase: "CLEAR ALL GRAPH DATA", clearGraphCancel: "Cancel",
+            clearGraphLoadingCounts: "Reading the current graph size…", clearGraphCounts: "Will delete {classes} classes, {properties} properties, {relations} ontology relations ({nodes} total Neo4j nodes)",
+            clearingGraph: "Clearing…", clearGraphDone: "Graph cleared; empty-graph mode is active",
             syncDescriptions: "Sync Current Node", syncingDescriptions: "Syncing…", syncDone: "Descriptions synchronized",
             moduleLegend: "Module Legend", searchModule: "Search modules…", nodeDetail: "Node Details",
             propertyList: "Properties", relationship: "Relationships", addContext: "Add Context", off: "Off",
@@ -335,8 +353,39 @@
                                     <button type="button" id="i18nApplyImport" class="i18n-primary-action"></button>
                                 </div>
                             </div>
+                            <section class="i18n-danger-zone">
+                                <div>
+                                    <h4 data-clear-text="title"></h4>
+                                    <p data-clear-text="help"></p>
+                                </div>
+                                <button type="button" id="i18nOpenClearGraph" class="i18n-danger-action">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+                                    <span></span>
+                                </button>
+                            </section>
                         </section>
                     </main>
+                </div>
+                <div id="i18nClearGraphDialog" class="i18n-clear-overlay" hidden>
+                    <section class="i18n-clear-dialog" role="alertdialog" aria-modal="true" aria-labelledby="i18nClearGraphTitle">
+                        <div class="i18n-clear-icon" aria-hidden="true">!</div>
+                        <div>
+                            <h3 id="i18nClearGraphTitle"></h3>
+                            <strong class="i18n-clear-irreversible"></strong>
+                        </div>
+                        <ul>
+                            <li data-clear-detail="scope"></li>
+                            <li data-clear-detail="restart"></li>
+                            <li data-clear-detail="keeps"></li>
+                        </ul>
+                        <p id="i18nClearGraphCounts" class="i18n-clear-counts"></p>
+                        <label class="i18n-clear-ack"><input id="i18nClearGraphAck" type="checkbox" /><span></span></label>
+                        <label class="i18n-clear-phrase"><span></span><code></code><input id="i18nClearGraphPhrase" class="i18n-form-control" type="text" autocomplete="off" spellcheck="false" /></label>
+                        <div class="i18n-clear-actions">
+                            <button type="button" id="i18nCancelClearGraph" class="i18n-secondary-action"></button>
+                            <button type="button" id="i18nConfirmClearGraph" class="i18n-danger-action" disabled></button>
+                        </div>
+                    </section>
                 </div>
                 <div id="i18nToast" class="i18n-toast" aria-live="polite"></div>
             </div>`;
@@ -360,6 +409,14 @@
         modal.querySelector("#i18nAnalyzeImport").addEventListener("click", analyzeGraphImport);
         modal.querySelector("#i18nApplyImport").addEventListener("click", applyGraphImport);
         modal.querySelector("#i18nRetryTranslation").addEventListener("click", retryImportTranslation);
+        modal.querySelector("#i18nOpenClearGraph").addEventListener("click", openGraphClearDialog);
+        modal.querySelector("#i18nCancelClearGraph").addEventListener("click", closeGraphClearDialog);
+        modal.querySelector("#i18nConfirmClearGraph").addEventListener("click", clearEntireGraph);
+        modal.querySelector("#i18nClearGraphAck").addEventListener("change", updateGraphClearConfirmation);
+        modal.querySelector("#i18nClearGraphPhrase").addEventListener("input", updateGraphClearConfirmation);
+        modal.querySelector("#i18nClearGraphDialog").addEventListener("mousedown", (event) => {
+            if (event.target.id === "i18nClearGraphDialog") closeGraphClearDialog();
+        });
         modal.querySelector("#i18nImportSearch").addEventListener("input", renderImportCandidates);
         modal.querySelector("#i18nImportStatus").addEventListener("change", renderImportCandidates);
         modal.querySelector("#i18nImportDatabase").addEventListener("change", (event) => window._setSqlDialect?.(event.target.value));
@@ -392,6 +449,20 @@
         ["allStatuses", "approvedStatus", "reviewStatus", "excludedStatus"].forEach((key, index) => { statusOptions[index].textContent = t(key); });
         modal.querySelector("#i18nApplyImport").textContent = t("importApply");
         modal.querySelector("#i18nRetryTranslation").textContent = t("retryTranslation");
+        modal.querySelector('[data-clear-text="title"]').textContent = t("clearGraphTitle");
+        modal.querySelector('[data-clear-text="help"]').textContent = t("clearGraphHelp");
+        modal.querySelector("#i18nOpenClearGraph span").textContent = t("clearGraphButton");
+        modal.querySelector("#i18nClearGraphTitle").textContent = t("clearGraphDialogTitle");
+        modal.querySelector(".i18n-clear-irreversible").textContent = t("clearGraphIrreversible");
+        modal.querySelector('[data-clear-detail="scope"]').textContent = t("clearGraphScope");
+        modal.querySelector('[data-clear-detail="restart"]').textContent = t("clearGraphRestart");
+        modal.querySelector('[data-clear-detail="keeps"]').textContent = t("clearGraphKeeps");
+        modal.querySelector(".i18n-clear-ack span").textContent = t("clearGraphAcknowledge");
+        modal.querySelector(".i18n-clear-phrase > span").textContent = t("clearGraphTypePrefix");
+        modal.querySelector(".i18n-clear-phrase code").textContent = t("clearGraphPhrase");
+        modal.querySelector("#i18nCancelClearGraph").textContent = t("clearGraphCancel");
+        if (!modal.querySelector("#i18nConfirmClearGraph").disabled) modal.querySelector("#i18nConfirmClearGraph").textContent = t("clearGraphButton");
+        updateGraphClearConfirmation();
         if (importAnalysis) { renderImportSummary(); renderImportCandidates(); renderTranslationState(); }
         const emptyEditor = modal.querySelector(".i18n-node-editor-empty");
         if (emptyEditor) emptyEditor.textContent = t("selectNodeHint");
@@ -405,6 +476,7 @@
     }
 
     function closeSettings() {
+        closeGraphClearDialog();
         document.getElementById("i18nSettingsModal")?.classList.add("i18n-settings-hidden");
         document.body.classList.remove("i18n-settings-open");
         stopImportTranslationPolling();
@@ -659,6 +731,68 @@
         }
     }
 
+    function formatClearCounts(template, values) {
+        return template.replace(/\{(\w+)\}/g, (_, key) => Number(values[key] || 0).toLocaleString());
+    }
+
+    async function openGraphClearDialog() {
+        const dialog = document.getElementById("i18nClearGraphDialog");
+        const ack = document.getElementById("i18nClearGraphAck");
+        const phrase = document.getElementById("i18nClearGraphPhrase");
+        ack.checked = false; phrase.value = "";
+        document.getElementById("i18nClearGraphCounts").textContent = t("clearGraphLoadingCounts");
+        dialog.hidden = false;
+        updateGraphClearConfirmation();
+        phrase.focus();
+        try {
+            const response = await fetch("/api/ontology-import/clear-preview", { cache: "no-store" });
+            if (!response.ok) throw new Error(await responseError(response));
+            const counts = await response.json();
+            document.getElementById("i18nClearGraphCounts").textContent = formatClearCounts(t("clearGraphCounts"), {
+                classes: counts.classes, properties: counts.properties,
+                relations: counts.ontologyRelationships, nodes: counts.totalNodes,
+            });
+        } catch (error) {
+            document.getElementById("i18nClearGraphCounts").textContent = error.message;
+        }
+    }
+
+    function closeGraphClearDialog() {
+        const dialog = document.getElementById("i18nClearGraphDialog");
+        if (dialog) dialog.hidden = true;
+    }
+
+    function updateGraphClearConfirmation() {
+        const ack = document.getElementById("i18nClearGraphAck");
+        const phrase = document.getElementById("i18nClearGraphPhrase");
+        const button = document.getElementById("i18nConfirmClearGraph");
+        if (!ack || !phrase || !button) return;
+        button.disabled = !(ack.checked && phrase.value.trim() === t("clearGraphPhrase"));
+        if (button.textContent !== t("clearingGraph")) button.textContent = t("clearGraphButton");
+    }
+
+    async function clearEntireGraph() {
+        const button = document.getElementById("i18nConfirmClearGraph");
+        const ack = document.getElementById("i18nClearGraphAck");
+        const phrase = document.getElementById("i18nClearGraphPhrase");
+        if (!ack.checked || phrase.value.trim() !== t("clearGraphPhrase")) return;
+        button.disabled = true; button.textContent = t("clearingGraph");
+        try {
+            const response = await fetch("/api/ontology-import/clear", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ confirmation: phrase.value.trim(), acknowledgeIrreversible: true }),
+            });
+            if (!response.ok) throw new Error(await responseError(response));
+            showToast(t("clearGraphDone"));
+            closeGraphClearDialog();
+            setTimeout(() => window.location.reload(), 900);
+        } catch (error) {
+            showToast(error.message, true);
+            button.textContent = t("clearGraphButton");
+            updateGraphClearConfirmation();
+        }
+    }
+
     async function loadNodeCatalog(reset) {
         const list = document.getElementById("i18nNodeList");
         const search = document.getElementById("i18nNodeSearch").value.trim();
@@ -815,7 +949,11 @@
             createSettingsModal();
             applyDom();
             document.querySelectorAll("#btnSettings, [data-open-i18n-settings]").forEach((button) => button.addEventListener("click", openSettings));
-            window.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSettings(); });
+            window.addEventListener("keydown", (event) => {
+                if (event.key !== "Escape") return;
+                const clearDialog = document.getElementById("i18nClearGraphDialog");
+                if (clearDialog && !clearDialog.hidden) closeGraphClearDialog(); else closeSettings();
+            });
             window.addEventListener("camstar:sql-dialect-change", (event) => {
                 const selector = document.getElementById("i18nImportDatabase");
                 if (selector && event.detail?.dialect) selector.value = event.detail.dialect;

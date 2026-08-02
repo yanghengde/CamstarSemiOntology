@@ -76,9 +76,13 @@ services:
     <<: *app-base
     restart: "no"
     command: ["python", "src/ontology/loader/neo4j_loader.py"]
+    volumes:
+      - app_data:/app/data
     depends_on:
       neo4j:
         condition: service_healthy
+      app-data-init:
+        condition: service_completed_successfully
 
   app:
     <<: *app-base

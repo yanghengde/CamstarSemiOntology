@@ -1,5 +1,8 @@
 import io
+import json
 
+import pytest
+from fastapi import HTTPException
 from starlette.datastructures import UploadFile
 
 from web.routers import ontology_import
@@ -92,8 +95,8 @@ def test_apply_import_writes_only_explicitly_selected_objects(monkeypatch):
             return Session()
 
     monkeypatch.setattr(ontology_import, "driver", Driver())
-    monkeypatch.setattr(ontology_import, "_write_imported_ontology", lambda classes, relationships: None)
-    monkeypatch.setattr(ontology_import, "_write_manifest", lambda selected, source_count: None)
+    monkeypatch.setattr(ontology_import, "_write_imported_ontology", lambda classes, relationships, **kwargs: None)
+    monkeypatch.setattr(ontology_import, "_write_manifest", lambda selected, source_count, **kwargs: None)
 
     result = ontology_import.apply_import(ontology_import.ImportApplyRequest(
         importId=analysis["importId"], selected=["NewBusinessObject"],
@@ -179,3 +182,101 @@ def test_background_translation_updates_progress_and_candidates(monkeypatch):
     assert result["translation"]["status"] == "completed"
     assert result["translation"]["completed"] == 2
     assert result["translations"] == {"Product": "中文：A product.", "Factory": "中文：A factory."}
+
+
+def test_clear_graph_rejects_incomplete_confirmation(monkeypatch):
+    called = []
+    monkeypatch.setattr(ontology_import, "mark_graph_cleared", lambda **kwargs: called.append(kwargs))
+
+    with pytest.raises(HTTPException) as error:
+        ontology_import.clear_graph(ontology_import.ClearGraphRequest(
+            confirmation="清空图谱",
+            acknowledgeIrreversible=True,
+        ))
+
+    assert error.value.status_code == 422
+    assert called == []
+
+
+def test_clear_graph_deletes_database_and_persists_empty_mode(monkeypatch):
+    queries = []
+    state_writes = []
+
+    class Result:
+        def single(self):
+            return {
+                "totalNodes": 12,
+                "totalRelationships": 20,
+                "classes": 3,
+                "properties": 9,
+                "ontologyRelationships": 8,
+            }
+
+        def consume(self):
+            return self
+
+    class Session:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def run(self, query, **_parameters):
+            queries.append(" ".join(query.split()))
+            return Result()
+
+    class Driver:
+        def session(self):
+            return Session()
+
+    monkeypatch.setattr(ontology_import, "driver", Driver())
+    monkeypatch.setattr(ontology_import, "load_graph_state", lambda: {"baselineMode": "curated"})
+    monkeypatch.setattr(ontology_import, "mark_graph_cleared", lambda **kwargs: state_writes.append(kwargs))
+    monkeypatch.setattr(ontology_import, "_invalidate_graph_caches", lambda: None)
+
+    result = ontology_import.clear_graph(ontology_import.ClearGraphRequest(
+        confirmation="清空全部图谱",
+        acknowledgeIrreversible=True,
+    ))
+
+    assert result["success"] is True
+    assert result["emptyBaselineMode"] is True
+    assert result["deleted"]["totalNodes"] == 12
+    assert any(query == "MATCH (n) DETACH DELETE n" for query in queries)
+    assert state_writes == [{}, {"nodes": 12, "relationships": 20}]
+
+
+def test_empty_baseline_only_uses_classes_present_in_graph(monkeypatch, tmp_path):
+    ontology_file = tmp_path / "curated_ontology.json"
+    ontology_file.write_text('{"classes":[{"className":"CuratedOnly"}]}', encoding="utf-8")
+    monkeypatch.setattr(ontology_import, "ONTOLOGY_DIR", tmp_path)
+    monkeypatch.setattr(ontology_import, "is_empty_baseline_mode", lambda: True)
+    monkeypatch.setattr("web.routers.graph._graph_overview_cached", lambda: {
+        "nodes": [{"id": "ImportedLiveNode"}],
+    })
+
+    assert ontology_import._reviewed_class_names() == {"ImportedLiveNode"}
+
+
+def test_first_import_after_clear_drops_stale_generated_classes(monkeypatch, tmp_path):
+    generated = tmp_path / "csv_business_import_ontology.json"
+    generated.write_text(json.dumps({
+        "module": "csv_business_import",
+        "classes": [{"className": "BadPreviousImport", "properties": []}],
+        "relationships": [{
+            "fromClass": "BadPreviousImport", "toClass": "Product",
+            "relationName": "BAD_RELATION", "cardinality": "MANY_TO_ONE",
+        }],
+    }), encoding="utf-8")
+    monkeypatch.setattr(ontology_import, "IMPORTED_ONTOLOGY", generated)
+
+    ontology_import._write_imported_ontology(
+        [{"className": "CleanImport", "properties": []}],
+        [],
+        allowed_class_names={"CleanImport"},
+    )
+
+    payload = json.loads(generated.read_text(encoding="utf-8"))
+    assert [item["className"] for item in payload["classes"]] == ["CleanImport"]
+    assert payload["relationships"] == []
