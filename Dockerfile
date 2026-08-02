@@ -21,7 +21,8 @@ RUN apt-get update \
 
 COPY requirements.txt .
 RUN python -m pip install --upgrade pip \
-    && python -m pip install -r requirements.txt
+    && python -m pip install -r requirements.txt \
+    && python -c "import torch; assert torch.version.cuda is None, f'Expected CPU-only PyTorch, got CUDA {torch.version.cuda}'"
 
 # The committed Chroma index still needs the matching embedding model at query
 # time. Cache it in the image so production can keep Hugging Face offline.

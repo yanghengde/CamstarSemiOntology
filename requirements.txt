@@ -17,6 +17,11 @@ oracledb>=2.0.0
 # ── LLM & RAG ──
 openai>=1.10.0
 chromadb>=0.4.22
+# Sentence Transformers 只在 CPU 上运行。固定官方 CPU wheel，避免 Linux
+# 环境从 PyPI 的默认 PyTorch 构建拉取 nvidia-cuda-* 等 GPU 运行包。
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.11.0+cpu; platform_system == "Linux" or platform_system == "Windows"
+torch==2.11.0; platform_system == "Darwin"
 sentence-transformers>=2.2.2
 
 # ── Document Parsing ──

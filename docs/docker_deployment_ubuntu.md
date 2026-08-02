@@ -26,7 +26,10 @@ sudo apt install -y git ca-certificates curl
 - 4 核或更多 CPU
 - 8 GB 或更多内存
 - 20 GB 或更多可用磁盘
-- 能访问 GitHub、Docker Hub、PyPI、Microsoft 软件源和 Hugging Face
+- 能访问 GitHub、Docker Hub、PyPI、`download.pytorch.org`、Microsoft 软件源和 Hugging Face
+
+应用固定使用 PyTorch 官方 CPU wheel，不需要安装 NVIDIA 驱动、CUDA Toolkit
+或 `nvidia-cuda-*` Python 运行包。
 
 ## 2. 安装 Docker Engine 和 Compose
 
