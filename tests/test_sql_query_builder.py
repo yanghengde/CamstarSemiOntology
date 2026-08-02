@@ -34,6 +34,30 @@ class SqlQueryBuilderTests(unittest.TestCase):
             plan["reference_validation"]["runtime_database_checked"],
         )
 
+    def test_one_center_node_can_keep_two_query_branches(self):
+        plan = build_query_builder_plan(
+            ["HistoryMainline", "Container", "Employee"]
+        )
+
+        joins = {
+            (
+                item["from_table"],
+                item["from_field"],
+                item["to_table"],
+                item["to_field"],
+            )
+            for item in plan["joins"]
+        }
+        self.assertIn(
+            ("HistoryMainline", "ContainerId", "Container", "ContainerId"),
+            joins,
+        )
+        self.assertIn(
+            ("HistoryMainline", "EmployeeId", "Employee", "EmployeeId"),
+            joins,
+        )
+        self.assertEqual(plan["unconnected"], [])
+
     def test_sqlserver_identifiers_and_aliases(self):
         plan = build_query_builder_plan(
             ["Container", "CurrentStatus"],

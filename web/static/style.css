@@ -1896,11 +1896,39 @@ body.detail-panel-resizing {
     background: rgba(0, 255, 185, .1);
     color: #dffff5;
     font: 600 10px 'Cascadia Code', 'Fira Code', monospace;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.query-selected-chip:hover {
+    border-color: rgba(0, 255, 185, .68);
+    background: rgba(0, 255, 185, .15);
+}
+
+.query-selected-chip.active {
+    border-color: var(--si-green);
+    background: rgba(0, 255, 185, .2);
+    box-shadow: 0 0 0 1px rgba(0, 255, 185, .18), 0 0 12px rgba(0, 255, 185, .12);
 }
 
 .query-selected-chip-index {
     color: var(--si-green);
     font-size: 9px;
+}
+
+.query-selected-chip-focus {
+    padding: 1px 4px;
+    border-radius: 5px;
+    background: rgba(0, 255, 185, .18);
+    color: var(--si-green);
+    font-size: 8px;
+}
+
+.query-selection-hint {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1.45;
 }
 
 .query-selected-chip button {

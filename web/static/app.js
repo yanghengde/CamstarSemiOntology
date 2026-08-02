@@ -1037,12 +1037,12 @@
         // Expose graph for chat.js linking
         window._g6Graph = graph;
 
-        // ── Node click → select + open detail panel (or toggle off if already selected) ──
+        // ── Node click → add to query, or reactivate an existing query branch ──
         graph.on("node:click", async (evt) => {
             const nodeId = evt.target.id;
 
             if (queryBuilderState.active) {
-                await toggleQueryNode(nodeId);
+                await selectOrActivateQueryNode(nodeId);
                 return;
             }
 
@@ -1249,6 +1249,11 @@
         queryBuilderState.selectedNodes.forEach((nodeId, index) => {
             const chip = document.createElement("span");
             chip.className = "query-selected-chip";
+            if (queryBuilderState.activeNodeId === nodeId) chip.classList.add("active");
+            chip.title = queryBuilderState.activeNodeId === nodeId
+                ? `${nodeId} 是当前关联起点`
+                : `点击切换到 ${nodeId}，继续添加分支`;
+            chip.addEventListener("click", () => activateQueryNode(nodeId));
 
             const order = document.createElement("span");
             order.className = "query-selected-chip-index";
@@ -1264,9 +1269,20 @@
             remove.textContent = "×";
             remove.title = `移出 ${nodeId}`;
             remove.setAttribute("aria-label", `移出 ${nodeId}`);
-            remove.addEventListener("click", () => toggleQueryNode(nodeId));
+            remove.addEventListener("click", (event) => {
+                event.stopPropagation();
+                removeQueryNode(nodeId);
+            });
 
-            chip.append(order, name, remove);
+            if (queryBuilderState.activeNodeId === nodeId) {
+                const focus = document.createElement("span");
+                focus.className = "query-selected-chip-focus";
+                focus.textContent = "起点";
+                chip.append(order, name, focus, remove);
+            } else {
+                chip.append(order, name, remove);
+            }
+
             container.appendChild(chip);
         });
     }
@@ -1601,7 +1617,7 @@
             hideNodeTooltip();
             const nodeId = event.target.id;
             if (selected.has(nodeId)) {
-                toggleQueryNode(nodeId);
+                activateQueryNode(nodeId);
                 return;
             }
             edgeDetail.textContent = `${nodeId} 是系统补充的中间对象，仅用于连接物理 JOIN。`;
@@ -1728,23 +1744,45 @@
         }
     }
 
-    async function toggleQueryNode(nodeId) {
+    async function activateQueryNode(nodeId) {
+        if (
+            !queryBuilderState.active
+            || !queryBuilderState.selectedNodes.includes(nodeId)
+        ) return;
+        queryBuilderState.activeNodeId = nodeId;
+        renderQuerySelectedNodes();
+        applyQueryMainStates();
+        queueIncidentEdgeRender(nodeId);
+        setQueryBuilderStatus(`已切换关联起点：${nodeId}，可继续选择其它分支`);
+    }
+
+    async function selectOrActivateQueryNode(nodeId) {
+        if (!queryBuilderState.active) return;
+        if (queryBuilderState.selectedNodes.includes(nodeId)) {
+            await activateQueryNode(nodeId);
+            return;
+        }
+        if (queryBuilderState.selectedNodes.length >= 16) {
+            setQueryBuilderStatus("最多可选择 16 个查询对象", true);
+            return;
+        }
+        queryBuilderState.selectedNodes.push(nodeId);
+        queryBuilderState.activeNodeId = nodeId;
+        renderQuerySelectedNodes();
+        applyQueryMainStates();
+        queueIncidentEdgeRender(nodeId);
+        await requestQueryBuilderPlan();
+    }
+
+    async function removeQueryNode(nodeId) {
         if (!queryBuilderState.active) return;
         const index = queryBuilderState.selectedNodes.indexOf(nodeId);
-        if (index >= 0) {
-            queryBuilderState.selectedNodes.splice(index, 1);
-            if (queryBuilderState.activeNodeId === nodeId) {
-                queryBuilderState.activeNodeId = (
-                    queryBuilderState.selectedNodes.at(-1) || null
-                );
-            }
-        } else {
-            if (queryBuilderState.selectedNodes.length >= 16) {
-                setQueryBuilderStatus("最多可选择 16 个查询对象", true);
-                return;
-            }
-            queryBuilderState.selectedNodes.push(nodeId);
-            queryBuilderState.activeNodeId = nodeId;
+        if (index < 0) return;
+        queryBuilderState.selectedNodes.splice(index, 1);
+        if (queryBuilderState.activeNodeId === nodeId) {
+            queryBuilderState.activeNodeId = (
+                queryBuilderState.selectedNodes.at(-1) || null
+            );
         }
         renderQuerySelectedNodes();
         applyQueryMainStates();
