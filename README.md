@@ -115,7 +115,8 @@ CamstarOntology/
 │
 ├── scripts/                     # 🛠️ 运维与系统初始化脚本
 │   ├── rebuild_indexes.py       # Neo4j 规范索引重建脚本 (包含 10 大全文/唯一约束索引)
-│   └── validate_ontology_vs_csv.py  # 物理一致性校验器，比对物理 CSV 结构与 JSON 本体定义
+│   ├── validate_ontology_vs_csv.py  # 物理一致性校验器，比对物理 CSV 结构与 JSON 本体定义
+│   └── validate_relationship_sql.py # 全量校验 Relationship 的 Oracle / SQL Server 示例
 │
 └── web/                         # 🌐 前端 UI 与 API 宿主服务
     ├── server.py                # FastAPI 启动服务入口
@@ -236,13 +237,22 @@ Camstar Designer 描述同步会根据平台顶部选择的数据库类型连接
    ```
 
    这会比对 `docs/` 下的 CSV 表和物理字段，检查是否存在未对齐的类型或缺失的 Navigation 属性。
-3. **重建图数据库规范索引**：
+
+3. **校验全部 Relationship SQL 示例**（只读，不连接 Neo4j）：
+
+   ```bash
+   python scripts/validate_relationship_sql.py
+   ```
+
+   校验器会逐条核对本体关系与 `Database_Fields.csv` 的物理外键，并同时生成 Oracle、SQL Server 两种示例；任一关系无法唯一解析时会返回非零退出码。
+
+4. **重建图数据库规范索引**：
    ```bash
    python scripts/rebuild_indexes.py
    ```
 
    *作用：在 Neo4j 中创建唯一性约束（如 `unique_ontology_class_name`、`unique_ontology_property`）以防脏数据生成，并创建全文索引以加速大模型的模糊检索。*
-4. **批量 UNWIND 写入本体数据**：
+5. **批量 UNWIND 写入本体数据**：
    ```bash
    python src/ontology/loader/neo4j_loader.py
    ```
