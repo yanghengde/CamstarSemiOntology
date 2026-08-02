@@ -1174,6 +1174,7 @@
             const target = edgeData.target;
             const desc = edgeData.data?.description || "";
             const cardinality = edgeData.data?.cardinality || "";
+            const relationships = edgeData.data?.relationships || null;
 
             // Position popup near the click
             const canvasEl = document.getElementById("graphContainer");
@@ -1181,7 +1182,16 @@
             const clientX = evt.client?.x ?? (evt.canvas?.x + rect.left) ?? rect.left + rect.width / 2;
             const clientY = evt.client?.y ?? (evt.canvas?.y + rect.top) ?? rect.top + rect.height / 2;
 
-            showEdgePopup(relName, source, target, desc, cardinality, clientX, clientY);
+            showEdgePopup(
+                relName,
+                source,
+                target,
+                desc,
+                cardinality,
+                clientX,
+                clientY,
+                relationships,
+            );
         });
 
         // ── Node click also hides edge popup ──
@@ -2113,6 +2123,13 @@
                         label: `${firstLabel} (+${edges.length - 1})`,
                         description: `${nodeId} 与 ${neighbor} 之间共 ${edges.length} 条关系；详情面板中可查看全部。`,
                         relationCount: edges.length,
+                        relationships: edges.map((edge) => ({
+                            source: edge.source,
+                            target: edge.target,
+                            relName: edge.data?.label || edge.id,
+                            desc: edge.data?.description || "",
+                            cardinality: edge.data?.cardinality || "",
+                        })),
                     },
                 };
             });
@@ -2546,6 +2563,40 @@
         return `/api/wiki/relationship?source=${encodeURIComponent(source)}&rel=${encodeURIComponent(relName)}&target=${encodeURIComponent(target)}&product_line=${encodeURIComponent(productLine)}&sql_dialect=${encodeURIComponent(sqlDialect)}`;
     }
 
+    function relationshipEntries(edgeInfo) {
+        if (Array.isArray(edgeInfo?.relationships) && edgeInfo.relationships.length) {
+            return edgeInfo.relationships;
+        }
+        return edgeInfo ? [edgeInfo] : [];
+    }
+
+    async function fetchRelationshipEntries(edgeInfo, productLine, sqlDialect) {
+        const entries = relationshipEntries(edgeInfo);
+        return Promise.all(entries.map(async (entry) => ({
+            entry,
+            wikiData: await fetchJSON(
+                relationshipWikiUrl(entry, productLine, sqlDialect),
+            ),
+        })));
+    }
+
+    function relationshipSqlMarkdown(results, sqlDialect) {
+        const dialectLabel = SQL_DIALECTS[sqlDialect].label;
+        if (results.length === 1) {
+            return results[0].wikiData.sql_content
+                || `当前物理 Schema 无法生成 ${dialectLabel} SQL 关联示例。`;
+        }
+        return results.map(({ entry, wikiData }, index) => {
+            const heading = (
+                `#### 关系 ${index + 1}：${entry.relName}\n\n`
+                + `\`${entry.source} → ${entry.target}\``
+            );
+            const sql = wikiData.sql_content
+                || `> 当前物理 Schema 无法生成 ${dialectLabel} SQL 关联示例。`;
+            return `${heading}\n\n${sql}`;
+        }).join("\n\n---\n\n");
+    }
+
     function setEdgeSqlDialectBadge(dialect = currentSqlDialect) {
         const badge = document.getElementById("edgeSqlDialectBadge");
         if (badge) badge.textContent = SQL_DIALECTS[normalizeSqlDialect(dialect)].label;
@@ -2571,9 +2622,10 @@
 
     async function copyRelationshipSql() {
         const sqlContent = document.getElementById("edgeSqlContent");
-        const code = sqlContent.querySelector("pre code")?.textContent?.trim()
-            || sqlContent.querySelector("code")?.textContent?.trim()
-            || "";
+        const code = [...sqlContent.querySelectorAll("pre code")]
+            .map((node) => node.textContent?.trim())
+            .filter(Boolean)
+            .join("\n\n");
         if (!code) return;
         try {
             await navigator.clipboard.writeText(code);
@@ -2608,8 +2660,10 @@
         sqlContent.textContent = `正在读取 ${SQL_DIALECTS[dialectAtRequest].label} 物理关联…`;
         sqlContent.style.whiteSpace = "";
         try {
-            const wikiData = await fetchJSON(
-                relationshipWikiUrl(edgeInfoAtRequest, currentProductLine, dialectAtRequest),
+            const results = await fetchRelationshipEntries(
+                edgeInfoAtRequest,
+                currentProductLine,
+                dialectAtRequest,
             );
             if (
                 sqlToken !== edgeSqlLoadToken
@@ -2618,7 +2672,7 @@
             ) return;
             renderRelationshipWiki(
                 sqlContent,
-                wikiData.sql_content || `当前物理 Schema 无法生成 ${SQL_DIALECTS[dialectAtRequest].label} SQL 关联示例。`,
+                relationshipSqlMarkdown(results, dialectAtRequest),
             );
             setEdgeSqlCopyReady(Boolean(sqlContent.querySelector("code")));
         } catch (error) {
@@ -2632,7 +2686,16 @@
         if (currentEdgeInfo) refreshCurrentEdgeSql();
     });
 
-    async function showEdgePopup(relName, source, target, desc, cardinality, x, y) {
+    async function showEdgePopup(
+        relName,
+        source,
+        target,
+        desc,
+        cardinality,
+        x,
+        y,
+        relationships = null,
+    ) {
         const loadToken = ++edgeWikiLoadToken;
         const sqlToken = ++edgeSqlLoadToken;
         const popup = document.getElementById("edgePopup");
@@ -2666,7 +2729,14 @@
         setIconContent(plEl, plInfo.icon || "package", plInfo.name, { size: 13 });
 
         // Store for buttons
-        currentEdgeInfo = { relName, source, target, desc, cardinality };
+        currentEdgeInfo = {
+            relName,
+            source,
+            target,
+            desc,
+            cardinality,
+            relationships,
+        };
         currentWikiContent = null;
 
         // SQL and relationship usage are two independent fields.
@@ -2707,19 +2777,47 @@
         // ── Auto-load wiki if exists (fast filesystem read, matches product line) ──
         try {
             const productLineAtOpen = currentProductLine;
-            const wikiUrl = relationshipWikiUrl(currentEdgeInfo, productLineAtOpen, dialectAtOpen);
-            const wikiData = await fetchJSON(wikiUrl);
+            const relationshipResults = await fetchRelationshipEntries(
+                currentEdgeInfo,
+                productLineAtOpen,
+                dialectAtOpen,
+            );
 
             if (loadToken !== edgeWikiLoadToken) return;
             if (sqlToken === edgeSqlLoadToken && dialectAtOpen === currentSqlDialect) {
                 renderRelationshipWiki(
                     sqlContent,
-                    wikiData.sql_content || `当前物理 Schema 无法生成 ${SQL_DIALECTS[dialectAtOpen].label} SQL 关联示例。`,
+                    relationshipSqlMarkdown(relationshipResults, dialectAtOpen),
                 );
                 setEdgeSqlCopyReady(Boolean(sqlContent.querySelector("code")));
             }
             wikiLoading.style.display = "none";
-            if (wikiData.found && wikiData.content) {
+            if (relationshipResults.length > 1) {
+                const authoredWikis = relationshipResults.filter(
+                    ({ wikiData }) => wikiData.found && wikiData.content,
+                );
+                if (authoredWikis.length) {
+                    const combinedWiki = authoredWikis.map(({ entry, wikiData }, index) => (
+                        `## 关系 ${index + 1}：${entry.relName}\n\n${wikiData.content}`
+                    )).join("\n\n---\n\n");
+                    wikiEmpty.style.display = "none";
+                    renderRelationshipWiki(wikiContent, combinedWiki);
+                    wikiContent.style.display = "block";
+                } else {
+                    wikiEmpty.style.display = "flex";
+                    wikiEmpty.innerHTML = `
+                        <span class="wiki-empty-icon">${AppIcons.svg("inbox", { size: 26 })}</span>
+                        <span>这条连线包含 ${relationshipResults.length} 条 Relationship，暂无用法 Wiki</span>
+                        <span style="font-size:10px;color:var(--text-muted);margin-top:4px">SQL 关联示例已按真实关系分别展示</span>
+                    `;
+                }
+                generateBtn.style.display = "none";
+                editBtn.style.display = "none";
+            } else if (
+                relationshipResults[0].wikiData.found
+                && relationshipResults[0].wikiData.content
+            ) {
+                const wikiData = relationshipResults[0].wikiData;
                 currentWikiContent = wikiData.content;
                 wikiEmpty.style.display = "none";
                 renderRelationshipWiki(wikiContent, wikiData.content);
@@ -2741,7 +2839,9 @@
                 <span style="font-size:10px;color:var(--text-muted);margin-top:4px">${String(e.message || e)}</span>
             `;
             wikiEmpty.style.display = "flex";
-            generateBtn.style.display = "inline-flex";
+            generateBtn.style.display = relationshipEntries(currentEdgeInfo).length > 1
+                ? "none"
+                : "inline-flex";
             console.warn("Wiki read error:", e);
         }
     }
@@ -2757,6 +2857,7 @@
     // Wire the "Generate Wiki" button — first try read, then generate
     document.getElementById("edgePopupGenerate").addEventListener("click", async () => {
         if (!currentEdgeInfo) return;
+        if (relationshipEntries(currentEdgeInfo).length > 1) return;
         const { relName, source, target, desc, cardinality } = currentEdgeInfo;
         const generateBtn = document.getElementById("edgePopupGenerate");
         const wikiLoading = document.getElementById("edgeWikiLoading");
