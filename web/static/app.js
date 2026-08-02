@@ -266,6 +266,8 @@
         requestRevision: 0,
         previousSelectedNodeId: null,
         selectedPreviewJoin: null,
+        activeJoinPairKey: null,
+        joinOverrides: new Map(),
     };
     const API = "";  // same origin
     const classDetailCache = new Map(); // Client-side cache for class detail API responses
@@ -1493,6 +1495,93 @@
         );
     }
 
+    function queryJoinPairKey(left, right) {
+        return [left, right].sort().join("|");
+    }
+
+    function samePhysicalJoin(left, right) {
+        return ["from_table", "from_field", "to_table", "to_field"]
+            .every((key) => left?.[key] === right?.[key]);
+    }
+
+    function queryJoinCandidateGroup(edge) {
+        const pairKey = queryJoinPairKey(edge.from_table, edge.to_table);
+        return (queryBuilderState.plan?.join_candidates || [])
+            .find((item) => item.pair_key === pairKey) || null;
+    }
+
+    function setQueryRelationshipButton(edge) {
+        const viewButton = document.getElementById("btnViewQueryRelationship");
+        viewButton.disabled = !edge;
+        viewButton.title = edge
+            ? `查看 ${edge.from_table} → ${edge.to_table} Relationship`
+            : "请先在小图中选择 Relationship";
+    }
+
+    function renderQueryJoinChoices(edge) {
+        const edgeDetail = document.getElementById("queryEdgeDetail");
+        const group = queryJoinCandidateGroup(edge);
+        const pairKey = queryJoinPairKey(edge.from_table, edge.to_table);
+        queryBuilderState.selectedPreviewJoin = { ...edge };
+        queryBuilderState.activeJoinPairKey = pairKey;
+        setQueryRelationshipButton(edge);
+        edgeDetail.replaceChildren();
+
+        if (!group || group.candidates.length <= 1) {
+            edgeDetail.textContent = (
+                `${edge.from_table}.${edge.from_field} = `
+                + `${edge.to_table}.${edge.to_field}`
+            );
+            return;
+        }
+
+        const title = document.createElement("div");
+        title.className = "query-join-choice-title";
+        title.textContent = `${group.tables.join(" ↔ ")} 有 ${group.candidates.length} 条物理关联，请选择：`;
+        edgeDetail.appendChild(title);
+
+        const choices = document.createElement("div");
+        choices.className = "query-join-choices";
+        group.candidates.forEach((candidate, index) => {
+            const label = document.createElement("label");
+            label.className = "query-join-choice";
+            if (samePhysicalJoin(candidate, group.selected)) label.classList.add("selected");
+
+            const radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = `query-join-${pairKey}`;
+            radio.value = String(index);
+            radio.checked = samePhysicalJoin(candidate, group.selected);
+            radio.addEventListener("change", async () => {
+                if (!radio.checked) return;
+                queryBuilderState.joinOverrides.set(pairKey, { ...candidate });
+                queryBuilderState.activeJoinPairKey = pairKey;
+                setQueryBuilderStatus(
+                    `已选择 ${candidate.from_table}.${candidate.from_field} = ${candidate.to_table}.${candidate.to_field}`,
+                );
+                await requestQueryBuilderPlan();
+            });
+
+            const text = document.createElement("span");
+            text.textContent = (
+                `${candidate.from_table}.${candidate.from_field} = `
+                + `${candidate.to_table}.${candidate.to_field}`
+            );
+            label.append(radio, text);
+            choices.appendChild(label);
+        });
+        edgeDetail.appendChild(choices);
+    }
+
+    async function selectQueryPreviewEdge(edgeId, edge) {
+        renderQueryJoinChoices(edge);
+        const states = {};
+        for (const item of queryPreviewGraph.getEdgeData()) {
+            states[item.id] = item.id === edgeId ? ["selected"] : [];
+        }
+        await queryPreviewGraph.setElementState(states);
+    }
+
     async function renderQueryPreviewGraph() {
         destroyQueryPreviewGraph();
         const plan = queryBuilderState.plan;
@@ -1501,11 +1590,14 @@
         const edgeDetail = document.getElementById("queryEdgeDetail");
         if (!plan?.nodes?.length) {
             empty.hidden = false;
-            edgeDetail.textContent = "点击关系线选中并查看物理 JOIN 条件";
+            edgeDetail.textContent = "点击关系线查看；橙色关系线可选择物理 JOIN 条件";
             return;
         }
 
         empty.hidden = true;
+        if (!queryBuilderState.activeJoinPairKey) {
+            edgeDetail.textContent = "点击关系线查看；橙色关系线可选择物理 JOIN 条件";
+        }
         const selected = new Set(plan.selected_nodes || []);
         const unconnected = new Set(plan.unconnected || []);
         const previewNodes = plan.nodes.map((node) => {
@@ -1522,12 +1614,20 @@
                 },
             };
         });
+        const ambiguousPairs = new Set(
+            (plan.join_candidates || [])
+                .filter((item) => item.candidates.length > 1)
+                .map((item) => item.pair_key),
+        );
         const previewEdges = plan.joins.map((edge, index) => ({
             id: `query-edge-${index}`,
             source: edge.from_table,
             target: edge.to_table,
             data: {
                 edgeIndex: index,
+                ambiguous: ambiguousPairs.has(
+                    queryJoinPairKey(edge.from_table, edge.to_table),
+                ),
             },
         }));
 
@@ -1570,8 +1670,8 @@
             edge: {
                 type: "line",
                 style: {
-                    stroke: "#4CA6FF",
-                    lineWidth: 1.6,
+                    stroke: (d) => d.data?.ambiguous ? "#FFB45C" : "#4CA6FF",
+                    lineWidth: (d) => d.data?.ambiguous ? 2.4 : 1.6,
                     endArrow: true,
                     endArrowSize: 6,
                     cursor: "pointer",
@@ -1596,21 +1696,7 @@
             const edgeData = queryPreviewGraph.getEdgeData(event.target.id);
             const edge = plan.joins[edgeData?.data?.edgeIndex];
             if (!edge) return;
-            queryBuilderState.selectedPreviewJoin = { ...edge };
-            edgeDetail.textContent = (
-                `${edge.from_table}.${edge.from_field} = `
-                + `${edge.to_table}.${edge.to_field}`
-            );
-            const viewButton = document.getElementById("btnViewQueryRelationship");
-            viewButton.disabled = false;
-            viewButton.title = (
-                `查看 ${edge.from_table} → ${edge.to_table} Relationship`
-            );
-            const states = {};
-            for (const item of queryPreviewGraph.getEdgeData()) {
-                states[item.id] = item.id === event.target.id ? ["selected"] : [];
-            }
-            await queryPreviewGraph.setElementState(states);
+            await selectQueryPreviewEdge(event.target.id, edge);
         });
 
         queryPreviewGraph.on("node:click", (event) => {
@@ -1620,6 +1706,9 @@
                 activateQueryNode(nodeId);
                 return;
             }
+            queryBuilderState.activeJoinPairKey = null;
+            queryBuilderState.selectedPreviewJoin = null;
+            setQueryRelationshipButton(null);
             edgeDetail.textContent = `${nodeId} 是系统补充的中间对象，仅用于连接物理 JOIN。`;
         });
 
@@ -1639,6 +1728,18 @@
 
         try {
             await queryPreviewGraph.render();
+            if (queryBuilderState.activeJoinPairKey) {
+                const edgeIndex = plan.joins.findIndex((edge) => (
+                    queryJoinPairKey(edge.from_table, edge.to_table)
+                    === queryBuilderState.activeJoinPairKey
+                ));
+                if (edgeIndex >= 0) {
+                    await selectQueryPreviewEdge(
+                        `query-edge-${edgeIndex}`,
+                        plan.joins[edgeIndex],
+                    );
+                }
+            }
         } catch (error) {
             console.error("Query preview graph render failed:", error);
             empty.hidden = false;
@@ -1698,6 +1799,8 @@
         if (!queryBuilderState.selectedNodes.length) {
             queryBuilderState.plan = null;
             queryBuilderState.loading = false;
+            queryBuilderState.activeJoinPairKey = null;
+            queryBuilderState.joinOverrides.clear();
             renderQueryBuilderPlan();
             await renderQueryPreviewGraph();
             setQueryBuilderStatus("");
@@ -1713,6 +1816,7 @@
                 body: JSON.stringify({
                     selected_nodes: queryBuilderState.selectedNodes,
                     dialect: currentSqlDialect,
+                    join_overrides: [...queryBuilderState.joinOverrides.values()],
                 }),
             });
             const payload = await response.json();
@@ -1724,6 +1828,20 @@
                 throw new Error(payload.detail || payload.error || `HTTP ${response.status}`);
             }
             queryBuilderState.plan = payload;
+            const validPairKeys = new Set(
+                (payload.join_candidates || []).map((item) => item.pair_key),
+            );
+            for (const pairKey of queryBuilderState.joinOverrides.keys()) {
+                if (!validPairKeys.has(pairKey)) {
+                    queryBuilderState.joinOverrides.delete(pairKey);
+                }
+            }
+            if (
+                queryBuilderState.activeJoinPairKey
+                && !validPairKeys.has(queryBuilderState.activeJoinPairKey)
+            ) {
+                queryBuilderState.activeJoinPairKey = null;
+            }
             queryBuilderState.error = "";
             setQueryBuilderStatus(
                 payload.warnings?.length
@@ -1803,6 +1921,8 @@
         queryBuilderState.plan = null;
         queryBuilderState.error = "";
         queryBuilderState.selectedPreviewJoin = null;
+        queryBuilderState.activeJoinPairKey = null;
+        queryBuilderState.joinOverrides.clear();
         selectedNodeId = null;
 
         document.body.classList.add("query-builder-mode");
@@ -1829,6 +1949,8 @@
         queryBuilderState.plan = null;
         queryBuilderState.error = "";
         queryBuilderState.selectedPreviewJoin = null;
+        queryBuilderState.activeJoinPairKey = null;
+        queryBuilderState.joinOverrides.clear();
         queryBuilderState.previousSelectedNodeId = null;
 
         document.body.classList.remove("query-builder-mode");
@@ -1915,6 +2037,8 @@
     async function clearQueryBuilderSelection() {
         queryBuilderState.selectedNodes = [];
         queryBuilderState.activeNodeId = null;
+        queryBuilderState.activeJoinPairKey = null;
+        queryBuilderState.joinOverrides.clear();
         await restoreOverviewEdges();
         await requestQueryBuilderPlan();
         setQueryBuilderStatus("查询已清空");

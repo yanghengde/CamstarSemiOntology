@@ -17,6 +17,84 @@ MAX_PLAN_TABLES = 24
 REFERENCE_SCHEMA_SOURCE = "docs/Database_Fields.csv"
 
 
+def _join_key(edge: dict[str, str]) -> tuple[str, str, str, str]:
+    return (
+        edge["from_table"],
+        edge["from_field"],
+        edge["to_table"],
+        edge["to_field"],
+    )
+
+
+def _join_pair_key(left: str, right: str) -> str:
+    return "|".join(sorted((left, right)))
+
+
+def _physical_join_candidates(left: str, right: str) -> list[dict[str, str]]:
+    candidates = {
+        _join_key(edge): dict(edge)
+        for neighbor, edge in _physical_fk_graph().get(left, [])
+        if neighbor == right
+    }
+    return [candidates[key] for key in sorted(candidates)]
+
+
+def _join_candidate_groups(joins: list[dict[str, str]]) -> list[dict]:
+    groups = []
+    seen_pairs: set[str] = set()
+    for selected in joins:
+        left = selected["from_table"]
+        right = selected["to_table"]
+        pair_key = _join_pair_key(left, right)
+        if pair_key in seen_pairs:
+            continue
+        seen_pairs.add(pair_key)
+        groups.append({
+            "pair_key": pair_key,
+            "tables": sorted((left, right)),
+            "selected": dict(selected),
+            "candidates": _physical_join_candidates(left, right),
+        })
+    return groups
+
+
+def _apply_join_overrides(
+    joins: list[dict[str, str]],
+    overrides: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    if not overrides:
+        return joins
+
+    known_edges = {
+        _join_key(edge)
+        for neighbors in _physical_fk_graph().values()
+        for _, edge in neighbors
+    }
+    by_pair: dict[str, dict[str, str]] = {}
+    for override in overrides:
+        candidate = {
+            key: str(override.get(key, "")).strip()
+            for key in ("from_table", "from_field", "to_table", "to_field")
+        }
+        if _join_key(candidate) not in known_edges:
+            raise ValueError(
+                "所选 JOIN 不是参考 Schema 中的物理外键："
+                f"{candidate['from_table']}.{candidate['from_field']} = "
+                f"{candidate['to_table']}.{candidate['to_field']}"
+            )
+        by_pair[_join_pair_key(
+            candidate["from_table"], candidate["to_table"]
+        )] = candidate
+
+    return [
+        by_pair.get(
+            _join_pair_key(edge["from_table"], edge["to_table"]),
+            edge,
+        )
+        for edge in joins
+    ]
+
+
 def _table_alias(table_name: str, used: set[str]) -> str:
     words = re.findall(r"[A-Z]+(?=[A-Z][a-z]|$)|[A-Z]?[a-z]+|\d+", table_name)
     base = "".join(word[0] for word in words if word).lower()
@@ -85,32 +163,18 @@ def _reachable_tables(root_table: str, joins: list[dict[str, str]]) -> set[str]:
 
 
 def _ambiguous_join_warnings(joins: list[dict[str, str]]) -> list[str]:
-    adjacency = _physical_fk_graph()
     warnings = []
-    seen_pairs: set[frozenset[str]] = set()
-    for selected in joins:
-        left = selected["from_table"]
-        right = selected["to_table"]
-        pair = frozenset((left, right))
-        if pair in seen_pairs:
-            continue
-        seen_pairs.add(pair)
-        candidates = {
-            (
-                edge["from_table"],
-                edge["from_field"],
-                edge["to_table"],
-                edge["to_field"],
-            )
-            for neighbor, edge in adjacency.get(left, [])
-            if neighbor == right
-        }
+    for group in _join_candidate_groups(joins):
+        candidates = group["candidates"]
         if len(candidates) <= 1:
             continue
+        left, right = group["tables"]
+        selected = group["selected"]
         warnings.append(
             f"{left} 与 {right} 存在 {len(candidates)} 个物理外键候选；"
             f"当前使用 {selected['from_table']}.{selected['from_field']} = "
-            f"{selected['to_table']}.{selected['to_field']}，请核对业务语义。"
+            f"{selected['to_table']}.{selected['to_field']}。"
+            "请点击预览图中的橙色关系线选择正确 JOIN。"
         )
     return warnings
 
@@ -255,6 +319,7 @@ def build_query_builder_plan(
     selected_nodes: list[str],
     *,
     dialect: str = "oracle",
+    join_overrides: list[dict[str, str]] | None = None,
 ) -> dict:
     """Build a transient visual join plan and read-only SQL skeleton."""
     normalized_dialect = normalize_sql_dialect(dialect)
@@ -280,6 +345,7 @@ def build_query_builder_plan(
             "aliases": {},
             "sql": "",
             "dialect": normalized_dialect,
+            "join_candidates": [],
             "warnings": [],
         }
 
@@ -287,10 +353,14 @@ def build_query_builder_plan(
         normalized_nodes,
         max_tables=MAX_PLAN_TABLES,
     )
+    planned_joins = _apply_join_overrides(
+        physical_plan["joins"],
+        join_overrides or [],
+    )
     sql, root_table, aliases, rendered_joins = _render_sql(
         normalized_nodes,
         physical_plan["tables"],
-        physical_plan["joins"],
+        planned_joins,
         physical_plan["unconnected"],
         normalized_dialect,
     )
@@ -331,6 +401,7 @@ def build_query_builder_plan(
         "aliases": aliases,
         "sql": sql,
         "dialect": normalized_dialect,
+        "join_candidates": _join_candidate_groups(rendered_joins),
         "warnings": warnings,
         "reference_validation": reference_validation,
     }

@@ -70,6 +70,48 @@ class SqlQueryBuilderTests(unittest.TestCase):
         plan = build_query_builder_plan(["Container", "Spec"])
         self.assertTrue(any("物理外键候选" in item for item in plan["warnings"]))
 
+    def test_ambiguous_join_exposes_clickable_candidates(self):
+        plan = build_query_builder_plan(["HistoryMainline", "Spec"])
+
+        group = next(
+            item for item in plan["join_candidates"]
+            if item["pair_key"] == "HistoryMainline|Spec"
+        )
+        self.assertEqual(len(group["candidates"]), 2)
+        self.assertEqual(group["selected"]["from_field"], "SpecId")
+        self.assertEqual(
+            {item["from_field"] for item in group["candidates"]},
+            {"FromSpecId", "SpecId"},
+        )
+
+    def test_join_override_rebuilds_sql_with_user_selected_candidate(self):
+        override = {
+            "from_table": "HistoryMainline",
+            "from_field": "FromSpecId",
+            "to_table": "Spec",
+            "to_field": "SpecId",
+        }
+        plan = build_query_builder_plan(
+            ["HistoryMainline", "Spec"],
+            join_overrides=[override],
+        )
+
+        self.assertEqual(plan["joins"][0], override)
+        self.assertIn("hm.FromSpecId = s.SpecId", plan["sql"])
+        self.assertEqual(plan["join_candidates"][0]["selected"], override)
+
+    def test_unknown_join_override_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "不是参考 Schema"):
+            build_query_builder_plan(
+                ["HistoryMainline", "Spec"],
+                join_overrides=[{
+                    "from_table": "HistoryMainline",
+                    "from_field": "MadeUpSpecId",
+                    "to_table": "Spec",
+                    "to_field": "SpecId",
+                }],
+            )
+
     def test_unknown_table_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "未知物理对象"):
             build_query_builder_plan(["DefinitelyNotATable"])
