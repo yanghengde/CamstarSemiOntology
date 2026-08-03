@@ -2702,6 +2702,7 @@
     // ══════════════════════════════════════════════════════
     let currentEdgeInfo = null;
     let currentWikiContent = null;  // raw markdown content for editing
+    let currentRelationshipWikiResults = null;
     let edgeWikiLoadToken = 0;
     let edgeSqlLoadToken = 0;
     let edgeSqlCopyFeedbackTimer = null;
@@ -2757,6 +2758,188 @@
                 || `> 当前物理 Schema 无法生成 ${dialectLabel} SQL 关联示例。`;
             return `${heading}\n\n${sql}`;
         }).join("\n\n---\n\n");
+    }
+
+    function hasRelationshipUsageWiki(wikiData) {
+        return Boolean(wikiData?.found && wikiData.content);
+    }
+
+    function relationshipUsageMarkdown(results) {
+        return results.map(({ entry, wikiData, generationStatus, generationError }, index) => {
+            const heading = (
+                `## 关系 ${index + 1}：${entry.relName}\n\n`
+                + `\`${entry.source} → ${entry.target}\``
+            );
+            let usage = wikiData?.content || "";
+            if (generationStatus === "generating" && !usage) {
+                usage = "> AI 正在生成这条 Relationship 的用法 Wiki…";
+            } else if (generationStatus === "error") {
+                usage = `> 生成失败：${generationError || "未知错误"}`;
+            } else if (!usage) {
+                usage = "> 暂无用法 Wiki，点击下方按钮为这条 Relationship 生成。";
+            }
+            return `${heading}\n\n${usage}`;
+        }).join("\n\n---\n\n");
+    }
+
+    function renderMultiRelationshipUsage(results, wikiContent, wikiEmpty) {
+        currentRelationshipWikiResults = results;
+        currentWikiContent = null;
+        wikiEmpty.style.display = "none";
+        renderRelationshipWiki(wikiContent, relationshipUsageMarkdown(results));
+        wikiContent.style.display = "block";
+    }
+
+    function setMultiRelationshipGenerateButton(results, generateBtn) {
+        const missing = results.filter(({ wikiData }) => !hasRelationshipUsageWiki(wikiData));
+        if (!missing.length) {
+            generateBtn.style.display = "none";
+            generateBtn.disabled = false;
+            return;
+        }
+        const failed = missing.filter(({ generationStatus }) => generationStatus === "error").length;
+        const existing = results.length - missing.length;
+        const action = failed ? "重试" : existing ? "补全" : "生成";
+        generateBtn.style.display = "inline-flex";
+        generateBtn.disabled = false;
+        setIconContent(generateBtn, "bot", `${action} ${missing.length} 份 Wiki`, { size: 14 });
+    }
+
+    async function streamRelationshipUsageWiki(entry, productLine, onChunk) {
+        const res = await fetch("/api/wiki/generate-one", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                source: entry.source,
+                rel: entry.relName,
+                target: entry.target,
+                product_line: productLine,
+                cardinality: entry.cardinality || "",
+                description: entry.desc || "",
+                overwrite: false,
+            }),
+        });
+        if (!res.ok || !res.body) {
+            throw new Error(`生成请求失败（HTTP ${res.status}）`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let finalContent = "";
+        let buffer = "";
+        let streamError = "";
+
+        const consumeLine = (line) => {
+            if (!line.startsWith("data: ")) return;
+            try {
+                const payload = JSON.parse(line.slice(6));
+                if (payload.type === "chunk") {
+                    fullText += payload.content || "";
+                    onChunk(fullText);
+                } else if (payload.type === "done") {
+                    finalContent = payload.content || fullText;
+                } else if (payload.type === "error") {
+                    streamError = payload.content || "生成失败";
+                }
+            } catch (_) {}
+        };
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            lines.forEach(consumeLine);
+        }
+        buffer += decoder.decode();
+        if (buffer.trim()) consumeLine(buffer.trim());
+        if (streamError) throw new Error(streamError);
+        const content = finalContent || fullText;
+        if (!content) throw new Error("生成服务未返回 Wiki 内容");
+        return content;
+    }
+
+    async function generateMissingRelationshipUsageWikis() {
+        if (!currentEdgeInfo) return;
+        const edgeInfoAtStart = currentEdgeInfo;
+        const loadToken = edgeWikiLoadToken;
+        const productLineAtStart = currentProductLine;
+        const generateBtn = document.getElementById("edgePopupGenerate");
+        const wikiContent = document.getElementById("edgeWikiContent");
+        const wikiEmpty = document.getElementById("edgeWikiEmpty");
+        const editBtn = document.getElementById("edgePopupEdit");
+
+        generateBtn.disabled = true;
+        editBtn.style.display = "none";
+        let results = currentRelationshipWikiResults;
+        if (!Array.isArray(results) || results.length !== relationshipEntries(edgeInfoAtStart).length) {
+            results = await fetchRelationshipEntries(
+                edgeInfoAtStart,
+                productLineAtStart,
+                currentSqlDialect,
+            );
+        }
+        const missingResults = results.filter(({ wikiData }) => !hasRelationshipUsageWiki(wikiData));
+        if (!missingResults.length) {
+            renderMultiRelationshipUsage(results, wikiContent, wikiEmpty);
+            setMultiRelationshipGenerateButton(results, generateBtn);
+            return;
+        }
+
+        for (let index = 0; index < missingResults.length; index += 1) {
+            const result = missingResults[index];
+            result.generationStatus = "generating";
+            result.generationError = "";
+            result.wikiData = { ...result.wikiData, found: false, content: "" };
+            renderMultiRelationshipUsage(results, wikiContent, wikiEmpty);
+            setIconContent(
+                generateBtn,
+                "loader",
+                `正在生成 ${index + 1}/${missingResults.length}：${result.entry.relName}`,
+                { size: 14, spin: true },
+            );
+
+            let lastRenderTime = 0;
+            try {
+                const content = await streamRelationshipUsageWiki(
+                    result.entry,
+                    productLineAtStart,
+                    (partialContent) => {
+                        if (
+                            loadToken !== edgeWikiLoadToken
+                            || currentEdgeInfo !== edgeInfoAtStart
+                        ) return;
+                        result.wikiData = {
+                            ...result.wikiData,
+                            found: true,
+                            content: partialContent,
+                        };
+                        const now = Date.now();
+                        if (now - lastRenderTime >= 150) {
+                            renderMultiRelationshipUsage(results, wikiContent, wikiEmpty);
+                            lastRenderTime = now;
+                        }
+                    },
+                );
+                result.wikiData = { ...result.wikiData, found: true, content };
+                result.generationStatus = "done";
+            } catch (error) {
+                result.wikiData = { ...result.wikiData, found: false, content: "" };
+                result.generationStatus = "error";
+                result.generationError = String(error.message || error);
+            }
+
+            if (
+                loadToken !== edgeWikiLoadToken
+                || currentEdgeInfo !== edgeInfoAtStart
+                || currentProductLine !== productLineAtStart
+            ) return;
+            renderMultiRelationshipUsage(results, wikiContent, wikiEmpty);
+        }
+
+        setMultiRelationshipGenerateButton(results, generateBtn);
     }
 
     function setEdgeSqlDialectBadge(dialect = currentSqlDialect) {
@@ -2900,6 +3083,7 @@
             relationships,
         };
         currentWikiContent = null;
+        currentRelationshipWikiResults = null;
 
         // SQL and relationship usage are two independent fields.
         const dialectAtOpen = currentSqlDialect;
@@ -2955,25 +3139,8 @@
             }
             wikiLoading.style.display = "none";
             if (relationshipResults.length > 1) {
-                const authoredWikis = relationshipResults.filter(
-                    ({ wikiData }) => wikiData.found && wikiData.content,
-                );
-                if (authoredWikis.length) {
-                    const combinedWiki = authoredWikis.map(({ entry, wikiData }, index) => (
-                        `## 关系 ${index + 1}：${entry.relName}\n\n${wikiData.content}`
-                    )).join("\n\n---\n\n");
-                    wikiEmpty.style.display = "none";
-                    renderRelationshipWiki(wikiContent, combinedWiki);
-                    wikiContent.style.display = "block";
-                } else {
-                    wikiEmpty.style.display = "flex";
-                    wikiEmpty.innerHTML = `
-                        <span class="wiki-empty-icon">${AppIcons.svg("inbox", { size: 26 })}</span>
-                        <span>这条连线包含 ${relationshipResults.length} 条 Relationship，暂无用法 Wiki</span>
-                        <span style="font-size:10px;color:var(--text-muted);margin-top:4px">SQL 关联示例已按真实关系分别展示</span>
-                    `;
-                }
-                generateBtn.style.display = "none";
+                renderMultiRelationshipUsage(relationshipResults, wikiContent, wikiEmpty);
+                setMultiRelationshipGenerateButton(relationshipResults, generateBtn);
                 editBtn.style.display = "none";
             } else if (
                 relationshipResults[0].wikiData.found
@@ -3001,9 +3168,7 @@
                 <span style="font-size:10px;color:var(--text-muted);margin-top:4px">${String(e.message || e)}</span>
             `;
             wikiEmpty.style.display = "flex";
-            generateBtn.style.display = relationshipEntries(currentEdgeInfo).length > 1
-                ? "none"
-                : "inline-flex";
+            generateBtn.style.display = "inline-flex";
             console.warn("Wiki read error:", e);
         }
     }
@@ -3014,12 +3179,23 @@
         document.getElementById("edgePopup").classList.add("edge-popup-hidden");
         currentEdgeInfo = null;
         currentWikiContent = null;
+        currentRelationshipWikiResults = null;
     }
 
     // Wire the "Generate Wiki" button — first try read, then generate
     document.getElementById("edgePopupGenerate").addEventListener("click", async () => {
         if (!currentEdgeInfo) return;
-        if (relationshipEntries(currentEdgeInfo).length > 1) return;
+        if (relationshipEntries(currentEdgeInfo).length > 1) {
+            try {
+                await generateMissingRelationshipUsageWikis();
+            } catch (error) {
+                const generateBtn = document.getElementById("edgePopupGenerate");
+                generateBtn.disabled = false;
+                setIconContent(generateBtn, "alert", "生成失败，请重试", { size: 14 });
+                console.error("Multi-relationship Wiki generation error:", error);
+            }
+            return;
+        }
         const { relName, source, target, desc, cardinality } = currentEdgeInfo;
         const generateBtn = document.getElementById("edgePopupGenerate");
         const wikiLoading = document.getElementById("edgeWikiLoading");
